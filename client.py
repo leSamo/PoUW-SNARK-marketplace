@@ -1,3 +1,10 @@
+# ####################################################################################################
+# The analysis of cryptographic techniques for offloading computations and storage in blockchains
+# Master thesis 2023/24
+# Samuel Olekšák
+# ✔️✔️❌❌❌
+# ####################################################################################################
+
 import socket
 import threading
 import getopt
@@ -16,7 +23,7 @@ def vprint(*args, **kwargs):
     if verbose_logging:
         print("VERBOSE: ", *args, file=sys.stdout, **kwargs)
 
-def handle_client(client_socket):
+def receive_incoming(client_socket):
     while True:
         # Receive data from the client
         data = client_socket.recv(1024)
@@ -45,7 +52,7 @@ def start_server(port):
                 vprint("Connection established.")
 
             # Start a new thread to handle the client connection
-            client_thread = threading.Thread(target=handle_client, args=(client_socket,))
+            client_thread = threading.Thread(target=receive_incoming, args=(client_socket,))
             client_thread.start()
     except Exception:
         print("Socket terminated")
@@ -127,6 +134,16 @@ def main(argv):
                 continue
 
             generate_key(command.split(" ")[1])
+        elif command.split(" ")[0] == 'send':
+            if len(command.split(" ")) != 3:
+                print("ERROR: Usage: send <receiver address> <amount>")
+                continue
+            
+            # TODO:
+            # check if funds are sufficient
+            # create transaction object
+            # sign transaction
+            # broadcast transactions
         else:
             print("Unknown command. Type 'help' to see a list of commands.")
 

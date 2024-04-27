@@ -6,3 +6,4 @@
 
 ## First time setup
 1. Make sure you run `pip install -r requirements.txt` to install dependencies
+2. (Optional) Configure network parameters in `config.py`
