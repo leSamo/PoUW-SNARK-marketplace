@@ -5,8 +5,15 @@
 # ❌❌❌❌❌
 # ####################################################################################################
 
+import time
+
 from block import Block
+from block_body import BlockBody
+from block_header import BlockHeader
 
 SEED_NODES = ['localhost:2222']
 
-# GENESIS_BLOCK = 
+#################### GENESIS BLOCK CONFIGURATION ####################
+#genesis_state_tree = 
+
+#GENESIS_BLOCK =

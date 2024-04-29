@@ -70,11 +70,11 @@ class CoinTransaction:
             'signature': self.__signature.hex()
         }
     
-def decode(dict):
+def decode(obj):
     return CoinTransaction(
-        bytes.fromhex(dict['id']),
-        bytes.fromhex(dict['address_from']),
-        bytes.fromhex(dict['address_to']),
-        dict['amount'],
-        bytes.fromhex(dict['signature']),
+        bytes.fromhex(obj['id']),
+        bytes.fromhex(obj['address_from']),
+        bytes.fromhex(obj['address_to']),
+        obj['amount'],
+        bytes.fromhex(obj['signature']),
     )
