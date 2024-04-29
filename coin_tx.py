@@ -8,21 +8,14 @@
 import time
 import hashlib
 
-class CoinTransaction:
+from encodeable import Encodeable
+
+class CoinTransaction(Encodeable):
     __id: bytes           # SHA256 hash (32 bytes)
     __address_from: bytes # SECP256k1 public key in SEC1 format (33 bytes)
     __address_to: bytes   # SECP256k1 public key in SEC1 format (33 bytes) 
     __amount: int
     __signature: bytes    # SECP256k1 signature (64 bytes)
-
-    def __init__(self, id, address_from, address_to, amount, signature):
-        self.__id = id
-        self.__address_from = address_from
-        self.__address_to = address_to
-        self.__amount = amount
-        self.__signature = signature
-
-        self.check_validity()
 
     def __init__(self, address_from, address_to, amount):
         timestamp = time.time() * 1000
@@ -35,6 +28,9 @@ class CoinTransaction:
         self.__signature = None
 
         self.check_validity()
+
+    def __init__(self, obj):
+        self.__decode(obj)
 
     def check_validity(self):
         if self.__amount <= 0:
@@ -63,18 +59,16 @@ class CoinTransaction:
     
     def encode(self):
         return {
-            'id': self.__id,
+            'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
             'address_to': self.__address_to.hex(),
             'amount': self.__amount,
             'signature': self.__signature.hex()
         }
     
-def decode(obj):
-    return CoinTransaction(
-        bytes.fromhex(obj['id']),
-        bytes.fromhex(obj['address_from']),
-        bytes.fromhex(obj['address_to']),
-        obj['amount'],
-        bytes.fromhex(obj['signature']),
-    )
+    def __decode(self, obj):
+        self.__id = bytes.fromhex(obj['id'])
+        self.__address_from =  bytes.fromhex(obj['address_from'])
+        self.__address_to = bytes.fromhex(obj['address_to'])
+        self.__amount = obj['amount']
+        self.__signature = bytes.fromhex(obj['signature'])

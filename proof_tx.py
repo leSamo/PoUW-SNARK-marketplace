@@ -8,7 +8,9 @@
 import time
 import hashlib
 
-class ProofTransaction:
+from encodeable import Encodeable
+
+class ProofTransaction(Encodeable):
     __id: bytes             # SHA256 hash (32 bytes)
     __address_from: bytes   # SECP256k1 public key in SEC1 format (33 bytes)
     __proof: bytes          # encoded JSON
@@ -28,6 +30,9 @@ class ProofTransaction:
         self.__signature = None
 
         self.check_validity()
+
+    def __init__(self, obj):
+        self.__decode(obj)
 
     def check_validity(self):
         # TODO: check if proof is valid JSON
@@ -50,3 +55,21 @@ class ProofTransaction:
 
     def is_signed(self):
         return self.__signature is not None
+    
+    def encode(self):
+        return {
+            'id': self.__id.hex(),
+            'address_from': self.__address_from.hex(),
+            'proof': self.__proof.hex(),
+            'circuit_hash': self.__circuit_hash(),
+            'key_randomness': self.__key_randomness(),
+            'signature': self.__signature.hex()
+        }
+    
+    def __decode(self, obj):
+        self.__id = bytes.fromhex(obj['id'])
+        self.__address_from =  bytes.fromhex(obj['address_from'])
+        self.__proof =  bytes.fromhex(obj['proof'])
+        self.__circuit_hash =  bytes.fromhex(obj['circuit_hash'])
+        self.__key_randomness =  bytes.fromhex(obj['key_randomness'])
+        self.__signature =  bytes.fromhex(obj['signature'])
