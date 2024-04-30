@@ -35,3 +35,9 @@ class Block(Encodeable):
     
     def get_timestamp(self):
         return self.__header.get_timestamp()
+    
+    def get_current_block_hash(self):
+        return self.__header.get_current_block_hash()
+
+    def get_state_tree(self):
+        return self.__body.get_state_tree()

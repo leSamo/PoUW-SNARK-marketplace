@@ -5,9 +5,11 @@
 # ❌❌❌❌❌
 # ####################################################################################################
 
+import socket
+
 import config
 
-peers = []
+peers = [] # list of tuples (IP address, port)
 pending_coin_transactions = []
 pending_proof_transactions = []
 
@@ -28,5 +30,11 @@ def get_blockchain(since):
     pass
 
 # broadcast newly generated block to the network
-def submit_block():
-    pass
+def broadcast_block(block):
+    for peer in peers:
+        try:
+            sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sending_socket.connect(peer)
+            sending_socket.send(block.encode())
+        except:
+            continue

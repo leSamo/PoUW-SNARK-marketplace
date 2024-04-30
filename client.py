@@ -10,8 +10,12 @@ import threading
 import getopt
 import sys
 import ecdsa
+import time
 
 import network
+from block import Block
+from block_body import BlockBody
+from block_header import BlockHeader
 
 USAGE = 'Usage: client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help]'
 
@@ -135,6 +139,7 @@ def main(argv):
             terminating_socket.connect(("localhost", server_port))
             
             break
+
         elif command == "help":
             print()
             print(f"{Colors.YELLOW}{Colors.BOLD}Available commands:{Colors.RESET}")
@@ -144,32 +149,43 @@ def main(argv):
             print(f"  {Colors.YELLOW}generate-key <output file>{Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {Colors.YELLOW}inspect <block id>{Colors.RESET} -- print information about block with <block id>")
             print(f"  {Colors.YELLOW}status{Colors.RESET} -- print current status of the network")
-            #print("\trequest-proof <> <>")
+            print(f"  {Colors.YELLOW}produce-empty{Colors.RESET} -- produces an empty dummy block and broadcasts it to the network")
+            print(f"  {Colors.YELLOW}auth <private key file>{Colors.RESET} -- switches from anonymous mode to authenticated mode")
             print()
+
         elif command == "verbose on":
             verbose_logging = True
             iprint("Enabled verbose logging")
+
         elif command == "verbose off":
             verbose_logging = False
             iprint("Disabled verbose logging")
+
         elif command.split(" ")[0] == "send":
             pass
+
         elif command.split(" ")[0] == 'generate-key':
             if len(command.split(" ")) != 2:
                 eprint("Usage: generate-key <output file>")
                 continue
 
             generate_key(command.split(" ")[1])
+            
         elif command.split(" ")[0] == 'send':
             if len(command.split(" ")) != 3:
                 eprint("Usage: send <receiver address> <amount>")
                 continue
+
+            if private_key is None:
+                eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue              
             
             # TODO:
             # check if funds are sufficient
             # create transaction object
             # sign transaction
             # broadcast transactions
+
         elif command.split(" ")[0] == 'inspect':
             if len(command.split(" ")) != 2:
                 eprint("Usage: inspect <block id>")
@@ -198,6 +214,37 @@ def main(argv):
             print(f"  {Colors.YELLOW}Connected peers ({len(network.pending_proof_transactions)}):{Colors.RESET}", network.pending_proof_transactions)
             print(f"  {Colors.YELLOW}Latest block id:{Colors.RESET}", network.blockchain[-1].get_id())
             print()
+
+        elif command == 'produce-empty':
+            previous_block = network.blockchain[-1]
+
+            new_block_body = BlockBody()
+            new_block_body.setup([], [], previous_block.get_state_tree())
+
+            coin_txs_hash = new_block_body.hash_coin_txs()
+            proof_txs_hash = new_block_body.hash_proof_txs()
+            state_root_hash = new_block_body.hash_state_tree()
+
+            current_timestamp = round(time.time() * 1000)
+
+            new_block_header = BlockHeader()
+            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 0, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
+
+            new_block = Block()
+            new_block.setup(new_block_header, new_block_body)
+
+            network.broadcast_block(new_block)
+
+        elif command.split(" ")[0] == 'auth':
+            if len(command.split(" ")) != 2:
+                eprint("Usage: auth <private key file>")
+                continue
+
+            private_key = load_ecdsa_private_key(command.split(" ")[1])
+
+            iprint("Private key file loaded succefully")
+            iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+
         else:
             eprint("Unknown command. Type 'help' to see a list of commands.")
 

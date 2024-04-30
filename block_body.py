@@ -70,3 +70,6 @@ class BlockBody(Encodeable):
         self.__coin_txs = coin_transactions
         self.__proof_txs = proof_transactions
         self.__state_tree = dict(obj['state_tree'])
+
+    def get_state_tree(self):
+        return self.__state_tree

@@ -46,6 +46,8 @@ class BlockHeader(Encodeable):
         self.__current_block_hash = block_hash
 
     def encode(self):
+        self.calculate_hash()
+
         return {
             'serial_id': self.__serial_id,
             'timestamp': self.__timestamp,
@@ -72,3 +74,7 @@ class BlockHeader(Encodeable):
     
     def get_timestamp(self):
         return self.__timestamp
+    
+    def get_current_block_hash(self):
+        self.calculate_hash()
+        return self.__current_block_hash
