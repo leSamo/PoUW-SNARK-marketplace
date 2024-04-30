@@ -66,3 +66,9 @@ class BlockHeader(Encodeable):
         self.__coin_txs_hash: obj['coin_txs_hash']
         self.__proof_txs_hash: obj['proof_txs_hash']
         self.__state_root_hash: obj['state_root_hash']
+
+    def get_id(self):
+        return self.__serial_id
+    
+    def get_timestamp(self):
+        return self.__timestamp

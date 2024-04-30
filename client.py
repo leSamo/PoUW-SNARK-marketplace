@@ -11,6 +11,8 @@ import getopt
 import sys
 import ecdsa
 
+import network
+
 USAGE = 'Usage: client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help]'
 
 server_running = True
@@ -71,7 +73,7 @@ def start_server(port):
             # Start a new thread to handle the client connection
             client_thread = threading.Thread(target=receive_incoming, args=(client_socket,))
             client_thread.start()
-    except Exception:
+    except:
         print("Socket terminated")
 
 def load_ecdsa_private_key(filename):
@@ -88,7 +90,8 @@ def generate_key(filename):
     with open(filename, "wb") as f:
         f.write(private_key_pem)
 
-    iprint("Private key saved to", filename)
+    iprint("Generated address", private_key.get_verifying_key().to_string('compressed').hex())
+    iprint(f"Private key saved to the file '{filename}'")
 
 def main(argv):
     global server_running, verbose_logging, private_key
@@ -122,7 +125,7 @@ def main(argv):
     while True:
         try:
             command = input()
-        except Exception:
+        except:
             command = "exit"
 
         if command == "exit":
@@ -139,6 +142,8 @@ def main(argv):
             print(f"  {Colors.YELLOW}exit{Colors.RESET} -- terminates client")
             print(f"  {Colors.YELLOW}send <receiver address> <amount>{Colors.RESET} -- create a coin transaction and submit it to the network")
             print(f"  {Colors.YELLOW}generate-key <output file>{Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
+            print(f"  {Colors.YELLOW}inspect <block id>{Colors.RESET} -- print information about block with <block id>")
+            print(f"  {Colors.YELLOW}status{Colors.RESET} -- print current status of the network")
             #print("\trequest-proof <> <>")
             print()
         elif command == "verbose on":
@@ -165,6 +170,34 @@ def main(argv):
             # create transaction object
             # sign transaction
             # broadcast transactions
+        elif command.split(" ")[0] == 'inspect':
+            if len(command.split(" ")) != 2:
+                eprint("Usage: inspect <block id>")
+                continue
+
+            try:
+                current_block_id = int(command.split(" ")[1])
+            except:
+                eprint("Usage: inspect <block id>")
+                continue
+
+            block = network.blockchain[current_block_id]
+
+            assert block.get_id() == current_block_id, "Blocks out of order in 'blockchain' variable"
+
+            print()
+            print(f"{Colors.YELLOW}{Colors.BOLD}Block {current_block_id}:{Colors.RESET}")
+            print(f"  {Colors.YELLOW}Timestamp ({len(network.peers)}):{Colors.RESET}", block.get_timestamp())
+            print()
+
+        elif command == 'status':
+            print()
+            print(f"{Colors.YELLOW}{Colors.BOLD}Network status:{Colors.RESET}")
+            print(f"  {Colors.YELLOW}Connected peers ({len(network.peers)}):{Colors.RESET}", network.peers)
+            print(f"  {Colors.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{Colors.RESET}", network.pending_coin_transactions)
+            print(f"  {Colors.YELLOW}Connected peers ({len(network.pending_proof_transactions)}):{Colors.RESET}", network.pending_proof_transactions)
+            print(f"  {Colors.YELLOW}Latest block id:{Colors.RESET}", network.blockchain[-1].get_id())
+            print()
         else:
             eprint("Unknown command. Type 'help' to see a list of commands.")
 

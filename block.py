@@ -29,3 +29,9 @@ class Block(Encodeable):
     def decode(self, obj):
         self.__header = BlockHeader(obj['header'])
         self.__body = BlockBody(obj['body'])
+
+    def get_id(self):
+        return self.__header.get_id()
+    
+    def get_timestamp(self):
+        return self.__header.get_timestamp()

@@ -5,9 +5,15 @@
 # ❌❌❌❌❌
 # ####################################################################################################
 
+import config
+
 peers = []
 pending_coin_transactions = []
 pending_proof_transactions = []
+
+blockchain = [config.genesis_block]
+
+assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
 
 # called by a client upon joining the network to receive list of pending txs
 def get_pending_transactions():
