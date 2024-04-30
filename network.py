@@ -2,11 +2,12 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ❌❌❌❌❌
+# ✔️❌❌❌❌
 # ####################################################################################################
 
 import socket
 
+from util import *
 import config
 
 peers = [] # list of tuples (IP address, port)
@@ -31,10 +32,14 @@ def get_blockchain(since):
 
 # broadcast newly generated block to the network
 def broadcast_block(block):
+    blockchain.append(block)
+
     for peer in peers:
         try:
             sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sending_socket.connect(peer)
             sending_socket.send(block.encode())
+            vprint("Successfully sent newly produced block to peer", peer)
         except:
+            vprint("Failed to send newly produced block to peer", peer)
             continue

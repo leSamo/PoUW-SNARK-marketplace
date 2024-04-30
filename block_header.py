@@ -36,10 +36,10 @@ class BlockHeader(Encodeable):
             str(self.__serial_id),
             str(self.__timestamp),
             str(self.__difficulty),
-            self.__previous_block_hash.decode(),
-            self.__coin_txs_hash.decode(),
-            self.__proof_txs_hash.decode(),
-            self.__state_root_hash.decode()
+            self.__previous_block_hash.hex(),
+            self.__coin_txs_hash.hex(),
+            self.__proof_txs_hash.hex(),
+            self.__state_root_hash.hex()
         ]).encode()
         block_hash = hashlib.sha256(serialized_block).digest()
 

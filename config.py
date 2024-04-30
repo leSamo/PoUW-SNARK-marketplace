@@ -5,8 +5,6 @@
 # ✔️❌❌❌❌
 # ####################################################################################################
 
-import time
-
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
@@ -26,7 +24,7 @@ proof_txs_hash = genesis_block_body.hash_proof_txs()
 state_root_hash = genesis_block_body.hash_state_tree()
 
 genesis_block_header = BlockHeader()
-genesis_block_header.setup(0, 1714436126662, 0, None, coin_txs_hash, proof_txs_hash, state_root_hash)
+genesis_block_header.setup(0, 1714436126662, 0, '00000000000000000000000000000000'.encode(), coin_txs_hash, proof_txs_hash, state_root_hash)
 
 genesis_block = Block()
 genesis_block.setup(genesis_block_header, genesis_block_body)

@@ -2,7 +2,7 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️❌❌❌
+# ✔️✔️✔️❌❌
 # ####################################################################################################
 
 import socket
@@ -12,39 +12,17 @@ import sys
 import ecdsa
 import time
 
+import util
 import network
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
 
-USAGE = 'Usage: client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help]'
+USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>]'
 
 server_running = True
-verbose_logging = False
 private_key = None
-
-class Colors:
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    PURPLE = '\033[35m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
-
-def vprint(*args, **kwargs):    
-    """ Print with verbose priority """
-    global verbose_logging
-    if verbose_logging:
-        print(f"{Colors.PURPLE}VERBOSE:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
-
-def iprint(*args, **kwargs):
-    """ Print with info priority """
-    print(f"{Colors.BLUE}INFO:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
-
-def eprint(*args, **kwargs):
-    """ Print with error priority """
-    print(f"{Colors.RED}ERROR:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+port = 12346
 
 def receive_incoming(client_socket):
     while True:
@@ -65,14 +43,14 @@ def start_server(port):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(("localhost", port))
     server_socket.listen(5)
-    vprint(f"Server listening on port {port}")
+    util.vprint(f"Server listening on port {port}")
 
     try:
         while server_running:
             client_socket, _ = server_socket.accept()
 
             if server_running:
-                vprint("Connection established.")
+                util.vprint("Connection established.")
 
             # Start a new thread to handle the client connection
             client_thread = threading.Thread(target=receive_incoming, args=(client_socket,))
@@ -94,14 +72,14 @@ def generate_key(filename):
     with open(filename, "wb") as f:
         f.write(private_key_pem)
 
-    iprint("Generated address", private_key.get_verifying_key().to_string('compressed').hex())
-    iprint(f"Private key saved to the file '{filename}'")
+    util.iprint("Generated address", private_key.get_verifying_key().to_string('compressed').hex())
+    util.iprint(f"Private key saved to the file '{filename}'")
 
 def main(argv):
-    global server_running, verbose_logging, private_key
+    global server_running, verbose_logging, private_key, port
 
     try:
-        opts, args = getopt.getopt(argv, "hvk:", ["help", "verbose", "key="])
+        opts, args = getopt.getopt(argv, "hvk:p:", ["help", "verbose", "key=", "port="])
     except getopt.GetoptError:
         print(USAGE)
         sys.exit(-1)
@@ -111,19 +89,20 @@ def main(argv):
             print(USAGE)
             sys.exit()
         elif opt in ['-v', '--verbose']:
-            iprint("Enabled verbose logging")
-            verbose_logging = True
+            util.iprint("Enabled verbose logging")
+            util.verbose_logging = True
         elif opt in ['-k', '--key']:
             private_key = load_ecdsa_private_key(arg)
+        elif opt in ['-p', '--port']:
+            port = int(arg)
 
     if private_key is None:
-        iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
+        util.iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
     else:
-        iprint("Private key file loaded succefully")
-        iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+        util.iprint("Private key file loaded succefully")
+        util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
-    server_port = 12346
-    server_thread = threading.Thread(target=start_server, args=(server_port,))
+    server_thread = threading.Thread(target=start_server, args=(port,))
     server_thread.start()
     
     while True:
@@ -136,48 +115,48 @@ def main(argv):
             server_running = False
 
             terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            terminating_socket.connect(("localhost", server_port))
+            terminating_socket.connect(("localhost", port))
             
             break
 
         elif command == "help":
             print()
-            print(f"{Colors.YELLOW}{Colors.BOLD}Available commands:{Colors.RESET}")
-            print(f"  {Colors.YELLOW}verbose <on|off>{Colors.RESET} -- toggles verbose logging")
-            print(f"  {Colors.YELLOW}exit{Colors.RESET} -- terminates client")
-            print(f"  {Colors.YELLOW}send <receiver address> <amount>{Colors.RESET} -- create a coin transaction and submit it to the network")
-            print(f"  {Colors.YELLOW}generate-key <output file>{Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
-            print(f"  {Colors.YELLOW}inspect <block id>{Colors.RESET} -- print information about block with <block id>")
-            print(f"  {Colors.YELLOW}status{Colors.RESET} -- print current status of the network")
-            print(f"  {Colors.YELLOW}produce-empty{Colors.RESET} -- produces an empty dummy block and broadcasts it to the network")
-            print(f"  {Colors.YELLOW}auth <private key file>{Colors.RESET} -- switches from anonymous mode to authenticated mode")
+            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Available commands:{util.Colors.RESET}")
+            print(f"  {util.Colors.YELLOW}verbose <on|off>{util.Colors.RESET} -- toggles verbose logging")
+            print(f"  {util.Colors.YELLOW}exit{util.Colors.RESET} -- terminates client")
+            print(f"  {util.Colors.YELLOW}send <receiver address> <amount>{util.Colors.RESET} -- create a coin transaction and submit it to the network")
+            print(f"  {util.Colors.YELLOW}generate-key <output file>{util.Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
+            print(f"  {util.Colors.YELLOW}inspect <block id>{util.Colors.RESET} -- print information about block with <block id>")
+            print(f"  {util.Colors.YELLOW}status{util.Colors.RESET} -- print current status of the network")
+            print(f"  {util.Colors.YELLOW}produce-empty{util.Colors.RESET} -- produces an empty dummy block and broadcasts it to the network")
+            print(f"  {util.Colors.YELLOW}auth <private key file>{util.Colors.RESET} -- switches from anonymous mode to authenticated mode")
             print()
 
         elif command == "verbose on":
-            verbose_logging = True
-            iprint("Enabled verbose logging")
+            util.verbose_logging = True
+            util.iprint("Enabled verbose logging")
 
         elif command == "verbose off":
-            verbose_logging = False
-            iprint("Disabled verbose logging")
+            util.verbose_logging(False)
+            util.iprint("Disabled verbose logging")
 
         elif command.split(" ")[0] == "send":
             pass
 
         elif command.split(" ")[0] == 'generate-key':
             if len(command.split(" ")) != 2:
-                eprint("Usage: generate-key <output file>")
+                util.eprint("Usage: generate-key <output file>")
                 continue
 
             generate_key(command.split(" ")[1])
             
         elif command.split(" ")[0] == 'send':
             if len(command.split(" ")) != 3:
-                eprint("Usage: send <receiver address> <amount>")
+                util.eprint("Usage: send <receiver address> <amount>")
                 continue
 
             if private_key is None:
-                eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue              
             
             # TODO:
@@ -188,13 +167,13 @@ def main(argv):
 
         elif command.split(" ")[0] == 'inspect':
             if len(command.split(" ")) != 2:
-                eprint("Usage: inspect <block id>")
+                util.eprint("Usage: inspect <block id>")
                 continue
 
             try:
                 current_block_id = int(command.split(" ")[1])
             except:
-                eprint("Usage: inspect <block id>")
+                util.eprint("Usage: inspect <block id>")
                 continue
 
             block = network.blockchain[current_block_id]
@@ -202,17 +181,17 @@ def main(argv):
             assert block.get_id() == current_block_id, "Blocks out of order in 'blockchain' variable"
 
             print()
-            print(f"{Colors.YELLOW}{Colors.BOLD}Block {current_block_id}:{Colors.RESET}")
-            print(f"  {Colors.YELLOW}Timestamp ({len(network.peers)}):{Colors.RESET}", block.get_timestamp())
+            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Block {current_block_id}:{util.Colors.RESET}")
+            print(f"  {util.Colors.YELLOW}Timestamp ({len(network.peers)}):{util.Colors.RESET}", block.get_timestamp())
             print()
 
         elif command == 'status':
             print()
-            print(f"{Colors.YELLOW}{Colors.BOLD}Network status:{Colors.RESET}")
-            print(f"  {Colors.YELLOW}Connected peers ({len(network.peers)}):{Colors.RESET}", network.peers)
-            print(f"  {Colors.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{Colors.RESET}", network.pending_coin_transactions)
-            print(f"  {Colors.YELLOW}Connected peers ({len(network.pending_proof_transactions)}):{Colors.RESET}", network.pending_proof_transactions)
-            print(f"  {Colors.YELLOW}Latest block id:{Colors.RESET}", network.blockchain[-1].get_id())
+            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Network status:{util.Colors.RESET}")
+            print(f"  {util.Colors.YELLOW}Connected peers ({len(network.peers)}):{util.Colors.RESET}", network.peers)
+            print(f"  {util.Colors.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Colors.RESET}", network.pending_coin_transactions)
+            print(f"  {util.Colors.YELLOW}Connected peers ({len(network.pending_proof_transactions)}):{util.Colors.RESET}", network.pending_proof_transactions)
+            print(f"  {util.Colors.YELLOW}Latest block id:{util.Colors.RESET}", network.blockchain[-1].get_id())
             print()
 
         elif command == 'produce-empty':
@@ -233,23 +212,25 @@ def main(argv):
             new_block = Block()
             new_block.setup(new_block_header, new_block_body)
 
+            util.iprint("Sucessfully produced an empty block with id", previous_block.get_id() + 1)
+
             network.broadcast_block(new_block)
 
         elif command.split(" ")[0] == 'auth':
             if len(command.split(" ")) != 2:
-                eprint("Usage: auth <private key file>")
+                util.eprint("Usage: auth <private key file>")
                 continue
 
             private_key = load_ecdsa_private_key(command.split(" ")[1])
 
-            iprint("Private key file loaded succefully")
-            iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+            util.iprint("Private key file loaded succefully")
+            util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
         else:
-            eprint("Unknown command. Type 'help' to see a list of commands.")
+            util.eprint("Unknown command. Type 'help' to see a list of commands.")
 
     server_thread.join()
-    vprint("Successfully terminated server thread")
+    util.vprint("Successfully terminated server thread")
 
 if __name__ == "__main__":
     main(sys.argv[1:])
