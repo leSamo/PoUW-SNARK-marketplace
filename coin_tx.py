@@ -17,8 +17,11 @@ class CoinTransaction(Encodeable):
     __amount: int
     __signature: bytes    # SECP256k1 signature (64 bytes)
 
-    def __init__(self, address_from, address_to, amount):
-        timestamp = time.time() * 1000
+    def __init__(self):
+        pass
+
+    def setup(self, address_from, address_to, amount):
+        timestamp = round(time.time() * 1000)
         serialized_tx = [timestamp, address_from, address_to, amount].encode()
 
         self.__id = hashlib.sha256(serialized_tx).hexdigest()
@@ -28,9 +31,6 @@ class CoinTransaction(Encodeable):
         self.__signature = None
 
         self.check_validity()
-
-    def __init__(self, obj):
-        self.__decode(obj)
 
     def check_validity(self):
         if self.__amount <= 0:
@@ -66,7 +66,7 @@ class CoinTransaction(Encodeable):
             'signature': self.__signature.hex()
         }
     
-    def __decode(self, obj):
+    def decode(self, obj):
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from =  bytes.fromhex(obj['address_from'])
         self.__address_to = bytes.fromhex(obj['address_to'])

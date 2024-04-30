@@ -16,31 +16,35 @@ class BlockBody(Encodeable):
     __proof_txs: list[ProofTransaction]
     __state_tree: dict
 
-    def __init__(self, coin_txs, proof_txs, state_tree):
+    def __init__(self):
+        pass
+
+    def setup(self, coin_txs, proof_txs, state_tree):
         self.__coin_txs = coin_txs
         self.__proof_txs = proof_txs
         self.__state_tree = state_tree
-
-    def __init__(self, obj):
-        self.__decode(obj)
 
     def hash_coin_txs(self):
         tx_hashes = []
 
         for tx in self.__coin_txs:
-            tx_hashes.append(tx.hash())
+            tx_hashes.append(tx.hash().decode())
         
-        serialized_txs = tx_hashes.encode()
+        serialized_txs = ("|").join(tx_hashes).encode()
         return hashlib.sha256(serialized_txs).digest()
     
     def hash_proof_txs(self):
         tx_hashes = []
 
         for tx in self.__proof_txs:
-            tx_hashes.append(tx.hash())
+            tx_hashes.append(tx.hash().decode())
         
-        serialized_txs = tx_hashes.encode()
+        serialized_txs = ("|").join(tx_hashes).encode()
         return hashlib.sha256(serialized_txs).digest()
+
+    def hash_state_tree(self):
+        items = str(tuple(sorted(self.__state_tree.items()))).encode()
+        return hashlib.sha256(items).digest()
 
     def encode(self):
         return {
@@ -49,7 +53,20 @@ class BlockBody(Encodeable):
             'state_tree': tuple(sorted(self.__state_tree.items()))
         }
     
-    def __decode(self, obj):
-        self.__coin_txs = [CoinTransaction(tx) for tx in obj['coin_txs']]
-        self.__proof_txs = [CoinTransaction(tx) for tx in obj['proof_txs']]
+    def decode(self, obj):
+        coin_transactions = []
+        proof_transactions = []
+
+        for tx in obj['coin_txs']:
+            ct = CoinTransaction()
+            ct.setup(tx)
+            coin_transactions.append(ct)
+
+        for tx in obj['proof_txs']:
+            pt = ProofTransaction()
+            pt.setup(tx)
+            proof_transactions.append(pt)
+
+        self.__coin_txs = coin_transactions
+        self.__proof_txs = proof_transactions
         self.__state_tree = dict(obj['state_tree'])

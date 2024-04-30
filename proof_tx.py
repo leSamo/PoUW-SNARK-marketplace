@@ -18,8 +18,11 @@ class ProofTransaction(Encodeable):
     __key_randomness: bytes # raw 32 bytes
     __signature: bytes      # SECP256k1 signature (64 bytes)
 
-    def __init__(self, address_from, proof, circuit_hash, key_randomness):
-        timestamp = time.time() * 1000
+    def __init__(self):
+        pass
+
+    def setup(self, address_from, proof, circuit_hash, key_randomness):
+        timestamp = round(time.time() * 1000)
         serialized_tx = [timestamp, address_from, proof, circuit_hash, key_randomness].encode()
 
         self.__id = hashlib.sha256(serialized_tx).hexdigest()
@@ -30,9 +33,6 @@ class ProofTransaction(Encodeable):
         self.__signature = None
 
         self.check_validity()
-
-    def __init__(self, obj):
-        self.__decode(obj)
 
     def check_validity(self):
         # TODO: check if proof is valid JSON
@@ -66,7 +66,7 @@ class ProofTransaction(Encodeable):
             'signature': self.__signature.hex()
         }
     
-    def __decode(self, obj):
+    def decode(self, obj):
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from =  bytes.fromhex(obj['address_from'])
         self.__proof =  bytes.fromhex(obj['proof'])
