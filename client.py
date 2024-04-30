@@ -17,11 +17,28 @@ server_running = True
 verbose_logging = False
 private_key = None
 
+class Colors:
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    PURPLE = '\033[35m'
+    BOLD = '\033[1m'
+    RESET = '\033[0m'
+
 def vprint(*args, **kwargs):    
     """ Print with verbose priority """
     global verbose_logging
     if verbose_logging:
-        print("VERBOSE: ", *args, file=sys.stdout, **kwargs)
+        print(f"{Colors.PURPLE}VERBOSE:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+
+def iprint(*args, **kwargs):
+    """ Print with info priority """
+    print(f"{Colors.BLUE}INFO:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+
+def eprint(*args, **kwargs):
+    """ Print with error priority """
+    print(f"{Colors.RED}ERROR:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
 
 def receive_incoming(client_socket):
     while True:
@@ -71,7 +88,7 @@ def generate_key(filename):
     with open(filename, "wb") as f:
         f.write(private_key_pem)
 
-    print("Private key saved to", filename)
+    iprint("Private key saved to", filename)
 
 def main(argv):
     global server_running, verbose_logging, private_key
@@ -87,23 +104,27 @@ def main(argv):
             print(USAGE)
             sys.exit()
         elif opt in ['-v', '--verbose']:
-            print("Enabled verbose logging")
+            iprint("Enabled verbose logging")
             verbose_logging = True
         elif opt in ['-k', '--key']:
             private_key = load_ecdsa_private_key(arg)
 
     if private_key is None:
-        print("INFO: Private key file was not provided, running in anonymous mode -- transactions cannot be created")
+        iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
     else:
-        print("INFO: Private key file loaded succefully")
-        print(f"INFO: Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+        iprint("Private key file loaded succefully")
+        iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
     server_port = 12346
     server_thread = threading.Thread(target=start_server, args=(server_port,))
     server_thread.start()
     
     while True:
-        command = input()
+        try:
+            command = input()
+        except Exception:
+            command = "exit"
+
         if command == "exit":
             server_running = False
 
@@ -113,30 +134,30 @@ def main(argv):
             break
         elif command == "help":
             print()
-            print("Available commands:")
-            print("\tverbose <on|off> -- toggles verbose logging")
-            print("\texit -- terminates client")
-            print("\tsend <receiver address> <amount> -- create a coin transaction and submit it to the network")
-            print("\tgenerate-key <output file> -- generate SECP256k1 private key and save it in <output file> in PEM format")
+            print(f"{Colors.YELLOW}{Colors.BOLD}Available commands:{Colors.RESET}")
+            print(f"  {Colors.YELLOW}verbose <on|off>{Colors.RESET} -- toggles verbose logging")
+            print(f"  {Colors.YELLOW}exit{Colors.RESET} -- terminates client")
+            print(f"  {Colors.YELLOW}send <receiver address> <amount>{Colors.RESET} -- create a coin transaction and submit it to the network")
+            print(f"  {Colors.YELLOW}generate-key <output file>{Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             #print("\trequest-proof <> <>")
             print()
         elif command == "verbose on":
             verbose_logging = True
-            print("Enabled verbose logging")
-        elif command == "vebose off":
+            iprint("Enabled verbose logging")
+        elif command == "verbose off":
             verbose_logging = False
-            print("Disabled verbose logging")
+            iprint("Disabled verbose logging")
         elif command.split(" ")[0] == "send":
             pass
         elif command.split(" ")[0] == 'generate-key':
             if len(command.split(" ")) != 2:
-                print("ERROR: Usage: generate-key <output file>")
+                eprint("Usage: generate-key <output file>")
                 continue
 
             generate_key(command.split(" ")[1])
         elif command.split(" ")[0] == 'send':
             if len(command.split(" ")) != 3:
-                print("ERROR: Usage: send <receiver address> <amount>")
+                eprint("Usage: send <receiver address> <amount>")
                 continue
             
             # TODO:
@@ -145,7 +166,7 @@ def main(argv):
             # sign transaction
             # broadcast transactions
         else:
-            print("Unknown command. Type 'help' to see a list of commands.")
+            eprint("Unknown command. Type 'help' to see a list of commands.")
 
     server_thread.join()
     vprint("Successfully terminated server thread")
