@@ -9,7 +9,7 @@ from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
 
-SEED_NODES = ['localhost:2222']
+SEED_NODES = [('localhost', 2222), ('localhost', 3333)]
 
 #################### GENESIS BLOCK CONFIGURATION ####################
 genesis_state_tree = {

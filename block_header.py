@@ -52,28 +52,31 @@ class BlockHeader(Encodeable):
             'serial_id': self.__serial_id,
             'timestamp': self.__timestamp,
             'difficulty': self.__difficulty,
-            'previous_block_hash': self.__previous_block_hash,
-            'current_block_hash': self.__current_block_hash,
-            'coin_txs_hash': self.__coin_txs_hash,
-            'proof_txs_hash': self.__proof_txs_hash,
-            'state_root_hash': self.__state_root_hash
+            'previous_block_hash': self.__previous_block_hash.hex(),
+            'current_block_hash': self.__current_block_hash.hex(),
+            'coin_txs_hash': self.__coin_txs_hash.hex(),
+            'proof_txs_hash': self.__proof_txs_hash.hex(),
+            'state_root_hash': self.__state_root_hash.hex()
         }
     
     def decode(self, obj):
-        self.__serial_id: obj['serial_id']
-        self.__timestamp: obj['timestamp']
-        self.__difficulty: obj['difficulty']
-        self.__previous_block_hash: obj['previous_block_hash']
-        self.__current_block_hash: obj['current_block_hash']
-        self.__coin_txs_hash: obj['coin_txs_hash']
-        self.__proof_txs_hash: obj['proof_txs_hash']
-        self.__state_root_hash: obj['state_root_hash']
+        self.__serial_id = obj['serial_id']
+        self.__timestamp = obj['timestamp']
+        self.__difficulty = obj['difficulty']
+        self.__previous_block_hash = bytes.fromhex(obj['previous_block_hash'])
+        self.__current_block_hash = bytes.fromhex(obj['current_block_hash'])
+        self.__coin_txs_hash = bytes.fromhex(obj['coin_txs_hash'])
+        self.__proof_txs_hash = bytes.fromhex(obj['proof_txs_hash'])
+        self.__state_root_hash = bytes.fromhex(obj['state_root_hash'])
 
     def get_id(self):
         return self.__serial_id
     
     def get_timestamp(self):
         return self.__timestamp
+    
+    def get_difficulty(self):
+        return self.__difficulty
     
     def get_current_block_hash(self):
         self.calculate_hash()

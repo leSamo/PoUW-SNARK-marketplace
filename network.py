@@ -6,11 +6,12 @@
 # ####################################################################################################
 
 import socket
+import json
 
-from util import *
+import util
 import config
 
-peers = [] # list of tuples (IP address, port)
+peers = config.SEED_NODES # list of tuples (IP address, port)
 pending_coin_transactions = []
 pending_proof_transactions = []
 
@@ -32,14 +33,15 @@ def get_blockchain(since):
 
 # broadcast newly generated block to the network
 def broadcast_block(block):
-    blockchain.append(block)
+    # blockchain.append(block)
 
     for peer in peers:
         try:
             sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sending_socket.connect(peer)
-            sending_socket.send(block.encode())
-            vprint("Successfully sent newly produced block to peer", peer)
-        except:
-            vprint("Failed to send newly produced block to peer", peer)
+            sending_socket.send(json.dumps(block.encode()).encode())
+
+            util.vprint("Successfully sent newly produced block to peer", peer)
+        except Exception as e:
+            util.vprint("Failed to send newly produced block to peer", peer, '-', e)
             continue

@@ -11,6 +11,7 @@ import getopt
 import sys
 import ecdsa
 import time
+import json
 
 import util
 import network
@@ -33,6 +34,11 @@ def receive_incoming(client_socket):
         
         # Process received data (you can modify this part based on your requirements)
         print("Received:", data.decode())
+
+        new_block = Block()
+        new_block.decode(json.loads(data.decode()))
+
+        network.blockchain.append(new_block)
 
     # Close the connection when done
     client_socket.close()
@@ -182,7 +188,9 @@ def main(argv):
 
             print()
             print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Block {current_block_id}:{util.Colors.RESET}")
-            print(f"  {util.Colors.YELLOW}Timestamp ({len(network.peers)}):{util.Colors.RESET}", block.get_timestamp())
+            print(f"  {util.Colors.YELLOW}Timestamp:{util.Colors.RESET}", block.get_timestamp())
+            print(f"  {util.Colors.YELLOW}Difficulty:{util.Colors.RESET}", block.get_difficulty())
+            print(f"  {util.Colors.YELLOW}Current block hash:{util.Colors.RESET}", block.get_current_block_hash().hex())
             print()
 
         elif command == 'status':
@@ -190,7 +198,7 @@ def main(argv):
             print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Network status:{util.Colors.RESET}")
             print(f"  {util.Colors.YELLOW}Connected peers ({len(network.peers)}):{util.Colors.RESET}", network.peers)
             print(f"  {util.Colors.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Colors.RESET}", network.pending_coin_transactions)
-            print(f"  {util.Colors.YELLOW}Connected peers ({len(network.pending_proof_transactions)}):{util.Colors.RESET}", network.pending_proof_transactions)
+            print(f"  {util.Colors.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Colors.RESET}", network.pending_proof_transactions)
             print(f"  {util.Colors.YELLOW}Latest block id:{util.Colors.RESET}", network.blockchain[-1].get_id())
             print()
 

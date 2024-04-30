@@ -27,8 +27,14 @@ class Block(Encodeable):
         }
     
     def decode(self, obj):
-        self.__header = BlockHeader(obj['header'])
-        self.__body = BlockBody(obj['body'])
+        header = BlockHeader()
+        body = BlockBody()
+
+        header.decode(obj['header'])
+        body.decode(obj['body'])
+
+        self.__header = header
+        self.__body = body
 
     def get_id(self):
         return self.__header.get_id()
@@ -36,8 +42,14 @@ class Block(Encodeable):
     def get_timestamp(self):
         return self.__header.get_timestamp()
     
+    def get_difficulty(self):
+        return self.__header.get_difficulty()
+    
     def get_current_block_hash(self):
         return self.__header.get_current_block_hash()
 
     def get_state_tree(self):
         return self.__body.get_state_tree()
+
+    def get_header(self):
+        return self.__header
