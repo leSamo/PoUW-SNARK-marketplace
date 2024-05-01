@@ -18,6 +18,8 @@ import network
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
+from coin_tx import CoinTransaction
+from proof_tx import ProofTransaction
 
 USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>]'
 
@@ -34,18 +36,48 @@ def receive_incoming(client_socket, client_address):
         if not data:
             break
         
-        # Process received data (you can modify this part based on your requirements)
-        util.vprint(f"Received from {client_address}:", json.dumps(json.loads(data.decode()), indent=2))
+        message = json.loads(data.decode())
 
-        if json.loads(data.decode())['command'] == util.Command.BROADCAST_BLOCK:
+        # Process received data (you can modify this part based on your requirements)
+        util.vprint(f"Received from {client_address}:", json.dumps(message, indent=2))
+
+        if message['command'] == util.Command.BROADCAST_BLOCK:
             new_block = Block()
-            new_block.decode(json.loads(data.decode())['block'])
+            new_block.decode(message['block'])
 
             # TODO: verify block
 
             network.blockchain.append(new_block)
 
             # TODO: propagate block to all peers except self and sender
+
+        elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
+            new_tx = CoinTransaction()
+            new_tx.decode(message['tx'])
+
+            # TODO: verify tx
+
+            network.pending_coin_transactions.append(new_tx)
+
+            # TODO: propagate tx to all peers except self and sender
+
+        elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
+            new_tx = ProofTransaction()
+            new_tx.decode(message['tx'])
+
+            # TODO: verify tx
+
+            network.pending_pending_transactions.append(new_tx)
+
+            # TODO: propagate tx to all peers except self and sender
+
+        elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
+            network.send_message(client_address, util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
+
+        elif message['command'] == util.Command.LATEST_BLOCK_ID:
+            # TODO: sync
+            pass
+
 
     # Close the connection when done
     client_socket.close()

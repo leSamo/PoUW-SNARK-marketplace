@@ -41,11 +41,16 @@ def get_pending_transactions():
     pass
 
 # answers a client requesting list of pending txs upon the network
-def broadcast_pending_coin_transactions(tx : CoinTransaction):
+
+# broadcast newly created coin transaction to the network
+def broadcast_pending_coin_transaction(tx : CoinTransaction):
     pending_coin_transactions.append(tx)
 
-    # TODO: Exclude self
+    message = { 'tx': tx.encode() }
 
+    # TODO: Exclude self
+    for peer in peers:
+        send_message(peer, util.Command.BROADCAST_BLOCK, message)
 
 # called by a client upon joining the network to get all blocks generated after block id specified in parameter
 def get_blockchain(since):
