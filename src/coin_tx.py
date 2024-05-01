@@ -34,10 +34,10 @@ class CoinTransaction(Encodeable):
 
     def check_validity(self):
         if self.__amount <= 0:
-            raise Exception("Transaction amount has to be positive")
+            raise ValueError("Transaction amount has to be positive")
         
         if self.__address_from == self.__address_to:
-            raise Exception("Sender and receiver addresses cannot be the same")
+            raise ValueError("Sender and receiver addresses cannot be the same")
 
     def hash(self):
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount)]).encode()
@@ -67,6 +67,7 @@ class CoinTransaction(Encodeable):
         }
     
     def decode(self, obj):
+        # TODO: Validate
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from =  bytes.fromhex(obj['address_from'])
         self.__address_to = bytes.fromhex(obj['address_to'])

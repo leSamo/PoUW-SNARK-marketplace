@@ -12,3 +12,6 @@
 **PeerA**
 - Address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2
 - Genesis blocks includes 1000 coins on account
+
+## Automated tests
+Automated tests are located in the `src/test` directory and can be run with `pytest src/test/*`.

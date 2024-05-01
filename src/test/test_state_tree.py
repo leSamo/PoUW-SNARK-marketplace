@@ -1,4 +1,15 @@
+# ####################################################################################################
+# The analysis of cryptographic techniques for offloading computations and storage in blockchains
+# Master thesis 2023/24
+# Samuel Olekšák
+# ✔️✔️✔️❌❌
+# ####################################################################################################
+
+import os
+import sys
 import pytest
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from state_tree import StateTree
 
@@ -100,3 +111,5 @@ def test_encode_decode():
     assert value1 == 234
     assert value2 == 789
     assert value3 == 0
+
+# TODO: Validate decoding
