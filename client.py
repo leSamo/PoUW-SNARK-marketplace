@@ -25,7 +25,9 @@ server_running = True
 private_key = None
 port = 12346
 
-def receive_incoming(client_socket):
+def receive_incoming(client_socket, client_address):
+    # TODO: Consider adding client_address to PEERS if not already
+
     while True:
         # Receive data from the client
         data = client_socket.recv(1024)
@@ -33,12 +35,17 @@ def receive_incoming(client_socket):
             break
         
         # Process received data (you can modify this part based on your requirements)
-        print("Received:", data.decode())
+        util.vprint(f"Received from {client_address}:", json.dumps(json.loads(data.decode()), indent=2))
 
-        new_block = Block()
-        new_block.decode(json.loads(data.decode()))
+        if json.loads(data.decode())['command'] == util.Command.BROADCAST_BLOCK:
+            new_block = Block()
+            new_block.decode(json.loads(data.decode())['block'])
 
-        network.blockchain.append(new_block)
+            # TODO: verify block
+
+            network.blockchain.append(new_block)
+
+            # TODO: propagate block to all peers except self and sender
 
     # Close the connection when done
     client_socket.close()
@@ -53,13 +60,13 @@ def start_server(port):
 
     try:
         while server_running:
-            client_socket, _ = server_socket.accept()
+            client_socket, client_address = server_socket.accept()
 
             if server_running:
                 util.vprint("Connection established.")
 
             # Start a new thread to handle the client connection
-            client_thread = threading.Thread(target=receive_incoming, args=(client_socket,))
+            client_thread = threading.Thread(target=receive_incoming, args=(client_socket, client_address))
             client_thread.start()
     except:
         print("Socket terminated")
@@ -127,15 +134,15 @@ def main(argv):
 
         elif command == "help":
             print()
-            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Available commands:{util.Colors.RESET}")
-            print(f"  {util.Colors.YELLOW}verbose <on|off>{util.Colors.RESET} -- toggles verbose logging")
-            print(f"  {util.Colors.YELLOW}exit{util.Colors.RESET} -- terminates client")
-            print(f"  {util.Colors.YELLOW}send <receiver address> <amount>{util.Colors.RESET} -- create a coin transaction and submit it to the network")
-            print(f"  {util.Colors.YELLOW}generate-key <output file>{util.Colors.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
-            print(f"  {util.Colors.YELLOW}inspect <block id>{util.Colors.RESET} -- print information about block with <block id>")
-            print(f"  {util.Colors.YELLOW}status{util.Colors.RESET} -- print current status of the network")
-            print(f"  {util.Colors.YELLOW}produce-empty{util.Colors.RESET} -- produces an empty dummy block and broadcasts it to the network")
-            print(f"  {util.Colors.YELLOW}auth <private key file>{util.Colors.RESET} -- switches from anonymous mode to authenticated mode")
+            print(f"{util.Color.YELLOW}{util.Color.BOLD}Available commands:{util.Color.RESET}")
+            print(f"  {util.Color.YELLOW}verbose <on|off>{util.Color.RESET} -- toggles verbose logging")
+            print(f"  {util.Color.YELLOW}exit{util.Color.RESET} -- terminates client")
+            print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
+            print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
+            print(f"  {util.Color.YELLOW}inspect <block id>{util.Color.RESET} -- print information about block with <block id>")
+            print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
+            print(f"  {util.Color.YELLOW}produce-empty{util.Color.RESET} -- produces an empty dummy block and broadcasts it to the network")
+            print(f"  {util.Color.YELLOW}auth <private key file>{util.Color.RESET} -- switches from anonymous mode to authenticated mode")
             print()
 
         elif command == "verbose on":
@@ -187,19 +194,19 @@ def main(argv):
             assert block.get_id() == current_block_id, "Blocks out of order in 'blockchain' variable"
 
             print()
-            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Block {current_block_id}:{util.Colors.RESET}")
-            print(f"  {util.Colors.YELLOW}Timestamp:{util.Colors.RESET}", block.get_timestamp())
-            print(f"  {util.Colors.YELLOW}Difficulty:{util.Colors.RESET}", block.get_difficulty())
-            print(f"  {util.Colors.YELLOW}Current block hash:{util.Colors.RESET}", block.get_current_block_hash().hex())
+            print(f"{util.Color.YELLOW}{util.Color.BOLD}Block {current_block_id}:{util.Color.RESET}")
+            print(f"  {util.Color.YELLOW}Timestamp:{util.Color.RESET}", block.get_timestamp())
+            print(f"  {util.Color.YELLOW}Difficulty:{util.Color.RESET}", block.get_difficulty())
+            print(f"  {util.Color.YELLOW}Current block hash:{util.Color.RESET}", block.get_current_block_hash().hex())
             print()
 
         elif command == 'status':
             print()
-            print(f"{util.Colors.YELLOW}{util.Colors.BOLD}Network status:{util.Colors.RESET}")
-            print(f"  {util.Colors.YELLOW}Connected peers ({len(network.peers)}):{util.Colors.RESET}", network.peers)
-            print(f"  {util.Colors.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Colors.RESET}", network.pending_coin_transactions)
-            print(f"  {util.Colors.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Colors.RESET}", network.pending_proof_transactions)
-            print(f"  {util.Colors.YELLOW}Latest block id:{util.Colors.RESET}", network.blockchain[-1].get_id())
+            print(f"{util.Color.YELLOW}{util.Color.BOLD}Network status:{util.Color.RESET}")
+            print(f"  {util.Color.YELLOW}Connected peers ({len(network.peers)}):{util.Color.RESET}", network.peers)
+            print(f"  {util.Color.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET}", network.pending_coin_transactions)
+            print(f"  {util.Color.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET}", network.pending_proof_transactions)
+            print(f"  {util.Color.YELLOW}Latest block id:{util.Color.RESET}", network.blockchain[-1].get_id())
             print()
 
         elif command == 'produce-empty':

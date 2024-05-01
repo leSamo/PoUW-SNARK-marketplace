@@ -9,7 +9,7 @@ import sys
 
 verbose_logging = False
 
-class Colors:
+class Color:
     RED = '\033[31m'
     GREEN = '\033[32m'
     YELLOW = '\033[33m'
@@ -22,12 +22,28 @@ def vprint(*args, **kwargs):
     """ Print with verbose priority """
     global verbose_logging
     if verbose_logging:
-        print(f"{Colors.PURPLE}VERBOSE:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+        print(f"{Color.PURPLE}VERBOSE:{Color.RESET}", *args, file=sys.stdout, **kwargs)
 
 def iprint(*args, **kwargs):
     """ Print with info priority """
-    print(f"{Colors.BLUE}INFO:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+    print(f"{Color.BLUE}INFO:{Color.RESET}", *args, file=sys.stdout, **kwargs)
 
 def eprint(*args, **kwargs):
     """ Print with error priority """
-    print(f"{Colors.RED}ERROR:{Colors.RESET}", *args, file=sys.stdout, **kwargs)
+    print(f"{Color.RED}ERROR:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+
+class Command:
+    # request-response commands
+    GET_PEERS = 'GET_PEERS'
+    PEERS = 'PEERS'
+    GET_LATEST_BLOCK_ID = 'GET_LATEST_BLOCK_ID'
+    LATEST_BLOCK_ID = 'LATEST_BLOCK_ID'
+    GET_BLOCK = 'GET_BLOCK'
+    BLOCK = 'BLOCK'
+    GET_PENDING_COIN_TXS = 'GET_PENDING_COIN_TXS'
+    GET_PENDING_PROOF_TXS = 'GET_PENDING_PROOF_TXS'
+
+    # broadcast commands
+    BROADCAST_BLOCK = 'BROADCAST_BLOCK'
+    BROADCAST_PENDING_COIN_TX = 'BROADCAST_PENDING_COIN_TX'
+    BROADCAST_PENDING_PROOF_TX = 'BROADCAST_PENDING_PROOF_TX'
