@@ -5,9 +5,9 @@
 # ✔️✔️✔️❌❌
 # ####################################################################################################
 
-import time
 import hashlib
 
+import util
 from encodeable import Encodeable
 
 class CoinTransaction(Encodeable):
@@ -21,7 +21,7 @@ class CoinTransaction(Encodeable):
         pass
 
     def setup(self, address_from, address_to, amount):
-        timestamp = round(time.time() * 1000)
+        timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), address_to.hex(), str(amount)]).encode()
 
         self.__id = hashlib.sha256(serialized_tx).digest()

@@ -59,6 +59,20 @@ def test_update():
 
     assert value == 456
 
+def test_hash():
+    st1 = StateTree()
+    st2 = StateTree()
+
+    assert st1.get_hash() == st2.get_hash()
+
+    st1.set(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"), 123)
+
+    assert st1.get_hash() != st2.get_hash()
+
+    st2.set(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"), 123)
+
+    assert st1.get_hash() == st2.get_hash()
+
 def test_encode_decode():
     st1 = StateTree()
     st1.set(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"), 123)

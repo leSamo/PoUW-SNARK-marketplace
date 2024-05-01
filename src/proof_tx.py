@@ -5,10 +5,10 @@
 # ✔️✔️❌❌❌
 # ####################################################################################################
 
-import time
 import hashlib
 
 from encodeable import Encodeable
+import util
 
 class ProofTransaction(Encodeable):
     __id: bytes             # SHA256 hash (32 bytes)
@@ -22,7 +22,7 @@ class ProofTransaction(Encodeable):
         pass
 
     def setup(self, address_from, proof, circuit_hash, key_randomness):
-        timestamp = round(time.time() * 1000)
+        timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), proof.hex(), circuit_hash.hex(), key_randomness.hex()]).encode()
 
         self.__id = hashlib.sha256(serialized_tx).digest()

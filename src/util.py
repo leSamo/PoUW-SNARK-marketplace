@@ -6,6 +6,7 @@
 # ####################################################################################################
 
 import sys
+import time
 
 verbose_logging = False
 
@@ -41,9 +42,14 @@ class Command:
     GET_BLOCK = 'GET_BLOCK'
     BLOCK = 'BLOCK'
     GET_PENDING_COIN_TXS = 'GET_PENDING_COIN_TXS'
+    PENDING_COIN_TXS = 'PENDING_COIN_TXS'
     GET_PENDING_PROOF_TXS = 'GET_PENDING_PROOF_TXS'
+    PENDING_PROOF_TXS = 'PENDING_PROOF_TXS'
 
     # broadcast commands
     BROADCAST_BLOCK = 'BROADCAST_BLOCK'
     BROADCAST_PENDING_COIN_TX = 'BROADCAST_PENDING_COIN_TX'
     BROADCAST_PENDING_PROOF_TX = 'BROADCAST_PENDING_PROOF_TX'
+
+def get_current_time():
+    return round(time.time() * 1000)

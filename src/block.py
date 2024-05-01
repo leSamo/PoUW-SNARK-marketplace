@@ -45,11 +45,21 @@ class Block(Encodeable):
     def get_difficulty(self):
         return self.__header.get_difficulty()
     
+    def get_previous_block_hash(self):
+        return self.__header.get_previous_block_hash()
+    
     def get_current_block_hash(self):
         return self.__header.get_current_block_hash()
+    
+    def verify_hash(self) -> bool:
+        block_hash = self.calculate_hash()
+        return self.get_current_block_hash() == block_hash
 
     def get_state_tree(self):
         return self.__body.get_state_tree()
 
     def get_header(self):
         return self.__header
+
+    def finish_block(self):
+        self.__header.finish_block()

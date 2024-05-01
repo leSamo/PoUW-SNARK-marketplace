@@ -12,6 +12,7 @@ import util
 import config
 from coin_tx import CoinTransaction
 from block import Block
+from state_tree import StateTree
 
 peers = config.SEED_NODES # list of tuples (IP address, port)
 pending_coin_transactions = []
@@ -59,7 +60,7 @@ def get_blockchain(since):
     pass
 
 # broadcast newly generated block to the network
-def broadcast_block(block : Block):
+def broadcast_block(block : Block) -> None:
     blockchain.append(block)
 
     # TODO: Verify block before broadcasting
@@ -69,3 +70,42 @@ def broadcast_block(block : Block):
     # TODO: Exclude self
     for peer in peers:
         send_message(peer, util.Command.BROADCAST_BLOCK, message)
+
+def verify_coin_transaction(tx : CoinTransaction, st : StateTree) -> bool:
+    try:
+        # TODO: assert sender funds are sufficient
+
+        # TODO: update state tree
+
+        return True, st
+    except Exception:
+        return False, st
+
+def verify_block(previous_block : Block, block : Block) -> bool:
+    try:
+        # header verification
+        #   serial id verification
+        assert(block.get_id() == previous_block.get_id() + 1)
+        #   time verification
+        assert(block.get_timestamp() <= util.get_current_time() + config.TIME_DIFFERENCE_TOLERANCE)
+        assert(previous_block.get_timestamp() <= block.get_timestamp())
+
+        #   TODO: difficulty verification
+
+        #   previous hash link
+        assert(previous_block.get_current_block_hash() == block.get_previous_block_hash())
+        #   current hash calculation
+        assert(block.verify_hash())
+
+        # TODO: body verification
+            # individual coin transaction verification
+            # individual proof transaction verification
+                # proof verification
+                # proof complexity verification
+                # difficulty threshold verification
+            # state tree verification
+                # check if state tree hash matches
+                   
+        return True
+    except Exception:
+        return False

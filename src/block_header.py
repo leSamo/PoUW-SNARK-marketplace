@@ -43,7 +43,7 @@ class BlockHeader(Encodeable):
         ]).encode()
         block_hash = hashlib.sha256(serialized_block).digest()
 
-        self.__current_block_hash = block_hash
+        return block_hash
 
     def encode(self):
         self.calculate_hash()
@@ -78,6 +78,16 @@ class BlockHeader(Encodeable):
     def get_difficulty(self):
         return self.__difficulty
     
+    def get_previous_block_hash(self):
+        return self.get_previous_block_hash()
+    
+    def verify_hash(self) -> bool:
+        block_hash = self.calculate_hash()
+        return self.__current_block_hash == block_hash
+    
     def get_current_block_hash(self):
-        self.calculate_hash()
         return self.__current_block_hash
+    
+    def finish_block(self):
+        block_hash = self.calculate_hash()
+        self.__current_block_hash = block_hash

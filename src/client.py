@@ -10,7 +10,6 @@ import threading
 import getopt
 import sys
 import ecdsa
-import time
 import json
 import traceback
 
@@ -291,13 +290,14 @@ def main(argv):
             proof_txs_hash = new_block_body.hash_proof_txs()
             state_root_hash = new_block_body.hash_state_tree()
 
-            current_timestamp = round(time.time() * 1000)
+            current_timestamp = util.get_current_time()
 
             new_block_header = BlockHeader()
             new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 0, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
 
             new_block = Block()
             new_block.setup(new_block_header, new_block_body)
+            new_block.finish_block()
 
             util.iprint("Sucessfully produced an empty block with id", previous_block.get_id() + 1)
 
