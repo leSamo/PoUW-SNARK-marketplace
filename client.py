@@ -12,6 +12,7 @@ import sys
 import ecdsa
 import time
 import json
+import traceback
 
 import util
 import network
@@ -46,6 +47,7 @@ def receive_incoming(client_socket, client_address):
             new_block.decode(message['block'])
 
             # TODO: verify block
+            # TODO: reject out of order block
 
             network.blockchain.append(new_block)
 
@@ -175,6 +177,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
             print(f"  {util.Color.YELLOW}produce-empty{util.Color.RESET} -- produces an empty dummy block and broadcasts it to the network")
             print(f"  {util.Color.YELLOW}auth <private key file>{util.Color.RESET} -- switches from anonymous mode to authenticated mode")
+            print(f"  {util.Color.YELLOW}balance [<address>]{util.Color.RESET} -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided")
             print()
 
         elif command == "verbose on":
@@ -185,8 +188,26 @@ def main(argv):
             util.verbose_logging(False)
             util.iprint("Disabled verbose logging")
 
-        elif command.split(" ")[0] == "send":
-            pass
+        elif command.split(" ")[0] == 'balance':
+            latest_block = network.blockchain[-1]
+        
+            if len(command.split(" ")) == 1:
+                if private_key is None:
+                    util.eprint("Either authenticate to list current self balance, or use 'balance <address>'")
+                    continue
+
+                sender_address = private_key.get_verifying_key().to_string('compressed').hex()
+                current_sender_balance = latest_block.get_state_tree().get(sender_address)
+
+                print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
+            
+            elif len(command.split(" ")) == 2:
+                current_sender_balance = latest_block.get_state_tree().get(command.split(" ")[1])
+
+                print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
+
+            else:
+                util.eprint("Usage: balance [<address>]")
 
         elif command.split(" ")[0] == 'generate-key':
             if len(command.split(" ")) != 2:
@@ -196,19 +217,38 @@ def main(argv):
             generate_key(command.split(" ")[1])
             
         elif command.split(" ")[0] == 'send':
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+    
             if len(command.split(" ")) != 3:
                 util.eprint("Usage: send <receiver address> <amount>")
                 continue
 
-            if private_key is None:
-                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
-                continue              
-            
             # TODO:
             # check if funds are sufficient
-            # create transaction object
-            # sign transaction
-            # broadcast transactions
+            latest_block = network.blockchain[-1]
+            sender_address = private_key.get_verifying_key().to_string('compressed').hex()
+            current_sender_balance = latest_block.get_state_tree().get(sender_address) or 0
+
+            # TODO: Check if valid address
+            try:
+                receiver_address = command.split(" ")[1]
+                amount = int(command.split(" ")[2])
+
+                assert current_sender_balance >= amount, "Insufficient sender balance"
+
+                new_tx = CoinTransaction()
+                new_tx.setup(sender_address.encode(), receiver_address.encode(), amount)
+
+                new_tx.sign(private_key)
+
+                network.broadcast_pending_coin_transaction(new_tx)
+                
+            except Exception as e:
+                util.eprint("Failed to create coin transaction:", e)
+                traceback.print_exc()
+                continue
 
         elif command.split(" ")[0] == 'inspect':
             if len(command.split(" ")) != 2:

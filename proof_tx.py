@@ -23,9 +23,9 @@ class ProofTransaction(Encodeable):
 
     def setup(self, address_from, proof, circuit_hash, key_randomness):
         timestamp = round(time.time() * 1000)
-        serialized_tx = [timestamp, address_from, proof, circuit_hash, key_randomness].encode()
+        serialized_tx = "|".join([str(timestamp), address_from.hex(), proof.hex(), circuit_hash.hex(), key_randomness.hex()]).encode()
 
-        self.__id = hashlib.sha256(serialized_tx).hexdigest()
+        self.__id = hashlib.sha256(serialized_tx).digest()
         self.__address_from = address_from
         self.__proof = proof
         self.__circuit_hash = circuit_hash
@@ -39,7 +39,7 @@ class ProofTransaction(Encodeable):
         pass
 
     def hash(self):
-        serialized_tx = [self.__id, self.__address_from, self.__proof, self.__circuit_hash, self.__key_randomness].encode()
+        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof.hex(), self.__circuit_hash.hex(), self.__key_randomness.hex()]).encode()
         return hashlib.sha256(serialized_tx).digest()
     
     def sign(self, private_key):

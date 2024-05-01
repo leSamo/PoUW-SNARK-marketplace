@@ -22,9 +22,9 @@ class CoinTransaction(Encodeable):
 
     def setup(self, address_from, address_to, amount):
         timestamp = round(time.time() * 1000)
-        serialized_tx = [timestamp, address_from, address_to, amount].encode()
+        serialized_tx = "|".join([str(timestamp), address_from.hex(), address_to.hex(), str(amount)]).encode()
 
-        self.__id = hashlib.sha256(serialized_tx).hexdigest()
+        self.__id = hashlib.sha256(serialized_tx).digest()
         self.__address_from = address_from
         self.__address_to = address_to
         self.__amount = amount
@@ -40,7 +40,7 @@ class CoinTransaction(Encodeable):
             raise Exception("Sender and receiver addresses cannot be the same")
 
     def hash(self):
-        serialized_tx = [self.__id, self.__address_from, self.__address_to, self.__amount].encode()
+        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount)]).encode()
         return hashlib.sha256(serialized_tx).digest()
 
     def sign(self, private_key):

@@ -44,13 +44,15 @@ def get_pending_transactions():
 
 # broadcast newly created coin transaction to the network
 def broadcast_pending_coin_transaction(tx : CoinTransaction):
+    assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
+
     pending_coin_transactions.append(tx)
 
     message = { 'tx': tx.encode() }
 
     # TODO: Exclude self
     for peer in peers:
-        send_message(peer, util.Command.BROADCAST_BLOCK, message)
+        send_message(peer, util.Command.BROADCAST_PENDING_COIN_TX, message)
 
 # called by a client upon joining the network to get all blocks generated after block id specified in parameter
 def get_blockchain(since):
@@ -59,6 +61,8 @@ def get_blockchain(since):
 # broadcast newly generated block to the network
 def broadcast_block(block : Block):
     blockchain.append(block)
+
+    # TODO: Verify block before broadcasting
 
     message = { 'block': block.encode() }
 
