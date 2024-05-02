@@ -14,4 +14,4 @@
 - Genesis blocks includes 1000 coins on account
 
 ## Automated tests
-Automated tests are located in the `src/test` directory and can be run with `pytest src/test/*`.
+Automated tests are located in the `src/test` directory and can be run with `pytest src/test/* -v`.
