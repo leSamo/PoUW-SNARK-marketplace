@@ -21,6 +21,9 @@ class CoinTransaction(Encodeable):
         pass
 
     def setup(self, address_from, address_to, amount):
+        util.validate_address(address_from)
+        util.validate_address(address_to)
+    
         timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), address_to.hex(), str(amount)]).encode()
 
@@ -43,10 +46,16 @@ class CoinTransaction(Encodeable):
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount)]).encode()
         return hashlib.sha256(serialized_tx).digest()
 
-    def sign(self, private_key):
+    def sign(self, private_key) -> None:
+        corresponding_public_key = private_key.get_verifying_key()
+
+        print("aaaaaa", corresponding_public_key, self.__address_from)
+
+        if corresponding_public_key != self.__address_from: raise ValueError("Incorrect private key used to signed transaction")
+
         self.__signature = private_key.sign(self.hash())
 
-    def verify_transaction(self, public_key):
+    def verify_transaction(self, public_key : bytes) -> bool:
         self.check_validity()
         
         if not public_key.verify(self.__signature, self.hash()):
@@ -56,6 +65,17 @@ class CoinTransaction(Encodeable):
 
     def is_signed(self):
         return self.__signature is not None
+    
+    # TODO: Check signature
+    
+    def get_address_from(self) -> bytes:
+        return self.__address_from
+    
+    def get_address_to(self) -> bytes:
+        return self.__address_to
+    
+    def get_amount(self) -> int:
+        return self.__amount
     
     def encode(self):
         return {

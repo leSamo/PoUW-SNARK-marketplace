@@ -53,3 +53,7 @@ class Command:
 
 def get_current_time():
     return round(time.time() * 1000)
+
+def validate_address(address):
+    if type(address) != bytes: raise TypeError("Invalid address type, only address of bytes type is permitted")
+    if len(address) != 33: raise ValueError("Invalid address size, expected length of 33 bytes")

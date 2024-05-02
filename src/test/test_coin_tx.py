@@ -25,8 +25,8 @@ def test_valid():
 
     tx = CoinTransaction()
     tx.setup(
-        "0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2".encode(),
-        "222222222222222222222222222222222222222222222222222222222222222222".encode(),
+        bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+        bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
         50
     )
 
@@ -40,21 +40,107 @@ def test_same_addreses():
     with pytest.raises(ValueError):
         tx = CoinTransaction()
         tx.setup(
-            "0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2".encode(),
-            "0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2".encode(),
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
             50
         )
 
 def test_invalid_addresses():
-    pass
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            bytes.fromhex("25"),
+            50
+        )
+
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("25"),
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            50
+        )
+
+    with pytest.raises(TypeError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            "222222222222222222222222222222222222222222222222222222222222222222",
+            50
+        )
+    
+    with pytest.raises(TypeError):
+        tx = CoinTransaction()
+        tx.setup(
+            "0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2",
+            bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+            50
+        )
+
+def test_zero_amount():
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+            0
+        )
 
 def test_negative_amount():
-    pass
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+            -50
+        )
 
 def test_invalid_signature():
-    pass
+    private_key = load_ecdsa_private_key(os.path.join(os.path.dirname(__file__), './misc/private_key'))
+
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            50
+        )
+
+        tx.sign(private_key)
 
 def test_encode_decode():
-    pass
+    private_key = load_ecdsa_private_key(os.path.join(os.path.dirname(__file__), './misc/private_key'))
 
-# TODO: Validate decoding
+    tx1 = CoinTransaction()
+    tx1.setup(
+        bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+        bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+        50
+    )
+
+    tx1.sign(private_key)
+
+    encoded = tx1.encode()
+    tx2 = CoinTransaction()
+    tx2.decode(encoded)
+
+    assert tx2.is_signed()
+    assert tx2.verify_transaction(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"))
+    assert tx2.__address_from == bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
+    assert tx2.__address_to == bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222")
+    assert tx2.__amount == 50
+
+def test_encode_decode_unsigned():
+    with pytest.raises(ValueError):
+        tx = CoinTransaction()
+        tx.setup(
+            bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"),
+            bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222"),
+            50
+        )
+
+        # Cannot encode unsigned transactions
+        tx.encode()
+
+# TODO: Validate decoding, especially signature

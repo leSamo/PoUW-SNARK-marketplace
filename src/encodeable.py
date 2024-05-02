@@ -10,9 +10,9 @@ from abc import ABC, abstractmethod
 class Encodeable(ABC):
 
     @abstractmethod
-    def encode(self):
+    def encode(self) -> dict:
         pass
 
     @abstractmethod
-    def decode(self):
+    def decode(self) -> None:
         pass
