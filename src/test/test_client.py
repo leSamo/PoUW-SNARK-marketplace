@@ -41,6 +41,29 @@ def test_generate_key():
 
     os.remove(file)
 
+def test_available_commands():
+    process = subprocess.Popen(f'python src/client.py -c "help; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process.wait()
+    stdout, _ = process.communicate()
+
+    assert process.returncode == 0
+    assert 'Available commands:' in stdout.decode()
+
+def test_verbose():
+    process = subprocess.Popen(f'python src/client.py -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process.wait()
+    stdout, _ = process.communicate()
+
+    assert process.returncode == 0
+    assert 'VERBOSE:' in stdout.decode()
+
+    process = subprocess.Popen(f'python src/client.py', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process.wait()
+    stdout, _ = process.communicate()
+
+    assert process.returncode == 0
+    assert 'VERBOSE:' not in stdout.decode()    
+
 def test_port():
     process = subprocess.Popen(f'python src/client.py -v -p 6464', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.stdin.write("status\n".encode())
@@ -58,4 +81,4 @@ def test_port():
     process.stdin.close()
     process.wait()
 
-    print(stdout)
+    assert process.returncode == 0
