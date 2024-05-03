@@ -94,3 +94,6 @@ class CoinTransaction(Encodeable):
         self.__address_to = bytes.fromhex(obj['address_to'])
         self.__amount = obj['amount']
         self.__signature = bytes.fromhex(obj['signature'])
+
+    def __str__(self) -> str:
+        return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --{self.__amount}--> {self.__address_to.hex()[0:6]}…"

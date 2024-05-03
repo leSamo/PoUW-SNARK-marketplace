@@ -210,7 +210,7 @@ def main(argv):
                     util.eprint("Either authenticate to list current self balance, or use 'balance <address>'")
                     continue
 
-                sender_address = private_key.get_verifying_key().to_string('compressed').hex()
+                sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
                 current_sender_balance = latest_block.get_state_tree().get(sender_address)
 
                 print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
@@ -242,18 +242,18 @@ def main(argv):
             # TODO:
             # check if funds are sufficient
             latest_block = network.blockchain[-1]
-            sender_address = private_key.get_verifying_key().to_string('compressed').hex()
+            sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
             current_sender_balance = latest_block.get_state_tree().get(sender_address) or 0
 
             # TODO: Check if valid address
             try:
-                receiver_address = command.split(" ")[1]
+                receiver_address = bytes.fromhex(command.split(" ")[1])
                 amount = int(command.split(" ")[2])
 
                 assert current_sender_balance >= amount, "Insufficient sender balance"
 
                 new_tx = CoinTransaction()
-                new_tx.setup(sender_address.encode(), receiver_address.encode(), amount)
+                new_tx.setup(sender_address, receiver_address, amount)
 
                 new_tx.sign(private_key)
 
@@ -290,9 +290,24 @@ def main(argv):
             print()
             print(f"{util.Color.YELLOW}{util.Color.BOLD}Network status:{util.Color.RESET}")
             print(f"  {util.Color.YELLOW}Connected peers ({len(network.peers)}):{util.Color.RESET}", network.peers)
-            print(f"  {util.Color.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET}", network.pending_coin_transactions)
-            print(f"  {util.Color.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET}", network.pending_proof_transactions)
-            print(f"  {util.Color.YELLOW}Latest block id:{util.Color.RESET}", network.blockchain[-1].get_id())
+
+            if len(network.pending_coin_transactions) == 0:
+                print(f"  {util.Color.YELLOW}No pending coin transactions{util.Color.RESET}")
+            else:
+                print(f"  {util.Color.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET}")
+
+                for tx in network.pending_coin_transactions:
+                    print(f"    - {tx}")
+
+            if len(network.pending_proof_transactions) == 0:
+                print(f"  {util.Color.YELLOW}No pending proof transactions{util.Color.RESET}")
+            else:
+                print(f"  {util.Color.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET}")
+
+                for tx in network.pending_proof_transactions:
+                    print(f"    - {tx}")
+
+            print(f"  {util.Color.YELLOW}Latest block:{util.Color.RESET} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
             print()
 
         elif command == 'produce-empty':
