@@ -46,7 +46,7 @@ class BlockHeader(Encodeable):
         return block_hash
 
     def encode(self):
-        self.calculate_hash()
+        if self.__current_block_hash is None: raise ValueError("Cannot encode unfinished block")
 
         return {
             'serial_id': self.__serial_id,

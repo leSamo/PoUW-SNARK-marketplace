@@ -9,6 +9,7 @@ import hashlib
 
 import util
 from encodeable import Encodeable
+import ecdsa
 
 class CoinTransaction(Encodeable):
     __id: bytes           # SHA256 hash (32 bytes)
@@ -47,9 +48,7 @@ class CoinTransaction(Encodeable):
         return hashlib.sha256(serialized_tx).digest()
 
     def sign(self, private_key) -> None:
-        corresponding_public_key = private_key.get_verifying_key()
-
-        print("aaaaaa", corresponding_public_key, self.__address_from)
+        corresponding_public_key = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 
         if corresponding_public_key != self.__address_from: raise ValueError("Incorrect private key used to signed transaction")
 
@@ -58,7 +57,7 @@ class CoinTransaction(Encodeable):
     def verify_transaction(self, public_key : bytes) -> bool:
         self.check_validity()
         
-        if not public_key.verify(self.__signature, self.hash()):
+        if not ecdsa.VerifyingKey.from_string(public_key, curve=ecdsa.SECP256k1).verify(self.__signature, self.hash()):
             return False
         
         return True
@@ -78,6 +77,8 @@ class CoinTransaction(Encodeable):
         return self.__amount
     
     def encode(self):
+        if not self.is_signed(): raise ValueError("Cannot encode an unsigned transaction");
+
         return {
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),

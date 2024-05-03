@@ -127,9 +127,9 @@ def test_encode_decode():
 
     assert tx2.is_signed()
     assert tx2.verify_transaction(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"))
-    assert tx2.__address_from == bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
-    assert tx2.__address_to == bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222")
-    assert tx2.__amount == 50
+    assert tx2.get_address_from() == bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
+    assert tx2.get_address_to() == bytes.fromhex("222222222222222222222222222222222222222222222222222222222222222222")
+    assert tx2.get_amount() == 50
 
 def test_encode_decode_unsigned():
     with pytest.raises(ValueError):
