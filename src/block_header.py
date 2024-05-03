@@ -31,6 +31,8 @@ class BlockHeader(Encodeable):
         self.__proof_txs_hash = proof_txs_hash
         self.__state_root_hash = state_root_hash
 
+        self.validate_block()
+
     def calculate_hash(self):
         serialized_block = "|".join([
             str(self.__serial_id),
@@ -44,9 +46,25 @@ class BlockHeader(Encodeable):
         block_hash = hashlib.sha256(serialized_block).digest()
 
         return block_hash
+    
+    def validate_block(self):
+        if type(self.__serial_id) != int: raise TypeError
+        if type(self.__difficulty) != int: raise TypeError
+        if type(self.__previous_block_hash) != bytes: raise TypeError
+
+        if self.__serial_id < 0: raise ValueError
+        if self.__difficulty <= 0: raise ValueError
+        if len(self.__previous_block_hash) != 32: raise ValueError
+
+        if hasattr(self, '__current_block_hash'):
+            self.validate_hash()
+
+    def validate_hash(self):
+        if self.calculate_hash() != self.__current_block_hash: raise ValueError
 
     def encode(self):
-        if self.__current_block_hash is None: raise ValueError("Cannot encode unfinished block")
+        if not hasattr(self, '_BlockHeader__current_block_hash'):
+            raise ValueError("Cannot encode unfinished block")
 
         return {
             'serial_id': self.__serial_id,
@@ -69,6 +87,9 @@ class BlockHeader(Encodeable):
         self.__proof_txs_hash = bytes.fromhex(obj['proof_txs_hash'])
         self.__state_root_hash = bytes.fromhex(obj['state_root_hash'])
 
+        self.validate_block()
+        self.validate_hash()
+
     def get_id(self):
         return self.__serial_id
     
@@ -79,7 +100,7 @@ class BlockHeader(Encodeable):
         return self.__difficulty
     
     def get_previous_block_hash(self):
-        return self.get_previous_block_hash()
+        return self.__previous_block_hash
     
     def verify_hash(self) -> bool:
         block_hash = self.calculate_hash()
