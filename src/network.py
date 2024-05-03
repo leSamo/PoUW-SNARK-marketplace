@@ -13,14 +13,24 @@ import config
 from coin_tx import CoinTransaction
 from block import Block
 from state_tree import StateTree
+from peer import Peer
 
-peers = config.SEED_NODES # list of tuples (IP address, port)
+peers = []
 pending_coin_transactions = []
 pending_proof_transactions = []
 
 blockchain = [config.genesis_block]
 
 assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
+
+def setup_peers(self_port):
+    for peer_str in config.SEED_NODES:
+        if peer_str == f"{config.SELF_ADDRESS}:{self_port}":
+            continue
+
+        peerObj = Peer()
+        peerObj.setup_from_string(peer_str)
+        peers.append(peerObj)
 
 def send_message(receiver, command, message):
     try:

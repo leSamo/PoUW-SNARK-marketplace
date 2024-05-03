@@ -16,7 +16,16 @@ class Peer(Encodeable):
     def __init__(self):
         pass
 
-    def setup(self, address_from, address_to, amount):
+    def setup_from_string(self, ip_address_with_port: str) -> None:
+        ip_address, port = ip_address_with_port.split(":")
+
+        self.__ip_address = ip_address
+        self.__port = int(port)
+        self.__reputation = 0
+
+    def setup_from_tuple(self, tuple) -> None:
+        self.__ip_address = tuple[0]
+        self.__port = tuple[1]
         self.__reputation = 0
 
     def increase_reputation(self):
@@ -31,6 +40,9 @@ class Peer(Encodeable):
 
     def to_tuple(self):
         return (self.__ip_address, self.__port)
+    
+    def to_string(self):
+        return f"{self.__ip_address}:{str(self.__port)}"
 
     def encode(self):
         return {
@@ -45,3 +57,6 @@ class Peer(Encodeable):
         self.__port = obj['port']
         self.__reputation = obj['reputation']
         self.__is_blacklisted = obj['is_blacklisted']
+
+    def get_reputation(self):
+        return self.__reputation

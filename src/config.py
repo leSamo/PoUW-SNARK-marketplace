@@ -10,7 +10,9 @@ from block_body import BlockBody
 from block_header import BlockHeader
 from state_tree import StateTree
 
-SEED_NODES = [('localhost', 2222), ('localhost', 3333)]
+SEED_NODES = ['localhost:2222', 'localhost:3333']
+
+SELF_ADDRESS = 'localhost'
 
 # in milliseconds
 TIME_DIFFERENCE_TOLERANCE = 10_000

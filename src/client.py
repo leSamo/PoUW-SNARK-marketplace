@@ -153,6 +153,8 @@ def main(argv):
         util.iprint("Private key file loaded succefully")
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
+    network.setup_peers(port)
+
     server_thread = threading.Thread(target=start_server, args=(port,))
     server_thread.start()
 
@@ -289,7 +291,14 @@ def main(argv):
         elif command == 'status':
             print()
             print(f"{util.Color.YELLOW}{util.Color.BOLD}Network status:{util.Color.RESET}")
-            print(f"  {util.Color.YELLOW}Connected peers ({len(network.peers)}):{util.Color.RESET}", network.peers)
+
+            if len(network.peers) == 0:
+                print(f"  {util.Color.YELLOW}No connected peers{util.Color.RESET}")
+            else:
+                print(f"  {util.Color.YELLOW}Connected peers ({len(network.peers)}):{util.Color.RESET}")
+
+                for peer in network.peers:
+                    print(f"    - {peer.to_string()} (reputation {peer.get_reputation()})")
 
             if len(network.pending_coin_transactions) == 0:
                 print(f"  {util.Color.YELLOW}No pending coin transactions{util.Color.RESET}")
