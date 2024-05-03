@@ -21,7 +21,7 @@ from block_header import BlockHeader
 from coin_tx import CoinTransaction
 from proof_tx import ProofTransaction
 
-USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>]'
+USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>]'
 
 server_running = True
 private_key = None
@@ -125,10 +125,12 @@ def main(argv):
     global server_running, verbose_logging, private_key, port
 
     try:
-        opts, args = getopt.getopt(argv, "hvk:p:", ["help", "verbose", "key=", "port="])
+        opts, args = getopt.getopt(argv, "hvk:p:c:", ["help", "verbose", "key=", "port=", "command="])
     except getopt.GetoptError:
         print(USAGE)
         sys.exit(-1)
+
+    cli_commands = []
 
     for opt, arg in opts:
         if opt in ['-h', '--help']:
@@ -141,6 +143,8 @@ def main(argv):
             private_key = load_ecdsa_private_key(arg)
         elif opt in ['-p', '--port']:
             port = int(arg)
+        elif opt in ['-c', '--command']:
+            cli_commands = arg.split(";")
 
     if private_key is None:
         util.iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
@@ -149,11 +153,14 @@ def main(argv):
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
     server_thread = threading.Thread(target=start_server, args=(port,))
-    server_thread.start()
+    server_thread.start()       
     
     while True:
         try:
-            command = input()
+            if len(cli_commands) > 0:
+                command = cli_commands.pop(0).strip()
+            else:
+                command = input().strip()
         except:
             command = "exit"
 
@@ -180,12 +187,12 @@ def main(argv):
             print()
 
         elif command == "verbose on":
-            util.verbose_logging = True
             util.iprint("Enabled verbose logging")
+            util.verbose_logging = True
 
         elif command == "verbose off":
-            util.verbose_logging(False)
             util.iprint("Disabled verbose logging")
+            util.verbose_logging(False)
 
         elif command.split(" ")[0] == 'balance':
             latest_block = network.blockchain[-1]
