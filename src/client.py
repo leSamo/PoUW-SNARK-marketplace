@@ -12,6 +12,7 @@ import sys
 import ecdsa
 import json
 import traceback
+import time
 
 import util
 import network
@@ -102,7 +103,7 @@ def start_server(port):
             client_thread = threading.Thread(target=receive_incoming, args=(client_socket, client_address))
             client_thread.start()
     except:
-        print("Socket terminated")
+        util.eprint("Server socket failed")
 
 def load_ecdsa_private_key(filename):
     with open(filename, "r") as key_file:
@@ -153,7 +154,11 @@ def main(argv):
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
     server_thread = threading.Thread(target=start_server, args=(port,))
-    server_thread.start()       
+    server_thread.start()
+
+    # prevent 'terminating' (exit) socket being open before 'server' socket
+    if len(cli_commands) > 0:
+        time.sleep(0.1)
     
     while True:
         try:
@@ -167,8 +172,11 @@ def main(argv):
         if command == "exit":
             server_running = False
 
-            terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            terminating_socket.connect(("localhost", port))
+            try:
+                terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                terminating_socket.connect(("localhost", port))
+            except:
+                util.eprint("Failed to open terminating socket")
             
             break
 
@@ -324,7 +332,7 @@ def main(argv):
             util.eprint("Unknown command. Type 'help' to see a list of commands.")
 
     server_thread.join()
-    util.vprint("Successfully terminated server thread")
+    util.vprint("Successfully terminated main thread")
 
 if __name__ == "__main__":
     main(sys.argv[1:])
