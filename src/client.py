@@ -329,7 +329,7 @@ def main(argv):
             util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
         else:
-            util.eprint("Unknown command. Type 'help' to see a list of commands.")
+            util.eprint(f"Unknown command '{command}'. Type 'help' to see a list of commands.")
 
     server_thread.join()
     util.vprint("Successfully terminated main thread")
