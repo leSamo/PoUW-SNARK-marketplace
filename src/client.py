@@ -16,6 +16,7 @@ import time
 
 import util
 import network
+import config
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
@@ -26,10 +27,10 @@ USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-
 
 server_running = True
 private_key = None
-port = 12346
 
 def receive_incoming(client_socket, client_address):
     # TODO: Consider adding client_address to PEERS if not already
+    # TODO: Reputation check
 
     while True:
         # Receive data from the client
@@ -40,9 +41,15 @@ def receive_incoming(client_socket, client_address):
         message = json.loads(data.decode())
 
         # Process received data (you can modify this part based on your requirements)
-        util.vprint(f"Received from {client_address}:", json.dumps(message, indent=2))
+        util.vprint(f"Received from {client_address[0]}:{message['port']}:", json.dumps(message, indent=2))
 
-        if message['command'] == util.Command.BROADCAST_BLOCK:
+        if message['command'] == util.Command.GET_PEERS:
+            network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{config.SELF_ADDRESS}:{network.port}'] })
+        
+        elif message['command'] == util.Command.PEERS:
+            network.accept_peers(message['peers'])
+
+        elif message['command'] == util.Command.BROADCAST_BLOCK:
             new_block = Block()
             new_block.decode(message['block'])
 
@@ -84,13 +91,13 @@ def receive_incoming(client_socket, client_address):
     # Close the connection when done
     client_socket.close()
 
-def start_server(port):
+def start_listener_socket():
     global server_running, verbose_logging
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("localhost", port))
+    server_socket.bind(("localhost", network.port))
     server_socket.listen(5)
-    util.vprint(f"Server listening on port {port}")
+    util.vprint(f"Server listening on port {network.port}")
 
     try:
         while server_running:
@@ -123,7 +130,7 @@ def generate_key(filename):
     util.iprint(f"Private key saved to the file '{filename}'")
 
 def main(argv):
-    global server_running, verbose_logging, private_key, port
+    global server_running, verbose_logging, private_key
 
     try:
         opts, args = getopt.getopt(argv, "hvk:p:c:", ["help", "verbose", "key=", "port=", "command="])
@@ -143,7 +150,7 @@ def main(argv):
         elif opt in ['-k', '--key']:
             private_key = load_ecdsa_private_key(arg)
         elif opt in ['-p', '--port']:
-            port = int(arg)
+            network.port = int(arg)
         elif opt in ['-c', '--command']:
             cli_commands = arg.split(";")
 
@@ -153,9 +160,9 @@ def main(argv):
         util.iprint("Private key file loaded succefully")
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
-    network.setup_peers(port)
+    network.setup_peers()
 
-    server_thread = threading.Thread(target=start_server, args=(port,))
+    server_thread = threading.Thread(target=start_listener_socket)
     server_thread.start()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
@@ -176,7 +183,7 @@ def main(argv):
 
             try:
                 terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                terminating_socket.connect(("localhost", port))
+                terminating_socket.connect(("localhost", network.port))
             except:
                 util.eprint("Failed to open terminating socket")
             

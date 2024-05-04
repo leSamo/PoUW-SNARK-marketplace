@@ -15,6 +15,8 @@ from block import Block
 from state_tree import StateTree
 from peer import Peer
 
+port = 12346
+
 peers = []
 pending_coin_transactions = []
 pending_proof_transactions = []
@@ -23,22 +25,60 @@ blockchain = [config.genesis_block]
 
 assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
 
-def setup_peers(self_port):
+def setup_peers():
+    global port, peers
+
     for peer_str in config.SEED_NODES:
-        if peer_str == f"{config.SELF_ADDRESS}:{self_port}":
+        if peer_str == f"{config.SELF_ADDRESS}:{port}":
             continue
 
         peerObj = Peer()
         peerObj.setup_from_string(peer_str)
-        peers.append(peerObj)
 
-def send_message(receiver, command, message):
+        if peer_str not in [p.to_string() for p in peers]:
+            peers.append(peerObj)
+
+        if len(peers) >= config.MAX_PEER_COUNT:
+            break
+
+        send_message(peerObj.to_tuple(), util.Command.GET_PEERS)
+
+    # TODO: dedupe
+
+def accept_peers(received_peers : list[Peer]):
+    global port, peers
+
+    if len(peers) >= config.MAX_PEER_COUNT:
+        return
+
+    for peer_str in received_peers:
+        if peer_str == f"{config.SELF_ADDRESS}:{port}":
+            continue
+
+        peerObj = Peer()
+        peerObj.setup_from_string(peer_str)
+
+        if peer_str not in [p.to_string() for p in peers]:
+            util.vprint(f"Accepting peer {peer_str}")
+            peers.append(peerObj)
+
+            if len(peers) >= config.MAX_PEER_COUNT:
+                return
+
+            send_message(peerObj.to_tuple(), util.Command.GET_PEERS)      
+
+    # TODO: dedupe  
+
+def send_message(receiver, command, message = {}):
+    global port
+
     try:
         sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sending_socket.connect(receiver)
 
         sending_socket.send(json.dumps({
             'command': command,
+            'port': port,
             **message
         }).encode())
 
@@ -55,13 +95,14 @@ def get_pending_transactions():
 
 # broadcast newly created coin transaction to the network
 def broadcast_pending_coin_transaction(tx : CoinTransaction):
+    global peers
+
     assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
 
     pending_coin_transactions.append(tx)
 
     message = { 'tx': tx.encode() }
 
-    # TODO: Exclude self
     for peer in peers:
         send_message(peer, util.Command.BROADCAST_PENDING_COIN_TX, message)
 
@@ -71,13 +112,14 @@ def get_blockchain(since):
 
 # broadcast newly generated block to the network
 def broadcast_block(block : Block) -> None:
+    global peers
+
     blockchain.append(block)
 
     # TODO: Verify block before broadcasting
 
     message = { 'block': block.encode() }
 
-    # TODO: Exclude self
     for peer in peers:
         send_message(peer, util.Command.BROADCAST_BLOCK, message)
 

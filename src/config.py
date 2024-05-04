@@ -10,12 +10,14 @@ from block_body import BlockBody
 from block_header import BlockHeader
 from state_tree import StateTree
 
-SEED_NODES = ['localhost:2222', 'localhost:3333']
+SEED_NODES = ['localhost:2222', 'localhost:3333', 'localhost:4444']
 
 SELF_ADDRESS = 'localhost'
 
 # in milliseconds
 TIME_DIFFERENCE_TOLERANCE = 10_000
+
+MAX_PEER_COUNT = 5
 
 #################### GENESIS BLOCK CONFIGURATION ####################
 genesis_state_tree = StateTree()
