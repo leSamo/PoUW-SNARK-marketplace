@@ -73,7 +73,7 @@ def test_port():
     time.sleep(0.1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        result = sock.connect_ex(('localhost', 6464))
+        result = sock.connect_ex(('127.0.0.1', 6464))
         assert result == 0
 
     process.stdin.write("exit\n".encode())
@@ -107,8 +107,6 @@ def test_initial_peer_discovery():
     match = re.search(pattern, stdout1111.decode())
     peer_count = int(match.group(1))
 
-    print(stdout1111.decode())
-
     assert peer_count == 2
-    assert "localhost:2222" in stdout1111.decode()
-    assert "localhost:3333" in stdout1111.decode()
+    assert "127.0.0.1:2222" in stdout1111.decode()
+    assert "127.0.0.1:3333" in stdout1111.decode()

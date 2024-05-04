@@ -40,61 +40,86 @@ def receive_incoming(client_socket, client_address):
     # TODO: Consider adding client_address to PEERS if not already
     # TODO: Reputation check
 
+    data = []
+
     while True:
-        # Receive data from the client
-        data = client_socket.recv(1024)
-        if not data:
+        received = client_socket.recv(1024)
+        if not received:
             break
-        
+
+        data.append(received)
+    
+    data =  b''.join(data)
+    
+    message = None
+
+    try:
         message = json.loads(data.decode())
+    except:
+        util.vprint(f"Received a message not in JSON format")
+        return
 
-        # Process received data (you can modify this part based on your requirements)
-        util.vprint(f"Received from {client_address[0]}:{message['port']}:", json.dumps(message, indent=2))
+    # Process received data (you can modify this part based on your requirements)
+    util.vprint(f"Received from {client_address[0]}:{message['port']}:", json.dumps(message, indent=2))
 
-        if message['command'] == util.Command.GET_PEERS:
-            network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{network.self_ip_address}:{network.port}'] })
-        
-        elif message['command'] == util.Command.PEERS:
-            network.accept_peers(message['peers'])
+    # Disregard messages which don't have command and peer fields
+    if 'command' not in message or 'port' not in message:
+        util.vprint(f"Received a message missing 'command' or 'port' fields")
+        return
 
-        elif message['command'] == util.Command.BROADCAST_BLOCK:
-            new_block = Block()
-            new_block.decode(message['block'])
+    # Disregard reply messages if coming from non-peers
+    if message['command'] in [util.Command.PEERS, util.Command.LATEST_BLOCK_ID, util.Command.BLOCK, util.Command.PENDING_COIN_TXS, util.Command.PENDING_PROOF_TXS] and f"{client_address[0]}:{message['port']}" not in [peer.to_string() for peer in network.peers]:
+        util.vprint(f"Received reply message from {client_address[0]}:{message['port']} which is not a peer")
+        return
 
-            # TODO: verify block
-            # TODO: reject out of order block
 
-            network.blockchain.append(new_block)
+    if message['command'] == util.Command.GET_PEERS:
+        util.vprint("Sending peers")
+        network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{network.self_ip_address}:{network.port}'] })
+    
+    elif message['command'] == util.Command.PEERS:
+        network.accept_peers(message['peers'])
 
-            # TODO: propagate block to all peers except self and sender
+    elif message['command'] == util.Command.BROADCAST_BLOCK:
+        new_block = Block()
+        new_block.decode(message['block'])
 
-        elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
-            new_tx = CoinTransaction()
-            new_tx.decode(message['tx'])
+        # TODO: verify block
+        # TODO: reject out of order block
 
-            # TODO: verify tx
+        network.blockchain.append(new_block)
 
-            network.pending_coin_transactions.append(new_tx)
+        # TODO: propagate block to all peers except self and sender
 
-            # TODO: propagate tx to all peers except self and sender
+    elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
+        new_tx = CoinTransaction()
+        new_tx.decode(message['tx'])
 
-        elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
-            new_tx = ProofTransaction()
-            new_tx.decode(message['tx'])
+        # TODO: verify tx
 
-            # TODO: verify tx
+        network.pending_coin_transactions.append(new_tx)
 
-            network.pending_pending_transactions.append(new_tx)
+        # TODO: propagate tx to all peers except self and sender
 
-            # TODO: propagate tx to all peers except self and sender
+    elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
+        new_tx = ProofTransaction()
+        new_tx.decode(message['tx'])
 
-        elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
-            network.send_message((client_address[0], message['port']), util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
+        # TODO: verify tx
 
-        elif message['command'] == util.Command.LATEST_BLOCK_ID:
-            # TODO: sync
-            pass
+        network.pending_pending_transactions.append(new_tx)
 
+        # TODO: propagate tx to all peers except self and sender
+
+    elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
+        util.vprint(f"Peer {client_address[0]}:{message['port']} is requesting latest block id")
+        network.send_message((client_address[0], message['port']), util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
+
+    elif message['command'] == util.Command.LATEST_BLOCK_ID:
+        util.vprint(f"Received latest block id from peer {client_address[0]}:{message['port']}: {message['latest_id']}")
+
+    else:
+        util.vprint(f"Received unknown message command from {client_address[0]}:{message['port']}")
 
     # Close the connection when done
     client_socket.close()
@@ -103,7 +128,7 @@ def start_listener_socket():
     global server_running, verbose_logging
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("localhost", network.port))
+    server_socket.bind((network.self_ip_address, network.port))
     server_socket.listen(5)
     util.vprint(f"Server listening on port {network.port}")
 
@@ -175,7 +200,6 @@ def main(argv):
         util.iprint("Private key file loaded succefully")
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
-
     server_thread = threading.Thread(target=start_listener_socket)
     server_thread.start()
 
@@ -201,7 +225,7 @@ def main(argv):
 
             try:
                 terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                terminating_socket.connect(("localhost", network.port))
+                terminating_socket.connect((network.self_ip_address, network.port))
             except:
                 util.eprint("Failed to open terminating socket")
             
