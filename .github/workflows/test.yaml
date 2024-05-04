@@ -1,0 +1,23 @@
+name: Run Tests on Push to Master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Zokrates
+      run: curl -LSfs get.zokrat.es | sh; echo "/home/runner/.zokrates/bin" >> $GITHUB_PATH
+
+    - name: Install pip dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run tests
+      run: pytest src/test/test_*.py -rP -v --color=yes
