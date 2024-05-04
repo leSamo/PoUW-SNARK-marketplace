@@ -11,6 +11,7 @@ import ecdsa
 import subprocess
 import socket
 import time
+import re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -82,3 +83,32 @@ def test_port():
     process.wait()
 
     assert process.returncode == 0
+
+
+def test_initial_peer_discovery():
+    process3333 = subprocess.Popen(f'python src/client.py -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    time.sleep(0.3)
+    process1111 = subprocess.Popen(f'python src/client.py -v -p 1111 -f {os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    time.sleep(0.3)
+    process1111.stdin.write("status\n".encode())
+    process1111.stdin.flush()
+
+    process3333.stdin.write("exit\n".encode())
+    process3333.stdin.flush()
+
+    process1111.stdin.write("exit\n".encode())
+    process1111.stdin.flush()
+
+    stdout1111, _ = process1111.communicate()
+
+    pattern = r"Connected peers \((\d+)\):"
+
+    # Search for the pattern in the text
+    match = re.search(pattern, stdout1111.decode())
+    peer_count = int(match.group(1))
+
+    print(stdout1111.decode())
+
+    assert peer_count == 2
+    assert "localhost:2222" in stdout1111.decode()
+    assert "localhost:3333" in stdout1111.decode()

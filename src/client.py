@@ -175,10 +175,13 @@ def main(argv):
         util.iprint("Private key file loaded succefully")
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
-    network.setup_peers()
 
     server_thread = threading.Thread(target=start_listener_socket)
     server_thread.start()
+
+    time.sleep(0.1)
+
+    network.setup_peers()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
