@@ -1,0 +1,25 @@
+{
+    "seed_nodes": ["localhost:2222", "localhost:3333", "localhost:4444"],
+    "self_ip_address": "localhost",
+    "time_difference_tolerance": 1e5,
+    "max_peer_count": 5,
+    "genesis_block": {
+        "header": {
+            "serial_id": 0,
+            "timestamp": 1714436126662,
+            "difficulty": 1,
+            "previous_block_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "current_block_hash": "54fa7afc4d8b39df8c1d1600ebbe47e6321555dce83420f180aabb88581ee1d1",
+            "coin_txs_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "proof_txs_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "state_root_hash": "a23e4325092d529a03f6acce2664823f68a78acfbe6566936f351d579d8650e7"
+        },
+        "body": {
+            "coin_txs": [],
+            "proof_txs": [],
+            "state_tree": {
+                "0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2": 1000
+            }
+        }
+    }
+}

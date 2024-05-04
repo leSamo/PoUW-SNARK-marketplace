@@ -13,17 +13,25 @@ import ecdsa
 import json
 import traceback
 import time
+import os
 
 import util
 import network
-import config
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
 from coin_tx import CoinTransaction
 from proof_tx import ProofTransaction
 
-USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>]'
+USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>]'
+USAGE_ARGUMENTS = """
+    -k, --key <private key file>   Authenticate against an existing private key file
+    -v, --verbose                  Show more detailed log messages
+    -h, --help                     Print this message
+    -p, --port <port number>       Open the listening socket on a specific port number
+    -c, --command <command>        Run semicolon separated list of commands just after client initialization
+    -f, --config <config file>     Provide a non-default configuration file
+"""
 
 server_running = True
 private_key = None
@@ -44,7 +52,7 @@ def receive_incoming(client_socket, client_address):
         util.vprint(f"Received from {client_address[0]}:{message['port']}:", json.dumps(message, indent=2))
 
         if message['command'] == util.Command.GET_PEERS:
-            network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{config.SELF_ADDRESS}:{network.port}'] })
+            network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{network.self_ip_address}:{network.port}'] })
         
         elif message['command'] == util.Command.PEERS:
             network.accept_peers(message['peers'])
@@ -81,7 +89,7 @@ def receive_incoming(client_socket, client_address):
             # TODO: propagate tx to all peers except self and sender
 
         elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
-            network.send_message(client_address, util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
+            network.send_message((client_address[0], message['port']), util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
 
         elif message['command'] == util.Command.LATEST_BLOCK_ID:
             # TODO: sync
@@ -133,16 +141,19 @@ def main(argv):
     global server_running, verbose_logging, private_key
 
     try:
-        opts, args = getopt.getopt(argv, "hvk:p:c:", ["help", "verbose", "key=", "port=", "command="])
+        opts, args = getopt.getopt(argv, "hvk:p:c:f:", ["help", "verbose", "key=", "port=", "command=", "config="])
     except getopt.GetoptError:
         print(USAGE)
+        print(USAGE_ARGUMENTS)
         sys.exit(-1)
 
     cli_commands = []
+    config_file = os.path.join(os.path.dirname(__file__), "config.json")
 
     for opt, arg in opts:
         if opt in ['-h', '--help']:
             print(USAGE)
+            print(USAGE_ARGUMENTS)
             sys.exit()
         elif opt in ['-v', '--verbose']:
             util.iprint("Enabled verbose logging")
@@ -153,6 +164,10 @@ def main(argv):
             network.port = int(arg)
         elif opt in ['-c', '--command']:
             cli_commands = arg.split(";")
+        elif opt in ['-f', '--config']:
+            config_file = arg
+
+    network.setup_config(config_file)
 
     if private_key is None:
         util.iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
@@ -339,7 +354,7 @@ def main(argv):
             current_timestamp = util.get_current_time()
 
             new_block_header = BlockHeader()
-            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 0, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
+            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
 
             new_block = Block()
             new_block.setup(new_block_header, new_block_body)

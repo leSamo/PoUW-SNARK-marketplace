@@ -9,7 +9,6 @@ import socket
 import json
 
 import util
-import config
 from coin_tx import CoinTransaction
 from block import Block
 from state_tree import StateTree
@@ -21,15 +20,32 @@ peers = []
 pending_coin_transactions = []
 pending_proof_transactions = []
 
-blockchain = [config.genesis_block]
+config = None
 
-assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
+blockchain = None
+self_ip_address = None
+
+def setup_config(filepath : str):
+    global config, blockchain, self_ip_address
+
+    with open(filepath, 'r') as file:
+        json_data = json.load(file)
+
+    config = json_data
+
+    genesis_block = Block()
+    genesis_block.decode(config['genesis_block'])
+
+    blockchain = [genesis_block]
+    self_ip_address = config['self_ip_address']
+
+    assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
 
 def setup_peers():
     global port, peers
 
-    for peer_str in config.SEED_NODES:
-        if peer_str == f"{config.SELF_ADDRESS}:{port}":
+    for peer_str in config['seed_nodes']:
+        if peer_str == f"{config['self_ip_address']}:{port}":
             continue
 
         peerObj = Peer()
@@ -38,21 +54,19 @@ def setup_peers():
         if peer_str not in [p.to_string() for p in peers]:
             peers.append(peerObj)
 
-        if len(peers) >= config.MAX_PEER_COUNT:
+        if len(peers) >= config['max_peer_count']:
             break
 
         send_message(peerObj.to_tuple(), util.Command.GET_PEERS)
 
-    # TODO: dedupe
-
 def accept_peers(received_peers : list[Peer]):
     global port, peers
 
-    if len(peers) >= config.MAX_PEER_COUNT:
+    if len(peers) >= config['max_peer_count']:
         return
 
     for peer_str in received_peers:
-        if peer_str == f"{config.SELF_ADDRESS}:{port}":
+        if peer_str == f"{config['self_ip_address']}:{port}":
             continue
 
         peerObj = Peer()
@@ -62,12 +76,10 @@ def accept_peers(received_peers : list[Peer]):
             util.vprint(f"Accepting peer {peer_str}")
             peers.append(peerObj)
 
-            if len(peers) >= config.MAX_PEER_COUNT:
+            if len(peers) >= config['max_peer_count']:
                 return
 
             send_message(peerObj.to_tuple(), util.Command.GET_PEERS)      
-
-    # TODO: dedupe  
 
 def send_message(receiver, command, message = {}):
     global port
@@ -104,7 +116,7 @@ def broadcast_pending_coin_transaction(tx : CoinTransaction):
     message = { 'tx': tx.encode() }
 
     for peer in peers:
-        send_message(peer, util.Command.BROADCAST_PENDING_COIN_TX, message)
+        send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_COIN_TX, message)
 
 # called by a client upon joining the network to get all blocks generated after block id specified in parameter
 def get_blockchain(since):
@@ -121,7 +133,7 @@ def broadcast_block(block : Block) -> None:
     message = { 'block': block.encode() }
 
     for peer in peers:
-        send_message(peer, util.Command.BROADCAST_BLOCK, message)
+        send_message(peer.to_tuple(), util.Command.BROADCAST_BLOCK, message)
 
 def verify_coin_transaction(tx : CoinTransaction, st : StateTree) -> bool:
     try:
@@ -139,7 +151,7 @@ def verify_block(previous_block : Block, block : Block) -> bool:
         #   serial id verification
         assert(block.get_id() == previous_block.get_id() + 1)
         #   time verification
-        assert(block.get_timestamp() <= util.get_current_time() + config.TIME_DIFFERENCE_TOLERANCE)
+        assert(block.get_timestamp() <= util.get_current_time() + config['time_difference_tolerance'])
         assert(previous_block.get_timestamp() <= block.get_timestamp())
 
         #   TODO: difficulty verification
