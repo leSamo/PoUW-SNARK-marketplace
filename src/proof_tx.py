@@ -56,6 +56,11 @@ class ProofTransaction(Encodeable):
     def is_signed(self):
         return self.__signature is not None
     
+    # TODO: Check signature
+    
+    def get_id(self) -> int:
+        return self.__amount
+    
     def encode(self):
         return {
             'id': self.__id.hex(),

@@ -134,8 +134,28 @@ def test_initial_block_discovery():
 
     assert latest_block_id == 1
 
+    process2222.stdin.close()
+    process3333.stdin.close()
+
 def test_initial_tx_discovery():
-    pass
+    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50; status"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    time.sleep(0.3)
+
+    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    time.sleep(1)
+
+    stdout2222, _ = process2222.communicate()
+
+    assert "Pending coin transactions (1)" in stdout2222.decode()
+
+    process3333.stdin.write("status\n".encode())
+    process3333.stdin.flush()
+
+    stdout3333, _ = process3333.communicate()
+
+    assert "Pending coin transactions (1)" in stdout3333.decode()
 
 def test_balance():
     process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "balance; balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2; balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

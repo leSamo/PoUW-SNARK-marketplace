@@ -66,6 +66,9 @@ class CoinTransaction(Encodeable):
         return self.__signature is not None
     
     # TODO: Check signature
+
+    def get_id(self) -> int:
+        return self.__amount
     
     def get_address_from(self) -> bytes:
         return self.__address_from
@@ -96,4 +99,4 @@ class CoinTransaction(Encodeable):
         self.__signature = bytes.fromhex(obj['signature'])
 
     def __str__(self) -> str:
-        return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --{self.__amount}--> {self.__address_to.hex()[0:6]}…"
+        return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__amount})--> {self.__address_to.hex()[0:6]}…"

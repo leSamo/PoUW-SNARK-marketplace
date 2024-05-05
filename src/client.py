@@ -125,7 +125,7 @@ def receive_incoming(client_socket, client_address):
         network.send_message((client_address[0], message['port']), util.Command.BLOCK, { 'block': network.blockchain[message['block_id']].encode() })
 
     elif message['command'] == util.Command.PENDING_COIN_TXS:
-        pass
+        network.receive_pending_coin_transactions(message['pending_txs'])
 
     elif message['command'] == util.Command.GET_PENDING_COIN_TXS:
         util.vprint(f"Sending pending coin txs")
@@ -133,12 +133,12 @@ def receive_incoming(client_socket, client_address):
         network.send_message((client_address[0], message['port']), util.Command.PENDING_COIN_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_coin_transactions] })
 
     elif message['command'] == util.Command.PENDING_PROOF_TXS:
-        pass
+        network.receive_pending_proof_transactions(message['pending_txs'])
 
     elif message['command'] == util.Command.GET_PENDING_PROOF_TXS:
         util.vprint(f"Sending pending proof txs")
 
-        network.send_message((client_address[0], message['port']), util.Command.PENDING_COIN_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_proof_transactions] })
+        network.send_message((client_address[0], message['port']), util.Command.PENDING_PROOF_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_proof_transactions] })
     
     elif message['command'] == util.Command.BLOCK:
         # TODO: verify block

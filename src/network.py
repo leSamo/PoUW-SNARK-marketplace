@@ -10,6 +10,7 @@ import json
 
 import util
 from coin_tx import CoinTransaction
+from proof_tx import ProofTransaction
 from block import Block
 from state_tree import StateTree
 from peer import Peer
@@ -99,9 +100,23 @@ def send_message(receiver, command, message = {}):
         util.vprint(f"Failed to send message {command} to peer {receiver} - {error}")
         # TODO: consider removing stale peers after N unsuccessful connections
 
-# called by a client upon joining the network to receive list of pending txs
-def get_pending_transactions():
-    pass
+def receive_pending_coin_transactions(pending_txs_obj):
+    for tx in pending_txs_obj:
+        new_tx = CoinTransaction()
+        new_tx.decode(tx)
+
+        if new_tx.get_id() not in [t.get_id() for t in pending_coin_transactions]:
+            pending_coin_transactions.append(new_tx)
+            util.vprint(f"Accepted pending coin tx with id {new_tx.get_id()}")
+
+def receive_pending_proof_transactions(pending_txs_obj):
+    for tx in pending_txs_obj:
+        new_tx = ProofTransaction()
+        new_tx.decode(tx)
+
+        if new_tx.get_id() not in [t.get_id() for t in pending_proof_transactions]:
+            pending_proof_transactions.append(new_tx)
+            util.vprint(f"Accepted pending proof tx with id {new_tx.get_id()}")
 
 # answers a client requesting list of pending txs upon the network
 
