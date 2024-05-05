@@ -131,3 +131,16 @@ def test_initial_block_discovery():
     latest_block_id = int(match.group(1))
 
     assert latest_block_id == 1
+
+def test_balance():
+    # test with 0 args and 1 arg
+    pass
+
+def test_inspect():
+    pass
+
+def test_not_auth():
+    pass
+
+def test_auth():
+    pass

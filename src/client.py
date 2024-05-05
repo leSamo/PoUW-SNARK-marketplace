@@ -36,9 +36,8 @@ USAGE_ARGUMENTS = """
 server_running = True
 private_key = None
 
-def start_sync():    
+def start_blockchain_sync():    
     util.vprint("Synchronization: Looking for peers")
-    network.setup_peers()
 
     time.sleep(0.3)
 
@@ -66,6 +65,15 @@ def start_sync():
         for block_id in range(network.blockchain[-1].get_id() + 1, best_peer_latest_block_id + 1):
             network.send_message(best_peer.to_tuple(), util.Command.GET_BLOCK, { 'block_id': block_id })
             time.sleep(0.2)
+
+def start_pending_tx_sync():
+    util.vprint("Synchronization: Retrieving pending transactions") 
+    
+    time.sleep(0.3)
+
+    for peer in network.peers:
+        network.send_message(peer.to_tuple(), util.Command.GET_PENDING_COIN_TXS)
+        network.send_message(peer.to_tuple(), util.Command.GET_PENDING_PROOF_TXS)
 
 def receive_incoming(client_socket, client_address):
     # TODO: Consider adding client_address to PEERS if not already
@@ -110,11 +118,27 @@ def receive_incoming(client_socket, client_address):
     elif message['command'] == util.Command.PEERS:
         network.accept_peers(message['peers'])
 
-    if message['command'] == util.Command.GET_BLOCK:
+    elif message['command'] == util.Command.GET_BLOCK:
         # TODO: Check if block exists in client's blockchain
         util.vprint(f"Sending block {message['block_id']}")
 
         network.send_message((client_address[0], message['port']), util.Command.BLOCK, { 'block': network.blockchain[message['block_id']].encode() })
+
+    elif message['command'] == util.Command.PENDING_COIN_TXS:
+        pass
+
+    elif message['command'] == util.Command.GET_PENDING_COIN_TXS:
+        util.vprint(f"Sending pending coin txs")
+
+        network.send_message((client_address[0], message['port']), util.Command.PENDING_COIN_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_coin_transactions] })
+
+    elif message['command'] == util.Command.PENDING_PROOF_TXS:
+        pass
+
+    elif message['command'] == util.Command.GET_PENDING_PROOF_TXS:
+        util.vprint(f"Sending pending proof txs")
+
+        network.send_message((client_address[0], message['port']), util.Command.PENDING_COIN_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_proof_transactions] })
     
     elif message['command'] == util.Command.BLOCK:
         # TODO: verify block
@@ -257,8 +281,13 @@ def main(argv):
 
     time.sleep(0.1)
 
-    sync_thread = threading.Thread(target=start_sync)
-    sync_thread.start()
+    network.setup_peers()
+
+    block_sync_thread = threading.Thread(target=start_blockchain_sync)
+    block_sync_thread.start()
+
+    pending_tx_sync_thred = threading.Thread(target=start_pending_tx_sync)
+    pending_tx_sync_thred.start()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
@@ -320,7 +349,7 @@ def main(argv):
                 print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
             
             elif len(command.split(" ")) == 2:
-                current_sender_balance = latest_block.get_state_tree().get(command.split(" ")[1])
+                current_sender_balance = latest_block.get_state_tree().get(bytes.fromhex(command.split(" ")[1]))
 
                 print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
 
@@ -458,6 +487,9 @@ def main(argv):
             util.eprint(f"Unknown command '{command}'. Type 'help' to see a list of commands.")
 
     server_thread.join()
+    block_sync_thread.join()
+    pending_tx_sync_thred.join()
+
     util.vprint("Successfully terminated main thread")
 
 if __name__ == "__main__":
