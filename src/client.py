@@ -260,7 +260,11 @@ def main(argv):
             util.iprint("Enabled verbose logging")
             util.verbose_logging = True
         elif opt in ['-k', '--key']:
-            private_key = load_ecdsa_private_key(arg)
+            try:
+                private_key = load_ecdsa_private_key(arg)
+            except e:
+                util.eprint("Failed to load private key file:", e)
+                sys.exit(-1)    
         elif opt in ['-p', '--port']:
             network.port = int(arg)
         elif opt in ['-c', '--command']:
@@ -273,7 +277,7 @@ def main(argv):
     if private_key is None:
         util.iprint("Private key file was not provided, running in anonymous mode -- transactions cannot be created")
     else:
-        util.iprint("Private key file loaded succefully")
+        util.iprint("Private key file loaded successfully")
         util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
 
     server_thread = threading.Thread(target=start_listener_socket)
@@ -391,6 +395,8 @@ def main(argv):
                 new_tx.sign(private_key)
 
                 network.broadcast_pending_coin_transaction(new_tx)
+
+                util.iprint("Successfully created and broadcasted transaction")
                 
             except Exception as e:
                 util.eprint("Failed to create coin transaction:", e)
@@ -477,11 +483,14 @@ def main(argv):
             if len(command.split(" ")) != 2:
                 util.eprint("Usage: auth <private key file>")
                 continue
+            
+            try:
+                private_key = load_ecdsa_private_key(command.split(" ")[1])
 
-            private_key = load_ecdsa_private_key(command.split(" ")[1])
-
-            util.iprint("Private key file loaded succefully")
-            util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+                util.iprint("Private key file loaded successfully")
+                util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
+            except e:
+                util.eprint("Failed to load private key file:", e)
 
         else:
             util.eprint(f"Unknown command '{command}'. Type 'help' to see a list of commands.")

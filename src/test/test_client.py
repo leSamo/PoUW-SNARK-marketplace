@@ -125,22 +125,64 @@ def test_initial_block_discovery():
 
     stdout3333, _ = process3333.communicate()
 
-    pattern = r" [0-9a-f]{6}… \(id (\d+)\)"
+    pattern = r"Latest block:\033\[0m [0-9a-f]{6}… \(id (\d+)\)"
 
     match = re.search(pattern, stdout3333.decode())
     latest_block_id = int(match.group(1))
 
     assert latest_block_id == 1
 
-def test_balance():
-    # test with 0 args and 1 arg
+def test_initial_tx_discovery():
     pass
+
+def test_balance():
+    process = subprocess.Popen(f'python src/client.py -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "balance; balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2; balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    stdout, _ = process.communicate()
+
+    pattern = r"Current balance \(block \d+\): (\d+)"
+
+    balances = re.findall(pattern, stdout.decode())
+    
+    assert int(balances[0]) == 1000
+    assert int(balances[1]) == 1000
+    assert int(balances[2]) == 0
 
 def test_inspect():
-    pass
+    process = subprocess.Popen(f'python src/client.py -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "inspect 0; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    stdout, _ = process.communicate()
+
+    block_id = int(re.findall(r'Block (\d+):', stdout.decode())[0])
+    timestamp = int(re.findall(r'Timestamp:\033\[0m (\d+)', stdout.decode())[0])
+    difficulty = int(re.findall(r'Difficulty:\033\[0m (\d+)', stdout.decode())[0])
+    block_hash = re.findall(r'Current block hash:\033\[0m ([0-9a-z]+)', stdout.decode())[0]
+
+    assert block_id == 0
+    assert timestamp == 1714436126662
+    assert difficulty == 1
+    assert block_hash == '54fa7afc4d8b39df8c1d1600ebbe47e6321555dce83420f180aabb88581ee1d1'
 
 def test_not_auth():
-    pass
+    process = subprocess.Popen(f'python src/client.py -p 2222 -v', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    process.stdin.write("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\n".encode())
+    process.stdin.flush()
+
+    process.stdin.write(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n".encode())
+    process.stdin.flush()
+
+    process.stdin.write("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\nexit\n".encode())
+    process.stdin.flush()
+
+    time.sleep(0.5)
+
+    process.wait()
+    stdout, _ = process.communicate()
+
+    assert "This command requires authentication" in stdout.decode()
+    assert "Private key file loaded successfully" in stdout.decode()
+    assert "Successfully created and broadcasted transaction" in stdout.decode()
 
 def test_auth():
     pass
