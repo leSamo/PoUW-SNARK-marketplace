@@ -15,6 +15,8 @@ import re
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+client_program = os.path.join(os.path.dirname(__file__), "..", "client.py")
+
 def load_ecdsa_private_key(filename):
     with open(filename, "r") as key_file:
         key_str = key_file.read()
@@ -22,7 +24,7 @@ def load_ecdsa_private_key(filename):
         return private_key
 
 def test_help():
-    process = subprocess.Popen(f'python src/client.py -h', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -h', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.wait()
     stdout, _ = process.communicate()
 
@@ -32,7 +34,7 @@ def test_help():
 def test_generate_key():
     file = os.path.join(os.path.dirname(__file__), "./abc")
 
-    process = subprocess.Popen(f'python src/client.py -c "generate-key {file}; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -c "generate-key {file}; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.wait()
 
     assert process.returncode == 0
@@ -43,7 +45,7 @@ def test_generate_key():
     os.remove(file)
 
 def test_available_commands():
-    process = subprocess.Popen(f'python src/client.py -c "help; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -c "help; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.wait()
     stdout, _ = process.communicate()
 
@@ -51,14 +53,14 @@ def test_available_commands():
     assert 'Available commands:' in stdout.decode()
 
 def test_verbose():
-    process = subprocess.Popen(f'python src/client.py -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.wait()
     stdout, _ = process.communicate()
 
     assert process.returncode == 0
     assert 'VERBOSE:' in stdout.decode()
 
-    process = subprocess.Popen(f'python src/client.py', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program}', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.wait()
     stdout, _ = process.communicate()
 
@@ -66,7 +68,7 @@ def test_verbose():
     assert 'VERBOSE:' not in stdout.decode()    
 
 def test_port():
-    process = subprocess.Popen(f'python src/client.py -v -p 6464', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -v -p 6464', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     process.stdin.write("status\n".encode())
     process.stdin.flush()
 
@@ -85,9 +87,9 @@ def test_port():
     assert process.returncode == 0
 
 def test_initial_peer_discovery():
-    process3333 = subprocess.Popen(f'python src/client.py -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     time.sleep(0.3)
-    process1111 = subprocess.Popen(f'python src/client.py -v -p 1111 -f {os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process1111 = subprocess.Popen(f'python {client_program} -v -p 1111 -f {os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     time.sleep(0.3)
     process1111.stdin.write("status\n".encode())
     process1111.stdin.flush()
@@ -110,11 +112,11 @@ def test_initial_peer_discovery():
     assert "127.0.0.1:3333" in stdout1111.decode()
 
 def test_initial_block_discovery():
-    process2222 = subprocess.Popen(f'python src/client.py -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     time.sleep(0.3)
 
-    process3333 = subprocess.Popen(f'python src/client.py -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     time.sleep(1)
 
@@ -136,7 +138,7 @@ def test_initial_tx_discovery():
     pass
 
 def test_balance():
-    process = subprocess.Popen(f'python src/client.py -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "balance; balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2; balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "balance; balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2; balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     stdout, _ = process.communicate()
 
@@ -149,7 +151,7 @@ def test_balance():
     assert int(balances[2]) == 0
 
 def test_inspect():
-    process = subprocess.Popen(f'python src/client.py -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "inspect 0; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "inspect 0; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     stdout, _ = process.communicate()
 
@@ -164,7 +166,7 @@ def test_inspect():
     assert block_hash == '54fa7afc4d8b39df8c1d1600ebbe47e6321555dce83420f180aabb88581ee1d1'
 
 def test_not_auth():
-    process = subprocess.Popen(f'python src/client.py -p 2222 -v', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -p 2222 -v', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     process.stdin.write("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\n".encode())
     process.stdin.flush()
