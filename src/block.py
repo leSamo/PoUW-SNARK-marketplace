@@ -52,8 +52,7 @@ class Block(Encodeable):
         return self.__header.get_current_block_hash()
     
     def verify_hash(self) -> bool:
-        block_hash = self.calculate_hash()
-        return self.get_current_block_hash() == block_hash
+        return self.__header.verify_hash()
 
     def get_state_tree(self):
         return self.__body.get_state_tree()

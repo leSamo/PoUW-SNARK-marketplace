@@ -23,6 +23,7 @@ class Peer(Encodeable):
         self.__ip_address = ip_address
         self.__port = int(port)
         self.__reputation = 0
+        self.__latest_block_id = 0
 
     def setup_from_tuple(self, tuple) -> None:
         self.__ip_address = tuple[0]

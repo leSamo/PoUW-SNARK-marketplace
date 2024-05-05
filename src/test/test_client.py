@@ -84,7 +84,6 @@ def test_port():
 
     assert process.returncode == 0
 
-
 def test_initial_peer_discovery():
     process3333 = subprocess.Popen(f'python src/client.py -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     time.sleep(0.3)
@@ -103,10 +102,32 @@ def test_initial_peer_discovery():
 
     pattern = r"Connected peers \((\d+)\):"
 
-    # Search for the pattern in the text
     match = re.search(pattern, stdout1111.decode())
     peer_count = int(match.group(1))
 
     assert peer_count == 2
     assert "127.0.0.1:2222" in stdout1111.decode()
     assert "127.0.0.1:3333" in stdout1111.decode()
+
+def test_initial_block_discovery():
+    process2222 = subprocess.Popen(f'python src/client.py -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    time.sleep(0.3)
+
+    process3333 = subprocess.Popen(f'python src/client.py -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    time.sleep(1)
+
+    process3333.stdin.write("status\n".encode())
+    process3333.stdin.flush()
+
+    time.sleep(0.3)
+
+    stdout3333, _ = process3333.communicate()
+
+    pattern = r" [0-9a-f]{6}… \(id (\d+)\)"
+
+    match = re.search(pattern, stdout3333.decode())
+    latest_block_id = int(match.group(1))
+
+    assert latest_block_id == 1

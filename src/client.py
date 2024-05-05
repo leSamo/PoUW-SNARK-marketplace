@@ -36,6 +36,37 @@ USAGE_ARGUMENTS = """
 server_running = True
 private_key = None
 
+def start_sync():    
+    util.vprint("Synchronization: Looking for peers")
+    network.setup_peers()
+
+    time.sleep(0.3)
+
+    util.vprint("Synchronization: Searching for longest chain")
+    
+    for peer in network.peers:
+        network.send_message(peer.to_tuple(), util.Command.GET_LATEST_BLOCK_ID)
+
+    time.sleep(0.3)
+
+    best_peer = None
+    best_peer_latest_block_id = 0
+
+    for peer in network.peers:
+        if peer.get_latest_block_id() > network.blockchain[-1].get_id():
+            best_peer = peer
+            best_peer_latest_block_id = peer.get_latest_block_id()
+
+    if best_peer is None:
+        util.vprint("Synchronization: Did not find a fresher peer")
+    else:
+        util.vprint(f"Synchronization: Determined freshest peer: {best_peer.to_string()}")
+        util.vprint("Synchronization: Downloading blocks")
+
+        for block_id in range(network.blockchain[-1].get_id() + 1, best_peer_latest_block_id + 1):
+            network.send_message(best_peer.to_tuple(), util.Command.GET_BLOCK, { 'block_id': block_id })
+            time.sleep(0.2)
+
 def receive_incoming(client_socket, client_address):
     # TODO: Consider adding client_address to PEERS if not already
     # TODO: Reputation check
@@ -72,13 +103,30 @@ def receive_incoming(client_socket, client_address):
         util.vprint(f"Received reply message from {client_address[0]}:{message['port']} which is not a peer")
         return
 
-
     if message['command'] == util.Command.GET_PEERS:
         util.vprint("Sending peers")
         network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{network.self_ip_address}:{network.port}'] })
     
     elif message['command'] == util.Command.PEERS:
         network.accept_peers(message['peers'])
+
+    if message['command'] == util.Command.GET_BLOCK:
+        # TODO: Check if block exists in client's blockchain
+        util.vprint(f"Sending block {message['block_id']}")
+
+        network.send_message((client_address[0], message['port']), util.Command.BLOCK, { 'block': network.blockchain[message['block_id']].encode() })
+    
+    elif message['command'] == util.Command.BLOCK:
+        # TODO: verify block
+        received_block = Block()
+        received_block.decode(message['block'])
+
+        if network.verify_block(network.blockchain[-1], received_block):
+            network.blockchain.append(received_block)
+            util.vprint("Received valid block")
+        else:
+            util.vprint("Received invalid block")
+            return            
 
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
@@ -118,8 +166,12 @@ def receive_incoming(client_socket, client_address):
     elif message['command'] == util.Command.LATEST_BLOCK_ID:
         util.vprint(f"Received latest block id from peer {client_address[0]}:{message['port']}: {message['latest_id']}")
 
+        for peer in network.peers:
+            if peer.to_string() == f"{client_address[0]}:{message['port']}":
+                peer.set_latest_block_id(message['latest_id'])
+
     else:
-        util.vprint(f"Received unknown message command from {client_address[0]}:{message['port']}")
+        util.vprint(f"Received unknown message command '{message['command']}' from {client_address[0]}:{message['port']}")
 
     # Close the connection when done
     client_socket.close()
@@ -205,7 +257,8 @@ def main(argv):
 
     time.sleep(0.1)
 
-    network.setup_peers()
+    sync_thread = threading.Thread(target=start_sync)
+    sync_thread.start()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:

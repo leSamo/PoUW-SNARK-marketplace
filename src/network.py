@@ -158,6 +158,7 @@ def verify_block(previous_block : Block, block : Block) -> bool:
 
         #   previous hash link
         assert(previous_block.get_current_block_hash() == block.get_previous_block_hash())
+
         #   current hash calculation
         assert(block.verify_hash())
 
