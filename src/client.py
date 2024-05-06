@@ -37,13 +37,13 @@ USAGE_ARGUMENTS = """
 server_running = True
 private_key = None
 
-def start_blockchain_sync():    
+def start_blockchain_sync():
     util.vprint("Synchronization: Looking for peers")
 
     time.sleep(0.3)
 
     util.vprint("Synchronization: Searching for longest chain")
-    
+
     for peer in network.peers:
         network.send_message(peer.to_tuple(), util.Command.GET_LATEST_BLOCK_ID)
 
@@ -68,8 +68,8 @@ def start_blockchain_sync():
             time.sleep(0.2)
 
 def start_pending_tx_sync():
-    util.vprint("Synchronization: Retrieving pending transactions") 
-    
+    util.vprint("Synchronization: Retrieving pending transactions")
+
     time.sleep(0.3)
 
     for peer in network.peers:
@@ -88,9 +88,9 @@ def receive_incoming(client_socket, client_address):
             break
 
         data.append(received)
-    
+
     data =  b''.join(data)
-    
+
     message = None
 
     try:
@@ -115,7 +115,7 @@ def receive_incoming(client_socket, client_address):
     if message['command'] == util.Command.GET_PEERS:
         util.vprint("Sending peers")
         network.send_message((client_address[0], message['port']), util.Command.PEERS, { 'peers': [peer.to_string() for peer in network.peers] + [f'{network.self_ip_address}:{network.port}'] })
-    
+
     elif message['command'] == util.Command.PEERS:
         network.accept_peers(message['peers'])
 
@@ -140,7 +140,7 @@ def receive_incoming(client_socket, client_address):
         util.vprint(f"Sending pending proof txs")
 
         network.send_message((client_address[0], message['port']), util.Command.PENDING_PROOF_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_proof_transactions] })
-    
+
     elif message['command'] == util.Command.BLOCK:
         # TODO: verify block
         received_block = Block()
@@ -151,7 +151,7 @@ def receive_incoming(client_socket, client_address):
             util.vprint("Received valid block")
         else:
             util.vprint("Received invalid block")
-            return            
+            return
 
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
@@ -225,7 +225,7 @@ def load_ecdsa_private_key(filename):
         key_str = key_file.read()
         private_key = ecdsa.SigningKey.from_pem(key_str)
         return private_key
-    
+
 def generate_key(filename):
     private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
 
@@ -265,7 +265,7 @@ def main(argv):
                 private_key = load_ecdsa_private_key(arg)
             except e:
                 util.eprint("Failed to load private key file:", e)
-                sys.exit(-1)    
+                sys.exit(-1)
         elif opt in ['-p', '--port']:
             network.port = int(arg)
         elif opt in ['-c', '--command']:
@@ -297,7 +297,7 @@ def main(argv):
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
         time.sleep(0.1)
-    
+
     while True:
         try:
             if len(cli_commands) > 0:
@@ -315,7 +315,7 @@ def main(argv):
                 terminating_socket.connect((network.self_ip_address, network.port))
             except:
                 util.eprint("Failed to open terminating socket")
-            
+
             break
 
         elif command == "help":
@@ -326,10 +326,10 @@ def main(argv):
             print(f"  {util.Color.YELLOW}exit{util.Color.RESET} -- terminates client")
             print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
             print(f"  {util.Color.YELLOW}request-proof <circuit hash> <parameters>{util.Color.RESET} -- request a proof to be generated")
-            print(f"  {util.Color.YELLOW}produce-proof <proof index>{util.Color.RESET} -- manually produce a proof and include it in partial block")
-            print(f"  {util.Color.YELLOW}confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
+            print(f"  {util.Color.YELLOW}📝 produce-proof <proof index>{util.Color.RESET} -- manually produce a proof and include it in partial block")
+            print(f"  {util.Color.YELLOW}📝 confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
             print(f"  {util.Color.YELLOW}partial{util.Color.RESET} -- print information about currently produced partial block")
-            print(f"  {util.Color.YELLOW}produce-block{util.Color.RESET} -- finish and broadcast current block")
+            print(f"  {util.Color.YELLOW}📝 produce-block{util.Color.RESET} -- finish and broadcast current block")
             print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {util.Color.YELLOW}inspect <block id>{util.Color.RESET} -- print information about block with <block id>")
             print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
@@ -345,6 +345,27 @@ def main(argv):
         elif command == "verbose off":
             util.iprint("Disabled verbose logging")
             util.verbose_logging(False)
+
+        elif command.split(" ")[0] == "confirm-coin-tx":
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+
+            if len(command.split(" ")) != 2:
+                if private_key is None:
+                    util.eprint("Usage: confirm-coin-tx <coin tx index>")
+                    continue
+
+            try:
+                proof_index = int(command.split(" ")[1])
+            except ValueError:
+                util.eprint("Usage: confirm-coin-tx <coin tx index>")
+                continue
+
+            if proof_index >= len(network.broadcast_pending_coin_transaction):
+                util.eprint("Coin transaction index out of bounds")
+                continue
+
 
         elif command == "partial":
             if private_key is None:
@@ -385,16 +406,16 @@ def main(argv):
             except ValueError:
                 util.eprint("Usage: produce-proof <proof index>")
                 continue
-            
+
             if proof_index >= len(network.broadcast_pending_proof_transaction):
-                util.eprint("Proof index out of bounds")
+                util.eprint("Proof transaction index out of bounds")
                 continue
 
             # Zokrates.produce_proof and remember it in current partial block
 
         elif command.split(" ")[0] == 'balance':
             latest_block = network.blockchain[-1]
-        
+
             if len(command.split(" ")) == 1:
                 if private_key is None:
                     util.eprint("Either authenticate to list current self balance, or use 'balance <address>'")
@@ -404,7 +425,7 @@ def main(argv):
                 current_sender_balance = latest_block.get_state_tree().get(sender_address)
 
                 print(f"Current balance (block {latest_block.get_id()}): {current_sender_balance}")
-            
+
             elif len(command.split(" ")) == 2:
                 current_sender_balance = latest_block.get_state_tree().get(bytes.fromhex(command.split(" ")[1]))
 
@@ -419,12 +440,12 @@ def main(argv):
                 continue
 
             generate_key(command.split(" ")[1])
-            
+
         elif command.split(" ")[0] == 'send':
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
-    
+
             if len(command.split(" ")) != 3:
                 util.eprint("Usage: send <receiver address> <amount>")
                 continue
@@ -449,7 +470,7 @@ def main(argv):
                 network.broadcast_pending_coin_transaction(new_tx)
 
                 util.iprint("Successfully created and broadcasted coin transaction")
-                
+
             except Exception as e:
                 util.eprint("Failed to create pending coin transaction:", e)
                 continue
@@ -458,7 +479,7 @@ def main(argv):
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
-    
+
             if len(command.split(" ")) != 3:
                 util.eprint("Usage: request-proof <circuit hash> <parameters>")
                 continue
@@ -559,7 +580,7 @@ def main(argv):
             if len(command.split(" ")) != 2:
                 util.eprint("Usage: auth <private key file>")
                 continue
-            
+
             try:
                 private_key = load_ecdsa_private_key(command.split(" ")[1])
 
