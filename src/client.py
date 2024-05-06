@@ -22,6 +22,7 @@ from block_body import BlockBody
 from block_header import BlockHeader
 from coin_tx import CoinTransaction
 from proof_tx import ProofTransaction
+from bind_zokrates import Zokrates
 
 USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>]'
 USAGE_ARGUMENTS = """
@@ -238,6 +239,8 @@ def generate_key(filename):
 
 def main(argv):
     global server_running, verbose_logging, private_key
+
+    Zokrates.check_version()
 
     try:
         opts, args = getopt.getopt(argv, "hvk:p:c:f:", ["help", "verbose", "key=", "port=", "command=", "config="])

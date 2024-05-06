@@ -32,6 +32,10 @@ def eprint(*args, **kwargs):
     """ Print with error priority """
     print(f"{Color.RED}ERROR:{Color.RESET}", *args, file=sys.stdout, **kwargs)
 
+def wprint(*args, **kwargs):
+    """ Print with warning priority """
+    print(f"{Color.YELLOW}WARN:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+
 class Command:
     # request-response commands
     GET_PEERS = 'GET_PEERS'

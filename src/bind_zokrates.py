@@ -8,7 +8,33 @@
 import subprocess
 import re
 
+import util
+
+ZOKRATES_EXPECTED_VERSION = "0.8.8"
+
 class Zokrates:
+    @staticmethod
+    def check_version():
+        try:
+            process = subprocess.Popen(['zokrates', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            return_code = process.wait()
+            stdout, stderr = process.communicate()
+
+            if return_code == 0:
+                pattern = r'\d+\.\d+\.\d+'
+                result = re.findall(pattern, stdout.decode())[0]
+
+                major, minor, patch = [int(n) for n in result.split('.')]
+                exp_major, exp_minor, exp_patch = [int(n) for n in ZOKRATES_EXPECTED_VERSION.split('.')]
+
+                if major > exp_major or minor < exp_minor:
+                    util.eprint(f"Current Zokrates version ({result}) is incompatible -- expected 0.8.8")
+            else:
+                util.eprint("The 'zokrates' command did not succeed. Do you have it installed?")
+        except Exception as e:
+            util.eprint("Failed to detect Zokrates version:", e)
+
     @staticmethod
     def get_constraint_count(filename):
         """
