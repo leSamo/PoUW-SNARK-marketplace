@@ -15,21 +15,21 @@ class ProofTransaction(Encodeable):
     __address_from: bytes   # SECP256k1 public key in SEC1 format (33 bytes)
     __proof: bytes          # encoded JSON
     __circuit_hash: bytes   # SHA256 hash (32 bytes)
-    __key_randomness: bytes # raw 32 bytes
+    __parameters: str
     __signature: bytes      # SECP256k1 signature (64 bytes)
 
     def __init__(self):
         pass
 
-    def setup(self, address_from, proof, circuit_hash, key_randomness):
+    def setup(self, address_from, circuit_hash, parameters):
         timestamp = util.get_current_time()
-        serialized_tx = "|".join([str(timestamp), address_from.hex(), proof.hex(), circuit_hash.hex(), key_randomness.hex()]).encode()
+        serialized_tx = "|".join([str(timestamp), address_from.hex(), circuit_hash.hex(), parameters]).encode()
 
         self.__id = hashlib.sha256(serialized_tx).digest()
         self.__address_from = address_from
-        self.__proof = proof
+        self.__proof = None
         self.__circuit_hash = circuit_hash
-        self.__key_randomness = key_randomness
+        self.__parameters = parameters
         self.__signature = None
 
         self.check_validity()
@@ -39,7 +39,11 @@ class ProofTransaction(Encodeable):
         pass
 
     def hash(self):
-        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof.hex(), self.__circuit_hash.hex(), self.__key_randomness.hex()]).encode()
+        if self.__proof is None:
+            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
+        else:
+            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
+
         return hashlib.sha256(serialized_tx).digest()
     
     def sign(self, private_key):
@@ -65,16 +69,16 @@ class ProofTransaction(Encodeable):
         return {
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
-            'proof': self.__proof.hex(),
-            'circuit_hash': self.__circuit_hash(),
-            'key_randomness': self.__key_randomness(),
+            'proof': self.__proof.hex() if self.__proof is not None else '',
+            'circuit_hash': self.__circuit_hash.hex(),
+            'parameters': self.__parameters,
             'signature': self.__signature.hex()
         }
     
     def decode(self, obj):
         self.__id = bytes.fromhex(obj['id'])
-        self.__address_from =  bytes.fromhex(obj['address_from'])
+        self.__address_from = bytes.fromhex(obj['address_from'])
         self.__proof =  bytes.fromhex(obj['proof'])
-        self.__circuit_hash =  bytes.fromhex(obj['circuit_hash'])
-        self.__key_randomness =  bytes.fromhex(obj['key_randomness'])
-        self.__signature =  bytes.fromhex(obj['signature'])
+        self.__circuit_hash = bytes.fromhex(obj['circuit_hash'])
+        self.__parameters = obj['parameters']
+        self.__signature = bytes.fromhex(obj['signature'])

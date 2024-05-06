@@ -201,8 +201,6 @@ def receive_incoming(client_socket, client_address):
     client_socket.close()
 
 def start_listener_socket():
-    global server_running, verbose_logging
-
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((network.self_ip_address, network.port))
     server_socket.listen(5)
@@ -323,6 +321,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW}verbose <on|off>{util.Color.RESET} -- toggles verbose logging")
             print(f"  {util.Color.YELLOW}exit{util.Color.RESET} -- terminates client")
             print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
+            print(f"  {util.Color.YELLOW}request-proof <circuit hash> <parameters>{util.Color.RESET} -- request a proof to be generated")
             print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {util.Color.YELLOW}inspect <block id>{util.Color.RESET} -- print information about block with <block id>")
             print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
@@ -376,8 +375,7 @@ def main(argv):
                 util.eprint("Usage: send <receiver address> <amount>")
                 continue
 
-            # TODO:
-            # check if funds are sufficient
+            # TODO: check if funds are sufficient
             latest_block = network.blockchain[-1]
             sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
             current_sender_balance = latest_block.get_state_tree().get(sender_address) or 0
@@ -396,10 +394,34 @@ def main(argv):
 
                 network.broadcast_pending_coin_transaction(new_tx)
 
-                util.iprint("Successfully created and broadcasted transaction")
+                util.iprint("Successfully created and broadcasted coin transaction")
                 
             except Exception as e:
-                util.eprint("Failed to create coin transaction:", e)
+                util.eprint("Failed to create pending coin transaction:", e)
+                continue
+
+        elif command.split(" ")[0] == 'request-proof':
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+    
+            if len(command.split(" ")) != 3:
+                util.eprint("Usage: request-proof <circuit hash> <parameters>")
+                continue
+
+            # TODO: check if funds are sufficient
+            try:
+                sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
+                new_tx = ProofTransaction()
+                new_tx.setup(sender_address, bytes.fromhex(command.split(" ")[1]), command.split(" ")[2])
+
+                new_tx.sign(private_key)
+
+                network.broadcast_pending_proof_transaction(new_tx)
+
+                util.iprint("Successfully created and broadcasted proof transaction")
+            except Exception as e:
+                util.eprint("Failed to create pending proof transaction:", e)
                 traceback.print_exc()
                 continue
 

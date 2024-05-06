@@ -43,7 +43,7 @@ def setup_config(filepath : str):
     assert len(blockchain) > 0, "Missing genesis block in 'blockchain' variable"
 
 def setup_peers():
-    global port, peers
+    global peers
 
     for peer_str in config['seed_nodes']:
         if peer_str == f"{config['self_ip_address']}:{port}":
@@ -61,7 +61,7 @@ def setup_peers():
         send_message(peerObj.to_tuple(), util.Command.GET_PEERS)
 
 def accept_peers(received_peers : list[Peer]):
-    global port, peers
+    global peers
 
     if len(peers) >= config['max_peer_count']:
         return
@@ -83,8 +83,6 @@ def accept_peers(received_peers : list[Peer]):
             send_message(peerObj.to_tuple(), util.Command.GET_PEERS)      
 
 def send_message(receiver, command, message = {}):
-    global port
-
     try:
         sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sending_socket.connect(receiver)
@@ -118,12 +116,8 @@ def receive_pending_proof_transactions(pending_txs_obj):
             pending_proof_transactions.append(new_tx)
             util.vprint(f"Accepted pending proof tx with id {new_tx.get_id()}")
 
-# answers a client requesting list of pending txs upon the network
-
 # broadcast newly created coin transaction to the network
 def broadcast_pending_coin_transaction(tx : CoinTransaction):
-    global peers
-
     assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
 
     pending_coin_transactions.append(tx)
@@ -133,14 +127,19 @@ def broadcast_pending_coin_transaction(tx : CoinTransaction):
     for peer in peers:
         send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_COIN_TX, message)
 
-# called by a client upon joining the network to get all blocks generated after block id specified in parameter
-def get_blockchain(since):
-    pass
+# broadcast newly created coin transaction to the network
+def broadcast_pending_proof_transaction(tx : CoinTransaction):
+    assert tx.is_signed(), "Unsigned proof transactions cannot be broadcast"
+
+    pending_proof_transactions.append(tx)
+
+    message = { 'tx': tx.encode() }
+
+    for peer in peers:
+        send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_PROOF_TX, message)
 
 # broadcast newly generated block to the network
 def broadcast_block(block : Block) -> None:
-    global peers
-
     blockchain.append(block)
 
     # TODO: Verify block before broadcasting

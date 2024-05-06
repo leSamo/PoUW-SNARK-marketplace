@@ -1,0 +1,10 @@
+def main(private u32 a) -> bool {
+    u32 mut b = a;
+
+    for u32 i in 0..5 {
+        b = if b % 2 == 0 { b / 2 } else { b * 3 + 1 };
+        assert (b != 1);
+    }
+
+    return true;
+}

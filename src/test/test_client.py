@@ -204,7 +204,7 @@ def test_not_auth():
 
     assert "This command requires authentication" in stdout.decode()
     assert "Private key file loaded successfully" in stdout.decode()
-    assert "Successfully created and broadcasted transaction" in stdout.decode()
+    assert "Successfully created and broadcasted coin transaction" in stdout.decode()
 
 def test_auth():
     pass

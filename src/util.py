@@ -21,7 +21,6 @@ class Color:
 
 def vprint(*args, **kwargs):    
     """ Print with verbose priority """
-    global verbose_logging
     if verbose_logging:
         print(f"{Color.PURPLE}VERBOSE:{Color.RESET}", *args, file=sys.stdout, **kwargs)
 
