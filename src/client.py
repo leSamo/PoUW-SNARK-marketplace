@@ -362,10 +362,9 @@ def main(argv):
                 util.eprint("Usage: confirm-coin-tx <coin tx index>")
                 continue
 
-            if proof_index >= len(network.broadcast_pending_coin_transaction):
+            if proof_index >= len(network.pending_coin_transactions):
                 util.eprint("Coin transaction index out of bounds")
                 continue
-
 
         elif command == "partial":
             if private_key is None:
@@ -375,19 +374,22 @@ def main(argv):
             print()
             print(f"{util.Color.YELLOW}{util.Color.BOLD}Currently produced partial block status:{util.Color.RESET}")
 
-            if len(network.partial_block_proof_transactions) == 0:
+            if len(network.partial_block_coin_transactions) == 0 and len(network.partial_block_proof_transactions):
                 print(f"  {util.Color.YELLOW}There is no partical block being produced -- use the 'produce-proof' command to start producing block{util.Color.RESET}")
             else:
-                print("  Generated proofs:")
-                for tx in network.pending_proof_transactions:
-                    # TODO: Highlight stale proofs
-                    print(f"    - {tx}")
+                if len(network.partial_block_proof_transactions) == 0:
+                    print(f"  {util.Color.YELLOW}No confirmed proof transactions{util.Color.RESET}")
+                else:
+                    print("  Generated proofs:")
+                    for tx in network.partial_block_proof_transactions:
+                        # TODO: Highlight stale proofs
+                        print(f"    - {tx}")
 
                 if len(network.partial_block_coin_transactions) == 0:
                     print(f"  {util.Color.YELLOW}No confirmed coin transactions{util.Color.RESET}")
                 else:
                     print("  Confirmed coin transactions:")
-                    for tx in network.pending_coin_transactions:
+                    for tx in network.partial_block_coin_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
@@ -407,7 +409,7 @@ def main(argv):
                 util.eprint("Usage: produce-proof <proof index>")
                 continue
 
-            if proof_index >= len(network.broadcast_pending_proof_transaction):
+            if proof_index >= len(network.pending_proof_transactions):
                 util.eprint("Proof transaction index out of bounds")
                 continue
 
