@@ -366,6 +366,19 @@ def main(argv):
                 util.eprint("Coin transaction index out of bounds")
                 continue
 
+            tx = network.pending_coin_transactions[proof_index]
+
+            if tx.get_id() in [t.get_id() for t in network.partial_block_coin_transactions]:
+                util.eprint("The coin transaction is already confirmed in the current partial block")
+                continue
+            else:
+                if tx.verify_transaction():
+                    network.partial_block_coin_transactions.append(tx)
+                    util.iprint("Successfully included the coin transaction")
+                else:
+                    util.eprint("The coin transaction is invalid")
+                    continue
+
         elif command == "partial":
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
@@ -380,7 +393,7 @@ def main(argv):
                 if len(network.partial_block_proof_transactions) == 0:
                     print(f"  {util.Color.YELLOW}No confirmed proof transactions{util.Color.RESET}")
                 else:
-                    print("  Generated proofs:")
+                    print(f"  {util.Color.YELLOW}Generated proofs ({len(network.partial_block_proof_transactions)}):{util.Color.RESET}")
                     for tx in network.partial_block_proof_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
@@ -388,7 +401,7 @@ def main(argv):
                 if len(network.partial_block_coin_transactions) == 0:
                     print(f"  {util.Color.YELLOW}No confirmed coin transactions{util.Color.RESET}")
                 else:
-                    print("  Confirmed coin transactions:")
+                    print(f"  {util.Color.YELLOW}Confirmed coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET}")
                     for tx in network.partial_block_coin_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")

@@ -18,8 +18,8 @@ from peer import Peer
 port = 12346
 
 peers = []
-pending_coin_transactions = []
-pending_proof_transactions = []
+pending_coin_transactions : list[CoinTransaction] = []
+pending_proof_transactions : list[ProofTransaction] = []
 
 partial_block_proof_transactions = []
 partial_block_coin_transactions = []

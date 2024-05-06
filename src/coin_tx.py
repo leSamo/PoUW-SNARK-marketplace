@@ -54,10 +54,10 @@ class CoinTransaction(Encodeable):
 
         self.__signature = private_key.sign(self.hash())
 
-    def verify_transaction(self, public_key : bytes) -> bool:
+    def verify_transaction(self) -> bool:
         self.check_validity()
 
-        if not ecdsa.VerifyingKey.from_string(public_key, curve=ecdsa.SECP256k1).verify(self.__signature, self.hash()):
+        if not ecdsa.VerifyingKey.from_string(self.__address_from, curve=ecdsa.SECP256k1).verify(self.__signature, self.hash()):
             return False
 
         return True
