@@ -319,12 +319,17 @@ def main(argv):
             break
 
         elif command == "help":
+            # TODO: Autoproduce block
             print()
             print(f"{util.Color.YELLOW}{util.Color.BOLD}Available commands:{util.Color.RESET}")
             print(f"  {util.Color.YELLOW}verbose <on|off>{util.Color.RESET} -- toggles verbose logging")
             print(f"  {util.Color.YELLOW}exit{util.Color.RESET} -- terminates client")
             print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
             print(f"  {util.Color.YELLOW}request-proof <circuit hash> <parameters>{util.Color.RESET} -- request a proof to be generated")
+            print(f"  {util.Color.YELLOW}produce-proof <proof index>{util.Color.RESET} -- manually produce a proof and include it in partial block")
+            print(f"  {util.Color.YELLOW}confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
+            print(f"  {util.Color.YELLOW}partial{util.Color.RESET} -- print information about currently produced partial block")
+            print(f"  {util.Color.YELLOW}produce-block{util.Color.RESET} -- finish and broadcast current block")
             print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {util.Color.YELLOW}inspect <block id>{util.Color.RESET} -- print information about block with <block id>")
             print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
@@ -340,6 +345,52 @@ def main(argv):
         elif command == "verbose off":
             util.iprint("Disabled verbose logging")
             util.verbose_logging(False)
+
+        elif command == "partial":
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+
+            print()
+            print(f"{util.Color.YELLOW}{util.Color.BOLD}Currently produced partial block status:{util.Color.RESET}")
+
+            if len(network.partial_block_proof_transactions) == 0:
+                print(f"  {util.Color.YELLOW}There is no partical block being produced -- use the 'produce-proof' command to start producing block{util.Color.RESET}")
+            else:
+                print("  Generated proofs:")
+                for tx in network.pending_proof_transactions:
+                    # TODO: Highlight stale proofs
+                    print(f"    - {tx}")
+
+                if len(network.partial_block_coin_transactions) == 0:
+                    print(f"  {util.Color.YELLOW}No confirmed coin transactions{util.Color.RESET}")
+                else:
+                    print("  Confirmed coin transactions:")
+                    for tx in network.pending_coin_transactions:
+                        # TODO: Highlight stale proofs
+                        print(f"    - {tx}")
+
+        elif command.split(" ")[0] == "produce-proof":
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+
+            if len(command.split(" ")) != 2:
+                if private_key is None:
+                    util.eprint("Usage: produce-proof <proof index>")
+                    continue
+
+            try:
+                proof_index = int(command.split(" ")[1])
+            except ValueError:
+                util.eprint("Usage: produce-proof <proof index>")
+                continue
+            
+            if proof_index >= len(network.broadcast_pending_proof_transaction):
+                util.eprint("Proof index out of bounds")
+                continue
+
+            # Zokrates.produce_proof and remember it in current partial block
 
         elif command.split(" ")[0] == 'balance':
             latest_block = network.blockchain[-1]

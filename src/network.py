@@ -21,6 +21,9 @@ peers = []
 pending_coin_transactions = []
 pending_proof_transactions = []
 
+partial_block_proof_transactions = []
+partial_block_coin_transactions = []
+
 config = None
 
 blockchain = None
