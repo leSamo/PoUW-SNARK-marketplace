@@ -327,7 +327,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
             print(f"  {util.Color.YELLOW}request-proof <circuit hash> <parameters>{util.Color.RESET} -- request a proof to be generated")
             print(f"  {util.Color.YELLOW}📝 produce-proof <proof index>{util.Color.RESET} -- manually produce a proof and include it in partial block")
-            print(f"  {util.Color.YELLOW}📝 confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
+            print(f"  {util.Color.YELLOW}confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
             print(f"  {util.Color.YELLOW}partial{util.Color.RESET} -- print information about currently produced partial block")
             print(f"  {util.Color.YELLOW}📝 produce-block{util.Color.RESET} -- finish and broadcast current block")
             print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
@@ -425,6 +425,23 @@ def main(argv):
             if proof_index >= len(network.pending_proof_transactions):
                 util.eprint("Proof transaction index out of bounds")
                 continue
+
+            tx = network.pending_proof_transactions[proof_index]
+
+            if tx.get_id() in [t.get_id() for t in network.partial_block_proof_transactions]:
+                util.eprint("The proof transaction is already confirmed in the current partial block")
+                continue
+            else:
+                if tx.verify_transaction():
+                    proof = Zokrates.generate_proof(tx.get_circuit_hash(), tx.get_parameters())
+                    # TODO: tx.set_proof() ???
+                    # TODO: Recalc hash???
+                    network.partial_block_proof_transactions.append(tx)
+                    util.iprint("Successfully included the proof transaction")
+                else:
+                    util.eprint("The proof transaction is invalid")
+                    continue
+
 
             # Zokrates.produce_proof and remember it in current partial block
 

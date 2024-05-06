@@ -21,7 +21,7 @@ class CoinTransaction(Encodeable):
     def __init__(self):
         pass
 
-    def setup(self, address_from, address_to, amount):
+    def setup(self, address_from : bytes, address_to : bytes, amount : int) -> None:
         util.validate_address(address_from)
         util.validate_address(address_to)
 
@@ -36,14 +36,14 @@ class CoinTransaction(Encodeable):
 
         self.check_validity()
 
-    def check_validity(self):
+    def check_validity(self) -> None:
         if self.__amount <= 0:
             raise ValueError("Transaction amount has to be positive")
 
         if self.__address_from == self.__address_to:
             raise ValueError("Sender and receiver addresses cannot be the same")
 
-    def hash(self):
+    def hash(self) -> bytes:
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount)]).encode()
         return hashlib.sha256(serialized_tx).digest()
 
@@ -62,7 +62,7 @@ class CoinTransaction(Encodeable):
 
         return True
 
-    def is_signed(self):
+    def is_signed(self) -> bool:
         return self.__signature is not None
 
     # TODO: Check signature
@@ -79,7 +79,7 @@ class CoinTransaction(Encodeable):
     def get_amount(self) -> int:
         return self.__amount
 
-    def encode(self):
+    def encode(self) -> dict:
         if not self.is_signed(): raise ValueError("Cannot encode an unsigned transaction");
 
         return {
@@ -90,7 +90,7 @@ class CoinTransaction(Encodeable):
             'signature': self.__signature.hex()
         }
 
-    def decode(self, obj):
+    def decode(self, obj : dict) -> None:
         # TODO: Validate
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from =  bytes.fromhex(obj['address_from'])

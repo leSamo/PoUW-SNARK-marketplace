@@ -60,3 +60,7 @@ def get_current_time():
 def validate_address(address):
     if type(address) != bytes: raise TypeError("Invalid address type, only address of bytes type is permitted")
     if len(address) != 33: raise ValueError("Invalid address size, expected length of 33 bytes")
+
+def validate_hash(hash):
+    if type(hash) != bytes: raise TypeError("Invalid hash type, only hash of bytes type is permitted")
+    if len(hash) != 32: raise ValueError("Invalid hash size, expected length of 32 bytes")

@@ -18,10 +18,13 @@ class ProofTransaction(Encodeable):
     __parameters: str
     __signature: bytes      # SECP256k1 signature (64 bytes)
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def setup(self, address_from, circuit_hash, parameters):
+    def setup(self, address_from, circuit_hash, parameters) -> None:
+        util.validate_address(address_from)
+        util.validate_hash(circuit_hash)
+
         timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), circuit_hash.hex(), parameters]).encode()
 
@@ -38,7 +41,7 @@ class ProofTransaction(Encodeable):
         # TODO: check if proof is valid JSON
         pass
 
-    def hash(self):
+    def hash(self) -> bytes:
         if self.__proof is None:
             serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
         else:
@@ -46,10 +49,10 @@ class ProofTransaction(Encodeable):
 
         return hashlib.sha256(serialized_tx).digest()
 
-    def sign(self, private_key):
+    def sign(self, private_key) -> None:
         self.__signature = private_key.sign(self.hash())
 
-    def verify_transaction(self, public_key):
+    def verify_transaction(self, public_key) -> bool:
         self.check_validity()
 
         if not public_key.verify(self.__signature, self.hash()):
@@ -57,7 +60,7 @@ class ProofTransaction(Encodeable):
 
         return True
 
-    def is_signed(self):
+    def is_signed(self) -> bool:
         return self.__signature is not None
 
     # TODO: Check signature
@@ -65,7 +68,13 @@ class ProofTransaction(Encodeable):
     def get_id(self) -> int:
         return self.__amount
 
-    def encode(self):
+    def get_circuit_hash(self) -> bytes:
+        return self.__circuit_hash
+
+    def get_parameters(self) -> str:
+        return self.__parameters
+
+    def encode(self) -> dict:
         return {
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
@@ -75,7 +84,7 @@ class ProofTransaction(Encodeable):
             'signature': self.__signature.hex()
         }
 
-    def decode(self, obj):
+    def decode(self, obj : dict) -> None:
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from = bytes.fromhex(obj['address_from'])
         self.__proof =  bytes.fromhex(obj['proof'])

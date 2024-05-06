@@ -14,7 +14,7 @@ ZOKRATES_EXPECTED_VERSION = "0.8.8"
 
 class Zokrates:
     @staticmethod
-    def check_version():
+    def check_version() -> None:
         try:
             process = subprocess.Popen(['zokrates', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -36,9 +36,9 @@ class Zokrates:
             util.eprint("Failed to detect Zokrates version:", e)
 
     @staticmethod
-    def get_constraint_count(filename):
+    def get_constraint_count(filename : str) -> int:
         """
-        Run command "zokrates inspect -i <filename>", returns the number of constraints
+        Run command "zokrates inspect -i <filename>" and return the number of constraints
         if successful or raises an Exception on command failure
         """
         process = subprocess.Popen(['zokrates', 'inspect', '-i', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -52,14 +52,14 @@ class Zokrates:
 
             return constraint_count
         else:
-            raise Exception("Failed to extract constraint count from ", filename)
+            raise Exception("Failed to extract constraint count from", filename)
 
     @staticmethod
-    def verify_proof(filename):
+    def verify_proof() -> bool:
         # TODO
         pass
 
     @staticmethod
-    def generate_proof(filename):
+    def generate_proof(circuit_hash : bytes, parameters : str) -> bytes:
         # TODO
         pass
