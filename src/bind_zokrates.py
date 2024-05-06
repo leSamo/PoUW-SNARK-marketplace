@@ -38,11 +38,11 @@ class Zokrates:
     @staticmethod
     def get_constraint_count(filename):
         """
-        Run command "zokrates inspect -i <filename>", returns the number of constraints 
+        Run command "zokrates inspect -i <filename>", returns the number of constraints
         if successful or raises an Exception on command failure
         """
         process = subprocess.Popen(['zokrates', 'inspect', '-i', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+
         return_code = process.wait()
         stdout, stderr = process.communicate()
 
@@ -63,4 +63,3 @@ class Zokrates:
     def generate_proof(filename):
         # TODO
         pass
-    

@@ -48,7 +48,7 @@ class Peer(Encodeable):
 
     def to_tuple(self):
         return (self.__ip_address, self.__port)
-    
+
     def to_string(self):
         return f"{self.__ip_address}:{str(self.__port)}"
 
@@ -59,7 +59,7 @@ class Peer(Encodeable):
             'reputation': self.__reputation,
             'is_blacklisted': self.__is_blacklisted
         }
-    
+
     def decode(self, obj):
         self.__ip_address = obj['ip_address']
         self.__port = obj['port']

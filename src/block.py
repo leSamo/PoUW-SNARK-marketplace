@@ -25,7 +25,7 @@ class Block(Encodeable):
             'header': self.__header.encode(),
             'body': self.__body.encode()
         }
-    
+
     def decode(self, obj):
         header = BlockHeader()
         body = BlockBody()
@@ -38,19 +38,19 @@ class Block(Encodeable):
 
     def get_id(self):
         return self.__header.get_id()
-    
+
     def get_timestamp(self):
         return self.__header.get_timestamp()
-    
+
     def get_difficulty(self):
         return self.__header.get_difficulty()
-    
+
     def get_previous_block_hash(self):
         return self.__header.get_previous_block_hash()
-    
+
     def get_current_block_hash(self):
         return self.__header.get_current_block_hash()
-    
+
     def verify_hash(self) -> bool:
         return self.__header.verify_hash()
 

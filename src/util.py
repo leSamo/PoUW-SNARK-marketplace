@@ -19,7 +19,7 @@ class Color:
     BOLD = '\033[1m'
     RESET = '\033[0m'
 
-def vprint(*args, **kwargs):    
+def vprint(*args, **kwargs):
     """ Print with verbose priority """
     if verbose_logging:
         print(f"{Color.PURPLE}VERBOSE:{Color.RESET}", *args, file=sys.stdout, **kwargs)

@@ -65,7 +65,7 @@ def test_verbose():
     stdout, _ = process.communicate()
 
     assert process.returncode == 0
-    assert 'VERBOSE:' not in stdout.decode()    
+    assert 'VERBOSE:' not in stdout.decode()
 
 def test_port():
     process = subprocess.Popen(f'python {client_program} -v -p 6464', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -165,7 +165,7 @@ def test_balance():
     pattern = r"Current balance \(block \d+\): (\d+)"
 
     balances = re.findall(pattern, stdout.decode())
-    
+
     assert int(balances[0]) == 1000
     assert int(balances[1]) == 1000
     assert int(balances[2]) == 0

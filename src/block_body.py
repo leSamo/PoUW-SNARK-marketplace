@@ -30,16 +30,16 @@ class BlockBody(Encodeable):
 
         for tx in self.__coin_txs:
             tx_hashes.append(tx.hash().decode())
-        
+
         serialized_txs = ("|").join(tx_hashes).encode()
         return hashlib.sha256(serialized_txs).digest()
-    
+
     def hash_proof_txs(self):
         tx_hashes = []
 
         for tx in self.__proof_txs:
             tx_hashes.append(tx.hash().decode())
-        
+
         serialized_txs = ("|").join(tx_hashes).encode()
         return hashlib.sha256(serialized_txs).digest()
 
@@ -52,7 +52,7 @@ class BlockBody(Encodeable):
             'proof_txs': [tx.encode() for tx in self.__coin_txs],
             'state_tree': self.__state_tree.encode()
         }
-    
+
     def decode(self, obj):
         coin_transactions = []
         proof_transactions = []

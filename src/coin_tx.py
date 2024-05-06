@@ -14,7 +14,7 @@ import ecdsa
 class CoinTransaction(Encodeable):
     __id: bytes           # SHA256 hash (32 bytes)
     __address_from: bytes # SECP256k1 public key in SEC1 format (33 bytes)
-    __address_to: bytes   # SECP256k1 public key in SEC1 format (33 bytes) 
+    __address_to: bytes   # SECP256k1 public key in SEC1 format (33 bytes)
     __amount: int
     __signature: bytes    # SECP256k1 signature (64 bytes)
 
@@ -24,7 +24,7 @@ class CoinTransaction(Encodeable):
     def setup(self, address_from, address_to, amount):
         util.validate_address(address_from)
         util.validate_address(address_to)
-    
+
         timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), address_to.hex(), str(amount)]).encode()
 
@@ -39,7 +39,7 @@ class CoinTransaction(Encodeable):
     def check_validity(self):
         if self.__amount <= 0:
             raise ValueError("Transaction amount has to be positive")
-        
+
         if self.__address_from == self.__address_to:
             raise ValueError("Sender and receiver addresses cannot be the same")
 
@@ -56,29 +56,29 @@ class CoinTransaction(Encodeable):
 
     def verify_transaction(self, public_key : bytes) -> bool:
         self.check_validity()
-        
+
         if not ecdsa.VerifyingKey.from_string(public_key, curve=ecdsa.SECP256k1).verify(self.__signature, self.hash()):
             return False
-        
+
         return True
 
     def is_signed(self):
         return self.__signature is not None
-    
+
     # TODO: Check signature
 
     def get_id(self) -> int:
         return self.__amount
-    
+
     def get_address_from(self) -> bytes:
         return self.__address_from
-    
+
     def get_address_to(self) -> bytes:
         return self.__address_to
-    
+
     def get_amount(self) -> int:
         return self.__amount
-    
+
     def encode(self):
         if not self.is_signed(): raise ValueError("Cannot encode an unsigned transaction");
 
@@ -89,7 +89,7 @@ class CoinTransaction(Encodeable):
             'amount': self.__amount,
             'signature': self.__signature.hex()
         }
-    
+
     def decode(self, obj):
         # TODO: Validate
         self.__id = bytes.fromhex(obj['id'])

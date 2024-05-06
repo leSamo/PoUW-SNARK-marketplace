@@ -45,26 +45,26 @@ class ProofTransaction(Encodeable):
             serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
 
         return hashlib.sha256(serialized_tx).digest()
-    
+
     def sign(self, private_key):
         self.__signature = private_key.sign(self.hash())
-    
+
     def verify_transaction(self, public_key):
         self.check_validity()
-        
+
         if not public_key.verify(self.__signature, self.hash()):
             return False
-        
+
         return True
 
     def is_signed(self):
         return self.__signature is not None
-    
+
     # TODO: Check signature
-    
+
     def get_id(self) -> int:
         return self.__amount
-    
+
     def encode(self):
         return {
             'id': self.__id.hex(),
@@ -74,7 +74,7 @@ class ProofTransaction(Encodeable):
             'parameters': self.__parameters,
             'signature': self.__signature.hex()
         }
-    
+
     def decode(self, obj):
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from = bytes.fromhex(obj['address_from'])

@@ -83,7 +83,7 @@ def accept_peers(received_peers : list[Peer]):
             if len(peers) >= config['max_peer_count']:
                 return
 
-            send_message(peerObj.to_tuple(), util.Command.GET_PEERS)      
+            send_message(peerObj.to_tuple(), util.Command.GET_PEERS)
 
 def send_message(receiver, command, message = {}):
     try:
@@ -187,7 +187,7 @@ def verify_block(previous_block : Block, block : Block) -> bool:
                 # difficulty threshold verification
             # state tree verification
                 # check if state tree hash matches
-                   
+
         return True
     except Exception:
         return False

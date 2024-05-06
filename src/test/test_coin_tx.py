@@ -69,7 +69,7 @@ def test_invalid_addresses():
             "222222222222222222222222222222222222222222222222222222222222222222",
             50
         )
-    
+
     with pytest.raises(TypeError):
         tx = CoinTransaction()
         tx.setup(

@@ -13,4 +13,4 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from bind_zokrates import Zokrates
 
 def test_get_constraint_count():
-    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), "misc/out")) == 2    
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), "misc/out")) == 2

@@ -49,7 +49,7 @@ def test_retrieve_missing():
     st.set(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"), 123)
     value = st.get(bytes.fromhex("4568b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f123"))
 
-    assert value == 0    
+    assert value == 0
 
 def test_retrieve_invalid_key_type():
     with pytest.raises(TypeError):
@@ -90,7 +90,7 @@ def test_encode_decode():
     st1.set(bytes.fromhex("4568b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f123"), 456)
 
     encoded = st1.encode()
-    
+
     st2 = StateTree()
     st2.decode(encoded)
     value1 = st2.get(bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"))
