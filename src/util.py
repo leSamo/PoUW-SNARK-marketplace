@@ -6,7 +6,9 @@
 # ####################################################################################################
 
 import sys
+import os
 import time
+import hashlib
 
 verbose_logging = False
 
@@ -64,3 +66,20 @@ def validate_address(address):
 def validate_hash(hash):
     if type(hash) != bytes: raise TypeError("Invalid hash type, only hash of bytes type is permitted")
     if len(hash) != 32: raise ValueError("Invalid hash size, expected length of 32 bytes")
+
+def find_files_with_extension(folder, extension):
+    result = []
+    for file in os.listdir(folder):
+        if file.endswith(extension):
+            result.append(file)
+
+    return result
+
+def get_file_hash(filename : str) -> str:
+    hasher = hashlib.new('sha256')
+
+    with open(filename, 'rb') as file:
+        for chunk in iter(lambda: file.read(4096), b''):
+            hasher.update(chunk)
+
+    return hasher.hexdigest()

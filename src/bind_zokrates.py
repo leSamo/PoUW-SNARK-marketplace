@@ -7,12 +7,57 @@
 
 import subprocess
 import re
+import os
 
 import util
 
 ZOKRATES_EXPECTED_VERSION = "0.8.8"
+CIRCUIT_PATH = "circuit/"
+ZOKRATES_EXTENSION = ".zok"
 
 class Zokrates:
+    @staticmethod
+    def prepare_circuits() -> dict:
+        util.vprint("Circuits: Detecting circuits...")
+
+        result = {}
+
+        for root, dirs, _ in os.walk(CIRCUIT_PATH):
+            for directory in dirs:
+                subfolder = os.path.join(root, directory)
+
+                zokrates_files = util.find_files_with_extension(subfolder, ZOKRATES_EXTENSION)
+
+                if len(zokrates_files) == 0:
+                    util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found zero, ignoring directory")
+                    continue
+                elif len(zokrates_files) > 1:
+                    util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found multiple, ignoring directory")
+                    continue
+
+                process = subprocess.Popen(['zokrates', 'compile', '--input', zokrates_files[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                return_code = process.wait()
+
+                # TODO: skip if exists
+                if return_code != 0:
+                    util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
+                    continue
+
+                file_hash : str = util.get_file_hash(zokrates_files[0])
+                #constraint_count = Zokrates.get_constraint_count(os.path.join(subfolder, 'out'))
+
+                # TODO: skip if exists
+                process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                if return_code != 0:
+                    util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
+                    continue
+
+                result[file_hash] = os.path.join(subfolder, 'out')
+
+        return result
+
     @staticmethod
     def check_version() -> None:
         try:

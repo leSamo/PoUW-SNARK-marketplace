@@ -291,8 +291,10 @@ def main(argv):
     block_sync_thread = threading.Thread(target=start_blockchain_sync)
     block_sync_thread.start()
 
-    pending_tx_sync_thred = threading.Thread(target=start_pending_tx_sync)
-    pending_tx_sync_thred.start()
+    pending_tx_sync_thread = threading.Thread(target=start_pending_tx_sync)
+    pending_tx_sync_thread.start()
+
+    circuits = Zokrates.prepare_circuits()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
@@ -626,7 +628,7 @@ def main(argv):
 
     server_thread.join()
     block_sync_thread.join()
-    pending_tx_sync_thred.join()
+    pending_tx_sync_thread.join()
 
     util.vprint("Successfully terminated main thread")
 
