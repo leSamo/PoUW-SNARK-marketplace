@@ -207,4 +207,22 @@ def test_not_auth():
     assert "Successfully created and broadcasted coin transaction" in stdout.decode()
 
 def test_auth():
-    pass
+    process = subprocess.Popen(f'python {client_program} -p 2222', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    process.stdin.write(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n".encode())
+    process.stdin.flush()
+
+    stdout, _ = process.communicate()
+
+    assert "Private key file was not provided, running in anonymous mode" in stdout.decode()
+
+    assert "Private key file loaded successfully" in stdout.decode()
+    assert "Your address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2" in stdout.decode()
+
+def test_partial_block():
+    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50; confirm-coin-tx 0; partial; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    process.wait()
+    stdout, _ = process.communicate()
+
+    assert "Confirmed coin transactions (1)" in stdout.decode()
