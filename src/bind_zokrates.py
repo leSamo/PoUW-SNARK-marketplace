@@ -2,7 +2,7 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️❌❌❌
+# ✔️✔️✔️❌❌
 # ####################################################################################################
 
 import subprocess
@@ -12,8 +12,7 @@ import os
 import util
 
 ZOKRATES_EXPECTED_VERSION = "0.8.8"
-CIRCUIT_PATH = "circuit/"
-ZOKRATES_EXTENSION = ".zok"
+CIRCUIT_PATH = os.path.join(os.path.dirname(__file__), "circuit/")
 
 class Zokrates:
     @staticmethod
@@ -26,7 +25,7 @@ class Zokrates:
             for directory in dirs:
                 subfolder = os.path.join(root, directory)
 
-                zokrates_files = util.find_files_with_extension(subfolder, ZOKRATES_EXTENSION)
+                zokrates_files = util.find_files_with_extension(subfolder, ".zok")
 
                 if len(zokrates_files) == 0:
                     util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found zero, ignoring directory")
@@ -35,28 +34,39 @@ class Zokrates:
                     util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found multiple, ignoring directory")
                     continue
 
-                process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_files[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                zokrates_filepath = os.path.join(subfolder, zokrates_files[0])
+                circuit_filepath = os.path.join(subfolder, "out")
+                r1cs_filepath = os.path.join(subfolder, "out.r1cs")
+                abi_filepath = os.path.join(subfolder, "abi.json")
+                proving_key_filepath = os.path.join(subfolder, "proving.key")
+                verification_key_filepath = os.path.join(subfolder, "verification.key")
 
-                return_code = process.wait()
+                if os.path.exists(circuit_filepath):
+                    util.vprint("Circuits: Using cached compiled circuit")
+                else:
+                    process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_filepath, '-o', circuit_filepath, '-r', r1cs_filepath, '-s', abi_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                # TODO: skip if exists
-                if return_code != 0:
-                    util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
-                    continue
+                    return_code = process.wait()
 
-                file_hash : str = util.get_file_hash(zokrates_files[0])
+                    if return_code != 0:
+                        util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
+                        continue
+
+                file_hash : str = util.get_file_hash(zokrates_filepath)
                 #constraint_count = Zokrates.get_constraint_count(os.path.join(subfolder, 'out'))
 
-                # TODO: skip if exists
-                process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if os.path.exists(proving_key_filepath) and os.path.exists(verification_key_filepath):
+                    util.vprint("Circuits: Using cached keys")
+                else:
+                    process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash, '-i', circuit_filepath, '-p', proving_key_filepath, '-v', verification_key_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                return_code = process.wait()
+                    return_code = process.wait()
 
-                if return_code != 0:
-                    util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
-                    continue
+                    if return_code != 0:
+                        util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
+                        continue
 
-                result[file_hash] = os.path.join(subfolder, 'out')
+                result[file_hash] = subfolder
 
         return result
 
@@ -107,21 +117,42 @@ class Zokrates:
         pass
 
     @staticmethod
-    def generate_proof(circuit_path : str, parameters : str) -> bytes:
-        process = subprocess.Popen(['zokrates', 'compute-witness', '-i', circuit_path, '-a', parameters], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def generate_proof(circuit_folder : str, parameters : str) -> str:
+        circuit_filepath = os.path.join(circuit_folder, "out")
+        abi_filepath = os.path.join(circuit_folder, "abi.json")
+        proving_key_filepath = os.path.join(circuit_folder, "proving.key")
+        witness_filepath = os.path.join(circuit_folder, "witness")
+        circom_witness_filepath = os.path.join(circuit_folder, "out.wtns")
+        proof_filepath = os.path.join(circuit_folder, "proof.json")
+
+        process = subprocess.Popen(['zokrates', 'compute-witness', '-i', circuit_filepath, '-s', abi_filepath, '-o', witness_filepath, '--circom-witness', circom_witness_filepath, '-a', *parameters.split(" ")], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return_code = process.wait()
 
         if return_code != 0:
-            util.wprint(f"Circuits: Failed to compute-witness for circuit {circuit_path}")
-            raise Exception("Failed to generate proof")
+            util.wprint(f"Circuits: Failed to compute-witness for circuit {circuit_folder}")
+            raise Exception("Failed to compute witness")
 
-        process = subprocess.Popen(['zokrates', 'generate-proof', '-i', circuit_path, '-p', '???', '-w', '???'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['zokrates', 'generate-proof', '-i', circuit_filepath, '-p', proving_key_filepath, '-w', witness_filepath, '-j', proof_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return_code = process.wait()
 
         if return_code != 0:
-            util.wprint(f"Circuits: Failed to generate-proof for circuit {circuit_path}")
+            util.wprint(f"Circuits: Failed to generate-proof for circuit {circuit_folder}")
             raise Exception("Failed to generate proof")
 
-        # return proof
+        proof = None
+
+        with open(proof_filepath, "r") as proof_file:
+            proof = proof_file.read()
+
+        if os.path.exists(witness_filepath):
+            os.remove(witness_filepath)
+
+        if os.path.exists(circom_witness_filepath):
+            os.remove(circom_witness_filepath)
+
+        if os.path.exists(proof_filepath):
+            os.remove(proof_filepath)
+
+        return proof

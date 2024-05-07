@@ -13,7 +13,7 @@ import util
 class ProofTransaction(Encodeable):
     __id: bytes             # SHA256 hash (32 bytes)
     __address_from: bytes   # SECP256k1 public key in SEC1 format (33 bytes)
-    __proof: bytes          # encoded JSON
+    __proof: str            # encoded JSON
     __circuit_hash: bytes   # SHA256 hash (32 bytes)
     __parameters: str
     __signature: bytes      # SECP256k1 signature (64 bytes)
@@ -45,7 +45,7 @@ class ProofTransaction(Encodeable):
         if self.__proof is None:
             serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
         else:
-            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
+            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof, self.__circuit_hash.hex(), self.__parameters]).encode()
 
         return hashlib.sha256(serialized_tx).digest()
 
@@ -87,13 +87,13 @@ class ProofTransaction(Encodeable):
     def decode(self, obj : dict) -> None:
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from = bytes.fromhex(obj['address_from'])
-        self.__proof =  bytes.fromhex(obj['proof'])
+        self.__proof = obj['proof']
         self.__circuit_hash = bytes.fromhex(obj['circuit_hash'])
         self.__parameters = obj['parameters']
         self.__signature = bytes.fromhex(obj['signature'])
 
     def __str__(self) -> str:
         if self.__proof is None:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}…: {self.__circuit_hash.hex()[0:6]}… --({self.__parameters})--> {util.Color.RED}unproven{util.Color.RESET}"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… ({util.Color.RED}unproven{util.Color.RESET})"
         else:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}…: {self.__circuit_hash.hex()[0:6]}… --({self.__parameters})--> {self.__proof.hex()[0:6]}…"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… ({util.Color.GREEN}proven{util.Color.RESET})"

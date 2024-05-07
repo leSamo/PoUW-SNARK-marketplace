@@ -1,3 +1,4 @@
 __pycache__/
-temp/
 .pytest_cache/
+src/circuit/*/*
+!src/circuit/*/*.zok
