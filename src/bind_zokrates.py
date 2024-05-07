@@ -22,50 +22,50 @@ class Zokrates:
         result = {}
 
         for directory in os.listdir(CIRCUIT_PATH):
-                subfolder = os.path.join(CIRCUIT_PATH, directory)
+            subfolder = os.path.join(CIRCUIT_PATH, directory)
 
-                zokrates_files = util.find_files_with_extension(subfolder, ".zok")
+            zokrates_files = util.find_files_with_extension(subfolder, ".zok")
 
-                if len(zokrates_files) == 0:
-                    util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found zero, ignoring directory")
+            if len(zokrates_files) == 0:
+                util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found zero, ignoring directory")
+                continue
+            elif len(zokrates_files) > 1:
+                util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found multiple, ignoring directory")
+                continue
+
+            zokrates_filepath = os.path.join(subfolder, zokrates_files[0])
+            circuit_filepath = os.path.join(subfolder, "out")
+            r1cs_filepath = os.path.join(subfolder, "out.r1cs")
+            abi_filepath = os.path.join(subfolder, "abi.json")
+            proving_key_filepath = os.path.join(subfolder, "proving.key")
+            verification_key_filepath = os.path.join(subfolder, "verification.key")
+
+            if os.path.exists(circuit_filepath):
+                util.vprint("Circuits: Using cached compiled circuit")
+            else:
+                process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_filepath, '-o', circuit_filepath, '-r', r1cs_filepath, '-s', abi_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                return_code = process.wait()
+
+                if return_code != 0:
+                    util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
                     continue
-                elif len(zokrates_files) > 1:
-                    util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found multiple, ignoring directory")
+
+            file_hash : str = util.get_file_hash(zokrates_filepath)
+            #constraint_count = Zokrates.get_constraint_count(os.path.join(subfolder, 'out'))
+
+            if os.path.exists(proving_key_filepath) and os.path.exists(verification_key_filepath):
+                util.vprint("Circuits: Using cached keys")
+            else:
+                process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash, '-i', circuit_filepath, '-p', proving_key_filepath, '-v', verification_key_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                return_code = process.wait()
+
+                if return_code != 0:
+                    util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
                     continue
 
-                zokrates_filepath = os.path.join(subfolder, zokrates_files[0])
-                circuit_filepath = os.path.join(subfolder, "out")
-                r1cs_filepath = os.path.join(subfolder, "out.r1cs")
-                abi_filepath = os.path.join(subfolder, "abi.json")
-                proving_key_filepath = os.path.join(subfolder, "proving.key")
-                verification_key_filepath = os.path.join(subfolder, "verification.key")
-
-                if os.path.exists(circuit_filepath):
-                    util.vprint("Circuits: Using cached compiled circuit")
-                else:
-                    process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_filepath, '-o', circuit_filepath, '-r', r1cs_filepath, '-s', abi_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                    return_code = process.wait()
-
-                    if return_code != 0:
-                        util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
-                        continue
-
-                file_hash : str = util.get_file_hash(zokrates_filepath)
-                #constraint_count = Zokrates.get_constraint_count(os.path.join(subfolder, 'out'))
-
-                if os.path.exists(proving_key_filepath) and os.path.exists(verification_key_filepath):
-                    util.vprint("Circuits: Using cached keys")
-                else:
-                    process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash, '-i', circuit_filepath, '-p', proving_key_filepath, '-v', verification_key_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                    return_code = process.wait()
-
-                    if return_code != 0:
-                        util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
-                        continue
-
-                result[file_hash] = subfolder
+            result[file_hash] = subfolder
 
         return result
 
@@ -134,16 +134,14 @@ class Zokrates:
         return_code = process.wait()
 
         if return_code != 0:
-            util.wprint(f"Circuits: Failed to compute-witness for circuit {circuit_folder}")
-            raise Exception("Failed to compute witness")
+            raise Exception(f"Failed to compute witness for circuit {circuit_folder}")
 
         process = subprocess.Popen(['zokrates', 'generate-proof', '-i', circuit_filepath, '-p', proving_key_filepath, '-w', witness_filepath, '-j', proof_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return_code = process.wait()
 
         if return_code != 0:
-            util.wprint(f"Circuits: Failed to generate-proof for circuit {circuit_folder}")
-            raise Exception("Failed to generate proof")
+            raise Exception(f"Failed to generate proof for circuit {circuit_folder}")
 
         proof = None
 
