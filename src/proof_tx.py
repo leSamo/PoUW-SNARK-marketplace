@@ -16,12 +16,14 @@ class ProofTransaction(Encodeable):
     __proof: str            # encoded JSON
     __circuit_hash: bytes   # SHA256 hash (32 bytes)
     __parameters: str
+    __complexity: int       # number of constraints
     __signature: bytes      # SECP256k1 signature (64 bytes)
 
     def __init__(self) -> None:
         pass
 
-    def setup(self, address_from, circuit_hash, parameters) -> None:
+    # TODO: Check if complexity is positive integer
+    def setup(self, address_from, circuit_hash, parameters, complexity) -> None:
         util.validate_address(address_from)
         util.validate_hash(circuit_hash)
 
@@ -33,6 +35,7 @@ class ProofTransaction(Encodeable):
         self.__proof = None
         self.__circuit_hash = circuit_hash
         self.__parameters = parameters
+        self.__complexity = complexity
         self.__signature = None
 
         self.check_validity()
@@ -43,9 +46,9 @@ class ProofTransaction(Encodeable):
 
     def hash(self) -> bytes:
         if self.__proof is None:
-            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters]).encode()
+            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
         else:
-            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof, self.__circuit_hash.hex(), self.__parameters]).encode()
+            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof, self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
 
         return hashlib.sha256(serialized_tx).digest()
 
@@ -74,13 +77,18 @@ class ProofTransaction(Encodeable):
     def get_parameters(self) -> str:
         return self.__parameters
 
+    def get_complexity(self) -> int:
+        return self.__complexity
+
     def encode(self) -> dict:
         return {
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
             'proof': self.__proof.hex() if self.__proof is not None else '',
+            'proof': self.__proof.hex() if self.__proof is not None else '',
             'circuit_hash': self.__circuit_hash.hex(),
             'parameters': self.__parameters,
+            'complexity': self.__complexity,
             'signature': self.__signature.hex()
         }
 
@@ -90,10 +98,11 @@ class ProofTransaction(Encodeable):
         self.__proof = obj['proof']
         self.__circuit_hash = bytes.fromhex(obj['circuit_hash'])
         self.__parameters = obj['parameters']
+        self.__complexity = obj['complexity']
         self.__signature = bytes.fromhex(obj['signature'])
 
     def __str__(self) -> str:
         if self.__proof is None:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… ({util.Color.RED}unproven{util.Color.RESET})"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.RED}unproven{util.Color.RESET})"
         else:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… ({util.Color.GREEN}proven{util.Color.RESET})"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.GREEN}proven{util.Color.RESET})"

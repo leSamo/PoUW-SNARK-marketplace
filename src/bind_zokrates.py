@@ -2,7 +2,7 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️✔️❌❌
+# ✔️✔️✔️✔️❌
 # ####################################################################################################
 
 import subprocess
@@ -112,8 +112,13 @@ class Zokrates:
             raise Exception("Failed to extract constraint count from", filename)
 
     @staticmethod
-    def verify_proof() -> bool:
-        # TODO
+    def verify_proof(circuit_folder : str, proof : str, expected_complexity : int) -> bool:
+        # TODO:
+        #   1. Write proof to a temp file
+        #   2. Verify proof
+        #   3. Get constraint count
+        #   4. Verify constraint count
+        #   5. Delete temp proof file
         pass
 
     @staticmethod

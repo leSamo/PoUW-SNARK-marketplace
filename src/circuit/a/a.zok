@@ -1,3 +1,9 @@
+/*
+    Proof a knowledge of two secret factors which make up public product.
+
+    Number of constraints: 2
+*/
+
 def main(private field factor1, private field factor2, public field product) -> bool {
     assert (factor1 * factor2 == product);
     return true;

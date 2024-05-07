@@ -1,10 +1,13 @@
-def main(private u32 a) -> bool {
-    u32 mut b = a;
 
-    for u32 i in 0..5 {
-        b = if b % 2 == 0 { b / 2 } else { b * 3 + 1 };
-        assert (b != 1);
-    }
+/*
+    Prove a knowledge of number which equals to 16 when squared.
 
-    return true;
+    Number of constraints: 54
+*/
+
+def main(private u16 x) -> bool {
+    u16 x_squared = x * x;
+    u16 target = 16;
+
+    return x_squared == target;
 }
