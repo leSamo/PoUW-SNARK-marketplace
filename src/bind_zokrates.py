@@ -21,9 +21,8 @@ class Zokrates:
 
         result = {}
 
-        for root, dirs, _ in os.walk(CIRCUIT_PATH):
-            for directory in dirs:
-                subfolder = os.path.join(root, directory)
+        for directory in os.listdir(CIRCUIT_PATH):
+                subfolder = os.path.join(CIRCUIT_PATH, directory)
 
                 zokrates_files = util.find_files_with_extension(subfolder, ".zok")
 
