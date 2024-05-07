@@ -35,7 +35,7 @@ class Zokrates:
                     util.wprint(f"Circuits: Expected to find a single Zokrates (.zok) file in subfolder {directory}, but found multiple, ignoring directory")
                     continue
 
-                process = subprocess.Popen(['zokrates', 'compile', '--input', zokrates_files[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_files[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 return_code = process.wait()
 
@@ -49,6 +49,8 @@ class Zokrates:
 
                 # TODO: skip if exists
                 process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                return_code = process.wait()
 
                 if return_code != 0:
                     util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
@@ -105,6 +107,21 @@ class Zokrates:
         pass
 
     @staticmethod
-    def generate_proof(circuit_hash : bytes, parameters : str) -> bytes:
-        # TODO
-        pass
+    def generate_proof(circuit_path : str, parameters : str) -> bytes:
+        process = subprocess.Popen(['zokrates', 'compute-witness', '-i', circuit_path, '-a', parameters], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return_code = process.wait()
+
+        if return_code != 0:
+            util.wprint(f"Circuits: Failed to compute-witness for circuit {circuit_path}")
+            raise Exception("Failed to generate proof")
+
+        process = subprocess.Popen(['zokrates', 'generate-proof', '-i', circuit_path, '-p', '???', '-w', '???'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return_code = process.wait()
+
+        if return_code != 0:
+            util.wprint(f"Circuits: Failed to generate-proof for circuit {circuit_path}")
+            raise Exception("Failed to generate proof")
+
+        # return proof
