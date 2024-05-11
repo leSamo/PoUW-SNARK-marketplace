@@ -43,6 +43,7 @@ class Zokrates:
             if os.path.exists(circuit_filepath):
                 util.vprint("Circuits: Using cached compiled circuit")
             else:
+                # TODO: wrap in try-catch
                 process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_filepath, '-o', circuit_filepath, '-r', r1cs_filepath, '-s', abi_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 return_code = process.wait()
@@ -92,12 +93,14 @@ class Zokrates:
             util.eprint("Failed to detect Zokrates version:", e)
 
     @staticmethod
-    def get_constraint_count(filename : str) -> int:
+    def get_constraint_count(circuit_folder : str) -> int:
         """
         Run command "zokrates inspect -i <filename>" and return the number of constraints
         if successful or raises an Exception on command failure
         """
-        process = subprocess.Popen(['zokrates', 'inspect', '-i', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        circuit_filepath = os.path.join(circuit_folder, "out")
+
+        process = subprocess.Popen(['zokrates', 'inspect', '-i', circuit_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return_code = process.wait()
         stdout, stderr = process.communicate()
@@ -108,17 +111,26 @@ class Zokrates:
 
             return constraint_count
         else:
-            raise Exception("Failed to extract constraint count from", filename)
+            raise Exception("Failed to extract constraint count from", circuit_folder)
 
     @staticmethod
-    def verify_proof(circuit_folder : str, proof : str, expected_complexity : int) -> bool:
-        # TODO:
+    def verify_proof(circuit_folder : str, proof : str) -> bool:
         #   1. Write proof to a temp file
+        temp_file = os.path.join(circuit_folder, 'temp')
+
+        with open(temp_file, 'w') as file:
+            file.write(proof)
+
         #   2. Verify proof
-        #   3. Get constraint count
-        #   4. Verify constraint count
-        #   5. Delete temp proof file
-        pass
+        process = subprocess.Popen(['zokrates', 'verify', '-j', temp_file, '-v', os.path.join(circuit_folder, 'verification.key')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        #   3. Delete temp proof file
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+
+        #   4. Return result
+
+        # TODO: Verify proof public parameters
 
     @staticmethod
     def generate_proof(circuit_folder : str, parameters : str) -> str:

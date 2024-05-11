@@ -36,7 +36,9 @@ def cleanup():
             shutil.rmtree(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, folder))
 
 def test_get_constraint_count():
-    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), "misc/out")) == 2
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')) == 2
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'b')) == 54
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'c')) == 760
 
 def test_prepare_circuits():
     for directory in os.listdir(CIRCUIT_PATH):
@@ -106,6 +108,13 @@ def test_prepare_circuits_invalid_zokrates(capsys):
 
 def test_generate_proof():
     proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 4')
+
+def test_verify_proof():
+    proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 4')
+
+    assert Zokrates.verify_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), proof)
+
+    # TODO: assert temp folder and file was deleted
 
 def test_generate_proof_invalid_params():
     with pytest.raises(Exception):
