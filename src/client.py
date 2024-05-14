@@ -338,6 +338,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW}produce-empty{util.Color.RESET} -- produces an empty dummy block and broadcasts it to the network")
             print(f"  {util.Color.YELLOW}auth <private key file>{util.Color.RESET} -- switches from anonymous mode to authenticated mode")
             print(f"  {util.Color.YELLOW}balance [<address>]{util.Color.RESET} -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided")
+            print(f"  {util.Color.YELLOW}logout{util.Color.RESET} -- switches to non-authenticated mode")
             print()
 
         elif command == "verbose on":
@@ -623,6 +624,15 @@ def main(argv):
                 util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
             except e:
                 util.eprint("Failed to load private key file:", e)
+
+        elif command == 'logout':
+            if private_key is None:
+                util.eprint("You are not currently authenticated, therefore you cannot log out")
+                continue
+            else:
+                util.iprint("Successfully logged out")
+
+            private_key = None
 
         else:
             util.eprint(f"Unknown command '{command}'. Type 'help' to see a list of commands.")
