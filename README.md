@@ -25,3 +25,4 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
     -p, --port <port number>       Open the listening socket on a specific port number
     -c, --command <command>        Run semicolon separated list of commands just after client initialization
     -f, --config <config file>     Provide a non-default configuration file
+    -n, --no-color                 Don't print colored text into the terminal

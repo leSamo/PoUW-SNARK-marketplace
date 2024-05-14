@@ -11,32 +11,46 @@ import time
 import hashlib
 
 verbose_logging = False
+enable_colors = True
 
 class Color:
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    PURPLE = '\033[35m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
+    def RED():
+        return '\033[31m' if enable_colors else ''
+
+    def GREEN():
+        return '\033[32m' if enable_colors else ''
+
+    def YELLOW():
+        return '\033[33m' if enable_colors else ''
+
+    def BLUE():
+        return '\033[34m' if enable_colors else ''
+
+    def PURPLE():
+        return '\033[35m' if enable_colors else ''
+
+    def BOLD():
+        return '\033[1m' if enable_colors else ''
+
+    def RESET():
+        return '\033[0m' if enable_colors else ''
 
 def vprint(*args, **kwargs):
     """ Print with verbose priority """
     if verbose_logging:
-        print(f"{Color.PURPLE}VERBOSE:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+        print(f"{Color.PURPLE()}VERBOSE:{Color.RESET()}", *args, file=sys.stdout, **kwargs)
 
 def iprint(*args, **kwargs):
     """ Print with info priority """
-    print(f"{Color.BLUE}INFO:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+    print(f"{Color.BLUE()}INFO:{Color.RESET()}", *args, file=sys.stdout, **kwargs)
 
 def eprint(*args, **kwargs):
     """ Print with error priority """
-    print(f"{Color.RED}ERROR:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+    print(f"{Color.RED()}ERROR:{Color.RESET()}", *args, file=sys.stdout, **kwargs)
 
 def wprint(*args, **kwargs):
     """ Print with warning priority """
-    print(f"{Color.YELLOW}WARN:{Color.RESET}", *args, file=sys.stdout, **kwargs)
+    print(f"{Color.YELLOW()}WARN:{Color.RESET()}", *args, file=sys.stdout, **kwargs)
 
 class Command:
     # request-response commands

@@ -24,7 +24,7 @@ from coin_tx import CoinTransaction
 from proof_tx import ProofTransaction
 from bind_zokrates import Zokrates
 
-USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>]'
+USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>] [-n|--no-color]'
 USAGE_ARGUMENTS = """
     -k, --key <private key file>   Authenticate against an existing private key file
     -v, --verbose                  Show more detailed log messages
@@ -32,6 +32,7 @@ USAGE_ARGUMENTS = """
     -p, --port <port number>       Open the listening socket on a specific port number
     -c, --command <command>        Run semicolon separated list of commands just after client initialization
     -f, --config <config file>     Provide a non-default configuration file
+    -n, --no-color                 Don't print colored text into the terminal
 """
 
 server_running = True
@@ -240,10 +241,8 @@ def generate_key(filename):
 def main(argv):
     global server_running, verbose_logging, private_key
 
-    Zokrates.check_version()
-
     try:
-        opts, args = getopt.getopt(argv, "hvk:p:c:f:", ["help", "verbose", "key=", "port=", "command=", "config="])
+        opts, args = getopt.getopt(argv, "hvk:p:c:f:n", ["help", "verbose", "key=", "port=", "command=", "config=", "no-color"])
     except getopt.GetoptError:
         print(USAGE)
         print(USAGE_ARGUMENTS)
@@ -251,6 +250,10 @@ def main(argv):
 
     cli_commands = []
     config_file = os.path.join(os.path.dirname(__file__), "config.json")
+
+    if ('-n', '') in opts or ('--no-color', '') in opts:
+        util.vprint("Disabled colors in the terminal")
+        util.enable_colors = False
 
     for opt, arg in opts:
         if opt in ['-h', '--help']:
@@ -272,6 +275,8 @@ def main(argv):
             cli_commands = arg.split(";")
         elif opt in ['-f', '--config']:
             config_file = arg
+
+    Zokrates.check_version()
 
     network.setup_config(config_file)
 
@@ -323,22 +328,22 @@ def main(argv):
         elif command == "help":
             # TODO: Autoproduce block
             print()
-            print(f"{util.Color.YELLOW}{util.Color.BOLD}Available commands:{util.Color.RESET}")
-            print(f"  {util.Color.YELLOW}verbose <on|off>{util.Color.RESET} -- toggles verbose logging")
-            print(f"  {util.Color.YELLOW}exit{util.Color.RESET} -- terminates client")
-            print(f"  {util.Color.YELLOW}send <receiver address> <amount>{util.Color.RESET} -- create a coin transaction and submit it to the network")
-            print(f"  {util.Color.YELLOW}request-proof <circuit hash> <parameters>{util.Color.RESET} -- request a proof to be generated")
-            print(f"  {util.Color.YELLOW}📝 produce-proof <proof index>{util.Color.RESET} -- manually produce a proof and include it in partial block")
-            print(f"  {util.Color.YELLOW}confirm-coin-tx <coin tx index>{util.Color.RESET} -- manually confirm a coin transaction and include it in partial block")
-            print(f"  {util.Color.YELLOW}partial{util.Color.RESET} -- print information about currently produced partial block")
-            print(f"  {util.Color.YELLOW}📝 produce-block{util.Color.RESET} -- finish and broadcast current block")
-            print(f"  {util.Color.YELLOW}generate-key <output file>{util.Color.RESET} -- generate SECP256k1 private key and save it in <output file> in PEM format")
-            print(f"  {util.Color.YELLOW}inspect <block id>{util.Color.RESET} -- print information about block with <block id>")
-            print(f"  {util.Color.YELLOW}status{util.Color.RESET} -- print current status of the network")
-            print(f"  {util.Color.YELLOW}produce-empty{util.Color.RESET} -- produces an empty dummy block and broadcasts it to the network")
-            print(f"  {util.Color.YELLOW}auth <private key file>{util.Color.RESET} -- switches from anonymous mode to authenticated mode")
-            print(f"  {util.Color.YELLOW}balance [<address>]{util.Color.RESET} -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided")
-            print(f"  {util.Color.YELLOW}logout{util.Color.RESET} -- switches to non-authenticated mode")
+            print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Available commands:{util.Color.RESET()}")
+            print(f"  {util.Color.YELLOW()}verbose <on|off>{util.Color.RESET()} -- toggles verbose logging")
+            print(f"  {util.Color.YELLOW()}exit{util.Color.RESET()} -- terminates client")
+            print(f"  {util.Color.YELLOW()}send <receiver address> <amount>{util.Color.RESET()} -- create a coin transaction and submit it to the network")
+            print(f"  {util.Color.YELLOW()}request-proof <circuit hash> <parameters>{util.Color.RESET()} -- request a proof to be generated")
+            print(f"  {util.Color.YELLOW()}📝 produce-proof <proof index>{util.Color.RESET()} -- manually produce a proof and include it in partial block")
+            print(f"  {util.Color.YELLOW()}confirm-coin-tx <coin tx index>{util.Color.RESET()} -- manually confirm a coin transaction and include it in partial block")
+            print(f"  {util.Color.YELLOW()}partial{util.Color.RESET()} -- print information about currently produced partial block")
+            print(f"  {util.Color.YELLOW()}📝 produce-block{util.Color.RESET()} -- finish and broadcast current block")
+            print(f"  {util.Color.YELLOW()}generate-key <output file>{util.Color.RESET()} -- generate SECP256k1 private key and save it in <output file> in PEM format")
+            print(f"  {util.Color.YELLOW()}inspect <block id>{util.Color.RESET()} -- print information about block with <block id>")
+            print(f"  {util.Color.YELLOW()}status{util.Color.RESET()} -- print current status of the network")
+            print(f"  {util.Color.YELLOW()}produce-empty{util.Color.RESET()} -- produces an empty dummy block and broadcasts it to the network")
+            print(f"  {util.Color.YELLOW()}auth <private key file>{util.Color.RESET()} -- switches from anonymous mode to authenticated mode")
+            print(f"  {util.Color.YELLOW()}balance [<address>]{util.Color.RESET()} -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided")
+            print(f"  {util.Color.YELLOW()}logout{util.Color.RESET()} -- switches to non-authenticated mode")
             print()
 
         elif command == "verbose on":
@@ -388,23 +393,23 @@ def main(argv):
                 continue
 
             print()
-            print(f"{util.Color.YELLOW}{util.Color.BOLD}Currently produced partial block status:{util.Color.RESET}")
+            print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Currently produced partial block status:{util.Color.RESET()}")
 
             if len(network.partial_block_coin_transactions) == 0 and len(network.partial_block_proof_transactions):
-                print(f"  {util.Color.YELLOW}There is no partical block being produced -- use the 'produce-proof' command to start producing block{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}There is no partical block being produced -- use the 'produce-proof' command to start producing block{util.Color.RESET()}")
             else:
                 if len(network.partial_block_proof_transactions) == 0:
-                    print(f"  {util.Color.YELLOW}No confirmed proof transactions{util.Color.RESET}")
+                    print(f"  {util.Color.YELLOW()}No confirmed proof transactions{util.Color.RESET()}")
                 else:
-                    print(f"  {util.Color.YELLOW}Generated proofs ({len(network.partial_block_proof_transactions)}):{util.Color.RESET}")
+                    print(f"  {util.Color.YELLOW()}Generated proofs ({len(network.partial_block_proof_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_proof_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
                 if len(network.partial_block_coin_transactions) == 0:
-                    print(f"  {util.Color.YELLOW}No confirmed coin transactions{util.Color.RESET}")
+                    print(f"  {util.Color.YELLOW()}No confirmed coin transactions{util.Color.RESET()}")
                 else:
-                    print(f"  {util.Color.YELLOW}Confirmed coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET}")
+                    print(f"  {util.Color.YELLOW()}Confirmed coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_coin_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
@@ -552,41 +557,41 @@ def main(argv):
             assert block.get_id() == current_block_id, "Blocks out of order in 'blockchain' variable"
 
             print()
-            print(f"{util.Color.YELLOW}{util.Color.BOLD}Block {current_block_id}:{util.Color.RESET}")
-            print(f"  {util.Color.YELLOW}Timestamp:{util.Color.RESET}", block.get_timestamp())
-            print(f"  {util.Color.YELLOW}Difficulty:{util.Color.RESET}", block.get_difficulty())
-            print(f"  {util.Color.YELLOW}Current block hash:{util.Color.RESET}", block.get_current_block_hash().hex())
+            print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Block {current_block_id}:{util.Color.RESET()}")
+            print(f"  {util.Color.YELLOW()}Timestamp:{util.Color.RESET()}", block.get_timestamp())
+            print(f"  {util.Color.YELLOW()}Difficulty:{util.Color.RESET()}", block.get_difficulty())
+            print(f"  {util.Color.YELLOW()}Current block hash:{util.Color.RESET()}", block.get_current_block_hash().hex())
             print()
 
         elif command == 'status':
             print()
-            print(f"{util.Color.YELLOW}{util.Color.BOLD}Network status:{util.Color.RESET}")
+            print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Network status:{util.Color.RESET()}")
 
             if len(network.peers) == 0:
-                print(f"  {util.Color.YELLOW}No connected peers{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}No connected peers{util.Color.RESET()}")
             else:
-                print(f"  {util.Color.YELLOW}Connected peers ({len(network.peers)}):{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}Connected peers ({len(network.peers)}):{util.Color.RESET()}")
 
                 for peer in network.peers:
                     print(f"    - {peer.to_string()} (reputation {peer.get_reputation()})")
 
             if len(network.pending_coin_transactions) == 0:
-                print(f"  {util.Color.YELLOW}No pending coin transactions{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}No pending coin transactions{util.Color.RESET()}")
             else:
-                print(f"  {util.Color.YELLOW}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET()}")
 
                 for tx in network.pending_coin_transactions:
                     print(f"    - {tx}")
 
             if len(network.pending_proof_transactions) == 0:
-                print(f"  {util.Color.YELLOW}No pending proof transactions{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}No pending proof transactions{util.Color.RESET()}")
             else:
-                print(f"  {util.Color.YELLOW}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET}")
+                print(f"  {util.Color.YELLOW()}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET()}")
 
                 for tx in network.pending_proof_transactions:
                     print(f"    - {tx}")
 
-            print(f"  {util.Color.YELLOW}Latest block:{util.Color.RESET} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
+            print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
             print()
 
         elif command == 'produce-empty':

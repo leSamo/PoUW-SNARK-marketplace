@@ -103,6 +103,6 @@ class ProofTransaction(Encodeable):
 
     def __str__(self) -> str:
         if self.__proof is None:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.RED}unproven{util.Color.RESET})"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.RED()}unproven{util.Color.RESET()})"
         else:
-            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.GREEN}proven{util.Color.RESET})"
+            return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.GREEN()}proven{util.Color.RESET()})"
