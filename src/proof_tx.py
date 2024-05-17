@@ -22,10 +22,15 @@ class ProofTransaction(Encodeable):
     def __init__(self) -> None:
         pass
 
-    # TODO: Check if complexity is positive integer
     def setup(self, address_from, circuit_hash, parameters, complexity) -> None:
         util.validate_address(address_from)
         util.validate_hash(circuit_hash)
+
+        if type(complexity) != int:
+            raise TypeError("Complexity has to be an integer")
+
+        if complexity <= 0:
+            raise ValueError("Complexity has to be a positive integer")
 
         timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), circuit_hash.hex(), parameters]).encode()

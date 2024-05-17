@@ -121,7 +121,14 @@ def receive_incoming(client_socket, client_address):
         network.accept_peers(message['peers'])
 
     elif message['command'] == util.Command.GET_BLOCK:
-        # TODO: Check if block exists in client's blockchain
+        if type(message['block_id']) != int:
+            util.vprint("Received request for non-int block id")
+            return
+
+        if message['block_id'] >= len(network.blockchain):
+            util.vprint("Received request for block id which is too high")
+            return
+
         util.vprint(f"Sending block {message['block_id']}")
 
         network.send_message((client_address[0], message['port']), util.Command.BLOCK, { 'block': network.blockchain[message['block_id']].encode() })
@@ -159,7 +166,10 @@ def receive_incoming(client_socket, client_address):
         new_block.decode(message['block'])
 
         # TODO: verify block
-        # TODO: reject out of order block
+
+        if new_block.get_id() != network.blockchain[-1].get_id() + 1:
+            util.vprint(f"Received out of order block with id {new_block.get_id()}, expected {network.blockchain[-1].get_id() + 1}")
+            return
 
         network.blockchain.append(new_block)
 
@@ -496,7 +506,8 @@ def main(argv):
             sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
             current_sender_balance = latest_block.get_state_tree().get(sender_address) or 0
 
-            # TODO: Check if valid address
+            util.validate_address(sender_address)
+
             try:
                 receiver_address = bytes.fromhex(command.split(" ")[1])
                 amount = int(command.split(" ")[2])
