@@ -26,7 +26,7 @@ from bind_zokrates import Zokrates
 
 USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>] [-n|--no-color]'
 USAGE_ARGUMENTS = """
-    -k, --key <private key file>   Authenticate against an existing private key file
+    -k, --key <private key file>   Authenticate using an existing private key file
     -v, --verbose                  Show more detailed log messages
     -h, --help                     Print this message
     -p, --port <port number>       Open the listening socket on a specific port number
@@ -533,6 +533,7 @@ def main(argv):
                 continue
 
             if len(command.split(" ")) != 3:
+                # TODO: Quote parameters?
                 util.eprint("Usage: request-proof <circuit hash> <parameters>")
                 continue
 

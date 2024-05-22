@@ -19,7 +19,7 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
 ## Usage
     Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>]
 
-    -k, --key <private key file>   Authenticate against an existing private key file
+    -k, --key <private key file>   Authenticate using an existing private key file
     -v, --verbose                  Show more detailed log messages
     -h, --help                     Print this message
     -p, --port <port number>       Open the listening socket on a specific port number
