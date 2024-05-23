@@ -49,6 +49,8 @@ class Zokrates:
 
             file_hash : str = util.get_file_hash(zokrates_filepath)
 
+            util.vprint(f"Circuits: Registered circuit from '{subfolder}' under hash '{file_hash}'")
+
             result[file_hash] = subfolder
 
         return result

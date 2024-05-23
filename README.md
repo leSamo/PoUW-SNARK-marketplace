@@ -27,18 +27,45 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
     -f, --config <config file>     Provide a non-default configuration file
     -n, --no-color                 Don't print colored text into the terminal
 
-## Limitations and Future Work
-TODO
+## Available Client Commands
+    verbose <on|off> -- toggles verbose logging
+    exit -- terminates client
+    send <receiver address> <amount> -- create a coin transaction and submit it to the network
+    request-proof <circuit hash> <parameters> -- request a proof to be generated
+    select-proof-tx <proof index> -- manually produce a proof and include it in partial block
+    select-coin-tx <coin tx index> -- manually confirm a coin transaction and include it in partial block
+    partial -- print information about currently produced partial block
+    produce-block -- finish and broadcast current block
+    generate-key <output file> -- generate SECP256k1 private key and save it in <output file> in PEM format
+    inspect <block id> -- print information about block with <block id>
+    status -- print current status of the network
+    produce-empty -- produces an empty dummy block and broadcasts it to the network
+    auth <private key file> -- switches from anonymous mode to authenticated mode
+    balance [<address>] -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided
+    logout -- switches to non-authenticated mode
 
-- Sycomore - prefix splitting
-- Blockchain explorer
-- statically defined circuits - implement circuit mgmt
-- test util class - process inicialisation and communication
-- improved reputation system
-- better interactive console - tabbing and command history accessible with arrow keys
-- hash generation
-- difficulty calculation
-- MPT instead of Python dict
+## Limitations and Future Work
+
+- **Transaction prefix splitting** -- As mentioned in the thesis, there are conflicts possible where two nodes work on the same transactions, which leads to wasted work on the part of the node which fails to publish first. This could be mitigated by allowing miners to only include transactions which match with their address in the prefix.
+- **Blockchain explorer** -- Having a web app that could interact with the network and display data in user-friendly format would make debugging and exploring the network easier.
+- **Statically defined circuits** - implement circuit mgmt
+- **Testing utilities class** -- Writing unit tests involves a lot of boilerplate code for process spawning and communication pipelining. Some test setup code could be abstracted into a class to make writing tests easier.
+- **Improved reputation system** -- Implemented reputation system is very rudimentary and could be abused with manually crafted messages.
+- **Better interactive console** -- User experience when using the client could be improved by implementing support for tab-completion and command history accessible with arrow keys similarly to Shell.
+- **Difficulty calculation** -- For debugging purposes, the difficulty parameter of the network is not calculated, nor enforced. Difficulty mechanism would exist to keep block time approximately the same by changing the amount of work required to produce a block depending on the total computational power of the network.
+- **Merkle-Patricia trie instead of Python dict** -- For simplicity, the blockchain uses plain Python dictionary to store the mapping from accounts to balances. It would be more performant to use Merkle-Patricia tries in production level environment.
 
 ## Adding a New Circuit
+
+This implementation does not include the circuit subnetwork which uses proof-of-stake-like circuit retrieval and registration using ZoKrates and SMPC. Its function is mocked by statically providing circuits in their source code and circuit form with ABI, proving key and verifying key.
+
+To add a new circuit, just create a new folder under `src/circuits` such as `src/circuits/d` and add the ZoKrates source code file with `.zok` extension into it. Navigate to the directory and run the following commands:
+
+1. `zokrates compile -i <zokrates source code file>`
+2. `zokrates setup`
+
+The circuit will be automatically registered when client is started the next time. To learn the hash of the circuit, start the app with `-v` switch and inspect first few logged messages.
+
+## Example commands
+
 TODO
