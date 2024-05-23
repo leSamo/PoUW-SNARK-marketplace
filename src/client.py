@@ -570,11 +570,33 @@ def main(argv):
 
             assert block.get_id() == current_block_id, "Blocks out of order in 'blockchain' variable"
 
+            coin_txs = block.get_body().get_coin_txs()
+            proof_txs = block.get_body().get_proof_txs()
+
             print()
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Block {current_block_id}:{util.Color.RESET()}")
             print(f"  {util.Color.YELLOW()}Timestamp:{util.Color.RESET()}", block.get_timestamp())
             print(f"  {util.Color.YELLOW()}Difficulty:{util.Color.RESET()}", block.get_difficulty())
             print(f"  {util.Color.YELLOW()}Current block hash:{util.Color.RESET()}", block.get_current_block_hash().hex())
+
+            if len(coin_txs) == 0:
+                print(f"  {util.Color.YELLOW()}No coin transactions{util.Color.RESET()}")
+            else:
+                print(f"  {util.Color.YELLOW()}Coin transactions ({len(coin_txs)}):{util.Color.RESET()}")
+
+                for tx in coin_txs:
+                    print(f"    - {tx}")
+
+            if len(proof_txs) == 0:
+                print(f"  {util.Color.YELLOW()}No proof transactions{util.Color.RESET()}")
+            else:
+                print(f"  {util.Color.YELLOW()}Proof transactions ({len(proof_txs)}):{util.Color.RESET()}")
+
+                for tx in proof_txs:
+                    print(f"    - {tx}")
+
+            print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
+
             print()
 
         elif command == 'status':
@@ -635,23 +657,54 @@ def main(argv):
             previous_block = network.blockchain[-1]
 
             new_block_body = BlockBody()
-            new_block_body.setup([], [], previous_block.get_state_tree())
-
-            current_timestamp = util.get_current_time()
-
-            new_block_header = BlockHeader()
+            new_block_body.setup(network.partial_block_coin_transactions, [], previous_block.get_state_tree())
 
             # 1. verify if block requirements are met -- minimum/maximum coin/proofs tx, block difficulty
 
             # 2. validate txs and perform state change
+            state_tree = previous_block.get_state_tree()
+
+            miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
+
+            for coin_tx in network.partial_block_coin_transactions:
+                state_tree.apply_coin_tx(coin_tx, network.config['coin_tx_fee'], miner_address)
+
+            for proof_tx in network.partial_block_proof_transactions:
+                state_tree.apply_proof_tx(proof_tx, network.config['proof_tx_fee'], miner_address)
 
             # 3. produce metadata integrity
-            metadata_integrity = network.get_pending_block_integrity()
+            metadata_integrity = network.get_pending_block_integrity(state_tree)
 
             # 4. prove each proof
-            # --> block.generate_proofs()
 
-            # 5. broadcast block
+            for proof in network.partial_block_proof_transactions:
+                try:
+                    circuit_folder = circuits[proof.get_circuit_hash()]
+                except KeyError:
+                    # TODO: Handle better
+                    util.eprint("Unknown circuit inside a proof request")
+                    continue
+
+                proof.prove(metadata_integrity, circuit_folder)
+
+            new_block_body.set_proof_txs(network.partial_block_proof_transactions)
+
+            # 5. construct block
+
+            coin_txs_hash = new_block_body.hash_coin_txs()
+            proof_txs_hash = new_block_body.hash_proof_txs()
+            state_root_hash = new_block_body.hash_state_tree()
+
+            current_timestamp = util.get_current_time()
+
+            new_block_header = BlockHeader()
+            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
+
+            new_block = Block()
+            new_block.setup(new_block_header, new_block_body)
+            new_block.finish_block()
+
+            # 6. broadcast block
             new_block.finish_block()
 
             util.iprint("Sucessfully produced a block with id", previous_block.get_id() + 1)

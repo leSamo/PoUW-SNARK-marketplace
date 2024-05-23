@@ -47,6 +47,10 @@ class CoinTransaction(Encodeable):
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount)]).encode()
         return hashlib.sha256(serialized_tx).digest()
 
+    def get_integrity(self) -> bytes:
+        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__address_to.hex(), str(self.__amount), self.__signature.hex()]).encode()
+        return hashlib.sha256(serialized_tx).digest()
+
     def sign(self, private_key) -> None:
         corresponding_public_key = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 

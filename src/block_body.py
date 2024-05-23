@@ -20,28 +20,26 @@ class BlockBody(Encodeable):
     def __init__(self):
         pass
 
-    def setup(self, coin_txs, proof_txs, state_tree):
+    def setup(self, coin_txs : list[CoinTransaction], proof_txs: list[ProofTransaction], state_tree: StateTree):
         self.__coin_txs = coin_txs
         self.__proof_txs = proof_txs
         self.__state_tree = state_tree
 
     def hash_coin_txs(self):
-        tx_hashes = []
+        tx_hashes = b''
 
         for tx in self.__coin_txs:
-            tx_hashes.append(tx.hash().decode())
+            tx_hashes += tx.hash()
 
-        serialized_txs = ("|").join(tx_hashes).encode()
-        return hashlib.sha256(serialized_txs).digest()
+        return hashlib.sha256(tx_hashes).digest()
 
     def hash_proof_txs(self):
-        tx_hashes = []
+        tx_hashes = b''
 
         for tx in self.__proof_txs:
-            tx_hashes.append(tx.hash().decode())
+            tx_hashes += tx.hash()
 
-        serialized_txs = ("|").join(tx_hashes).encode()
-        return hashlib.sha256(serialized_txs).digest()
+        return hashlib.sha256(tx_hashes).digest()
 
     def hash_state_tree(self):
         return self.__state_tree.get_hash()
@@ -74,5 +72,14 @@ class BlockBody(Encodeable):
         self.__proof_txs = proof_transactions
         self.__state_tree = state_tree
 
+    def get_coin_txs(self):
+        return self.__coin_txs
+
+    def get_proof_txs(self):
+        return self.__proof_txs
+
     def get_state_tree(self):
         return self.__state_tree
+
+    def set_proof_txs(self, proof_txs):
+        self.__proof_txs = proof_txs

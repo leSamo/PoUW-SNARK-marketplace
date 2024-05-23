@@ -7,6 +7,7 @@
 
 import socket
 import json
+import hashlib
 
 import util
 from coin_tx import CoinTransaction
@@ -162,9 +163,16 @@ def verify_coin_transaction(tx : CoinTransaction, st : StateTree) -> bool:
     except Exception:
         return False, st
 
-# TODO
-def get_pending_block_integrity():
-    return "1"
+def get_pending_block_integrity(state_tree : StateTree) -> str:
+    integrity = state_tree.get_hash()
+
+    for tx in partial_block_coin_transactions:
+        integrity += tx.get_integrity()
+
+    for tx in partial_block_proof_transactions:
+        integrity += tx.get_integrity()
+
+    return hashlib.sha256(integrity).digest().hex()
 
 def verify_block(previous_block : Block, block : Block) -> bool:
     try:

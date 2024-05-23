@@ -52,6 +52,10 @@ class ProofTransaction(Encodeable):
 
         return hashlib.sha256(serialized_tx).digest()
 
+    def get_integrity(self) -> bytes:
+        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity), self.__signature.hex()]).encode()
+        return hashlib.sha256(serialized_tx).digest()
+
     def sign(self, private_key) -> None:
         self.__signature = private_key.sign(self.hash())
 

@@ -34,7 +34,7 @@ class StateTree(Encodeable):
         except KeyError:
             return 0
 
-    def get_hash(self):
+    def get_hash(self) -> bytes:
         items = str(tuple(sorted(self.__state.items()))).encode()
         return hashlib.sha256(items).digest()
 
@@ -48,7 +48,6 @@ class StateTree(Encodeable):
         }
 
     def apply_coin_tx(self, coin_tx : CoinTransaction, fee : int, fee_beneficiary : bytes):
-        # fee = network.config['coin_tx_fee']
         amount = coin_tx.get_amount()
 
         sender_balance = self.get(coin_tx.get_address_from())
