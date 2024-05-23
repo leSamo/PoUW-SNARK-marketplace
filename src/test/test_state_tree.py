@@ -12,6 +12,8 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from state_tree import StateTree
+from coin_tx import CoinTransaction
+from proof_tx import ProofTransaction
 
 def test_insert():
     st = StateTree()
@@ -111,5 +113,40 @@ def test_encode_decode():
     assert value1 == 234
     assert value2 == 789
     assert value3 == 0
+
+def test_coin_tx_application():
+    sender = bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
+    receiver = bytes.fromhex("7778b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f777")
+    miner = bytes.fromhex("0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000")
+
+    st = StateTree()
+    st.set(sender, 100)
+
+    tx = CoinTransaction()
+    tx.setup(sender, receiver, 10)
+
+    st.apply_coin_tx(tx, 1, miner)
+
+    assert st.get(sender) == 89
+    assert st.get(receiver) == 10
+    assert st.get(miner) == 1
+
+
+def test_proof_tx_application():
+    sender = bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
+    miner = bytes.fromhex("0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000")
+
+    circuit_hash = bytes.fromhex("7a6e42a3c43b426aad2e6062d33be7cc0650e8ea724c12574d44a740cfd63319")
+
+    st = StateTree()
+    st.set(sender, 100)
+
+    tx = ProofTransaction()
+    tx.setup(sender, circuit_hash, "1111", 761)
+
+    st.apply_proof_tx(tx, 100, miner)
+
+    assert st.get(sender) == 92
+    assert st.get(miner) == 8
 
 # TODO: Validate decoding

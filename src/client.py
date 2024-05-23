@@ -641,7 +641,6 @@ def main(argv):
 
             new_block_header = BlockHeader()
 
-
             # 1. verify if block requirements are met -- minimum/maximum coin/proofs tx, block difficulty
 
             # 2. validate txs and perform state change

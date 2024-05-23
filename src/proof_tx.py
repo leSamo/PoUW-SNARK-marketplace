@@ -44,8 +44,6 @@ class ProofTransaction(Encodeable):
         self.__complexity = complexity
         self.__signature = None
 
-        self.validate()
-
     def hash(self) -> bytes:
         if self.__proof is None:
             serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
@@ -81,6 +79,9 @@ class ProofTransaction(Encodeable):
 
     def get_complexity(self) -> int:
         return self.__complexity
+
+    def get_address_from(self) -> bytes:
+        return self.__address_from
 
     def encode(self) -> dict:
         return {

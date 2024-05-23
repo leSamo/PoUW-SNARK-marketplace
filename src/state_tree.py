@@ -5,9 +5,12 @@
 # ✔️✔️✔️❌❌
 # ####################################################################################################
 
+import math
 import hashlib
 
 from encodeable import Encodeable
+from coin_tx import CoinTransaction
+from proof_tx import ProofTransaction
 import util
 
 class StateTree(Encodeable):
@@ -40,4 +43,28 @@ class StateTree(Encodeable):
 
     def decode(self, obj):
         # TODO: Validate
-        self.__state = {bytes.fromhex(key): value for key, value in obj.items()}
+        self.__state = {
+            bytes.fromhex(key): value for key, value in obj.items()
+        }
+
+    def apply_coin_tx(self, coin_tx : CoinTransaction, fee : int, fee_beneficiary : bytes):
+        # fee = network.config['coin_tx_fee']
+        amount = coin_tx.get_amount()
+
+        sender_balance = self.get(coin_tx.get_address_from())
+        self.set(coin_tx.get_address_from(), sender_balance - amount - fee)
+
+        receiver_balance = self.get(coin_tx.get_address_to())
+        self.set(coin_tx.get_address_to(), receiver_balance + amount)
+
+        miner_balance = self.get(fee_beneficiary)
+        self.set(fee_beneficiary, miner_balance + fee)
+
+    def apply_proof_tx(self, proof_tx : ProofTransaction, fee : int, fee_beneficiary : bytes):
+        price = math.ceil(proof_tx.get_complexity() / fee)
+
+        sender_balance = self.get(proof_tx.get_address_from())
+        self.set(proof_tx.get_address_from(), sender_balance - price)
+
+        miner_balance = self.get(fee_beneficiary)
+        self.set(fee_beneficiary, miner_balance + price)

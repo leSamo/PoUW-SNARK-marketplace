@@ -3,6 +3,8 @@
     "self_ip_address": "127.0.0.1",
     "time_difference_tolerance": 1e5,
     "max_peer_count": 5,
+    "coin_tx_fee": 1,
+    "proof_tx_fee": 100,
     "genesis_block": {
         "header": {
             "serial_id": 0,
