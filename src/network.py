@@ -21,8 +21,8 @@ peers = []
 pending_coin_transactions : list[CoinTransaction] = []
 pending_proof_transactions : list[ProofTransaction] = []
 
-partial_block_proof_transactions = []
-partial_block_coin_transactions = []
+partial_block_coin_transactions : list[CoinTransaction] = []
+partial_block_proof_transactions : list[ProofTransaction] = []
 
 config = None
 

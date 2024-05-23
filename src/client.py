@@ -533,16 +533,17 @@ def main(argv):
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
 
-            if len(command.split(" ")) != 3:
-                # TODO: Quote parameters?
-                util.eprint("Usage: request-proof <circuit hash> <parameters>")
+            if len(command.split(" ")) < 3:
+                util.eprint("Usage: request-proof <circuit hash> <space separated parameters>")
                 continue
 
             # TODO: check if funds are sufficient
             try:
                 sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
                 new_tx = ProofTransaction()
-                new_tx.setup(sender_address, bytes.fromhex(command.split(" ")[1]), command.split(" ")[2])
+                complexity = Zokrates.get_constraint_count(circuits[command.split(" ")[1]])
+
+                new_tx.setup(sender_address, bytes.fromhex(command.split(" ")[1]), " ".join(command.split(" ")[2:]), complexity)
 
                 new_tx.sign(private_key)
 
@@ -627,6 +628,34 @@ def main(argv):
             new_block.finish_block()
 
             util.iprint("Sucessfully produced an empty block with id", previous_block.get_id() + 1)
+
+            network.broadcast_block(new_block)
+
+        elif command == 'produce-block':
+            previous_block = network.blockchain[-1]
+
+            new_block_body = BlockBody()
+            new_block_body.setup([], [], previous_block.get_state_tree())
+
+            current_timestamp = util.get_current_time()
+
+            new_block_header = BlockHeader()
+
+
+            # 1. verify if block requirements are met -- minimum/maximum coin/proofs tx, block difficulty
+
+            # 2. validate txs and perform state change
+
+            # 3. produce metadata integrity
+            metadata_integrity = network.get_pending_block_integrity()
+
+            # 4. prove each proof
+            # --> block.generate_proofs()
+
+            # 5. broadcast block
+            new_block.finish_block()
+
+            util.iprint("Sucessfully produced a block with id", previous_block.get_id() + 1)
 
             network.broadcast_block(new_block)
 

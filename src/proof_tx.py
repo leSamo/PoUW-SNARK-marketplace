@@ -8,6 +8,7 @@
 import hashlib
 
 from encodeable import Encodeable
+from bind_zokrates import Zokrates
 import util
 
 class ProofTransaction(Encodeable):
@@ -43,11 +44,7 @@ class ProofTransaction(Encodeable):
         self.__complexity = complexity
         self.__signature = None
 
-        self.check_validity()
-
-    def check_validity(self):
-        # TODO: check if proof is valid JSON
-        pass
+        self.validate()
 
     def hash(self) -> bytes:
         if self.__proof is None:
@@ -61,7 +58,7 @@ class ProofTransaction(Encodeable):
         self.__signature = private_key.sign(self.hash())
 
     def verify_transaction(self, public_key) -> bool:
-        self.check_validity()
+        self.validate()
 
         if not public_key.verify(self.__signature, self.hash()):
             return False
@@ -90,7 +87,6 @@ class ProofTransaction(Encodeable):
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
             'proof': self.__proof.hex() if self.__proof is not None else '',
-            'proof': self.__proof.hex() if self.__proof is not None else '',
             'circuit_hash': self.__circuit_hash.hex(),
             'parameters': self.__parameters,
             'complexity': self.__complexity,
@@ -111,3 +107,10 @@ class ProofTransaction(Encodeable):
             return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.RED()}unproven{util.Color.RESET()})"
         else:
             return f"{self.__id.hex()[0:6]}…: {self.__address_from.hex()[0:6]}… --({self.__parameters})--> {self.__circuit_hash.hex()[0:6]}… @ {self.__complexity} constraints ({util.Color.GREEN()}proven{util.Color.RESET()})"
+
+    def prove(self, block_metadata, circuit_folder) -> None:
+        self.__proof = Zokrates.generate_proof(block_metadata, circuit_folder, self.__parameters)
+
+    def validate(self, block_metadata, circuit_folder) -> bool:
+        Zokrates.verify_proof(block_metadata, circuit_folder, self.__proof, self.__parameters)
+        pass
