@@ -35,36 +35,15 @@ class Zokrates:
 
             zokrates_filepath = os.path.join(subfolder, zokrates_files[0])
             circuit_filepath = os.path.join(subfolder, "out")
-            r1cs_filepath = os.path.join(subfolder, "out.r1cs")
-            abi_filepath = os.path.join(subfolder, "abi.json")
             proving_key_filepath = os.path.join(subfolder, "proving.key")
             verification_key_filepath = os.path.join(subfolder, "verification.key")
 
-            if os.path.exists(circuit_filepath):
-                util.vprint("Circuits: Using cached compiled circuit")
-            else:
-                # TODO: wrap in try-catch
-                process = subprocess.Popen(['zokrates', 'compile', '-i', zokrates_filepath, '-o', circuit_filepath, '-r', r1cs_filepath, '-s', abi_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                return_code = process.wait()
-
-                if return_code != 0:
-                    util.wprint(f"Circuits: Failed to compile circuit in subfolder {directory}, ignoring directory")
-                    continue
+            assert os.path.exists(zokrates_filepath)
+            assert os.path.exists(circuit_filepath)
+            assert os.path.exists(proving_key_filepath)
+            assert os.path.exists(verification_key_filepath)
 
             file_hash : str = util.get_file_hash(zokrates_filepath)
-            #constraint_count = Zokrates.get_constraint_count(os.path.join(subfolder, 'out'))
-
-            if os.path.exists(proving_key_filepath) and os.path.exists(verification_key_filepath):
-                util.vprint("Circuits: Using cached keys")
-            else:
-                process = subprocess.Popen(['zokrates', 'setup', '-e', file_hash, '-i', circuit_filepath, '-p', proving_key_filepath, '-v', verification_key_filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                return_code = process.wait()
-
-                if return_code != 0:
-                    util.wprint(f"Circuits: Failed to perform key setup in subfolder {directory}, ignoring directory")
-                    continue
 
             result[file_hash] = subfolder
 

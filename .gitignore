@@ -3,3 +3,5 @@ __pycache__/
 src/circuit/*/*
 !src/circuit/*/*.zok
 !src/circuit/*/out
+!src/circuit/*/proving.key
+!src/circuit/*/verification.key
