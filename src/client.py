@@ -343,10 +343,10 @@ def main(argv):
             print(f"  {util.Color.YELLOW()}exit{util.Color.RESET()} -- terminates client")
             print(f"  {util.Color.YELLOW()}send <receiver address> <amount>{util.Color.RESET()} -- create a coin transaction and submit it to the network")
             print(f"  {util.Color.YELLOW()}request-proof <circuit hash> <parameters>{util.Color.RESET()} -- request a proof to be generated")
-            print(f"  {util.Color.YELLOW()}📝 produce-proof <proof index>{util.Color.RESET()} -- manually produce a proof and include it in partial block")
-            print(f"  {util.Color.YELLOW()}confirm-coin-tx <coin tx index>{util.Color.RESET()} -- manually confirm a coin transaction and include it in partial block")
+            print(f"  {util.Color.YELLOW()}select-proof-tx <proof index>{util.Color.RESET()} -- manually produce a proof and include it in partial block")
+            print(f"  {util.Color.YELLOW()}select-coin-tx <coin tx index>{util.Color.RESET()} -- manually confirm a coin transaction and include it in partial block")
             print(f"  {util.Color.YELLOW()}partial{util.Color.RESET()} -- print information about currently produced partial block")
-            print(f"  {util.Color.YELLOW()}📝 produce-block{util.Color.RESET()} -- finish and broadcast current block")
+            print(f"  {util.Color.YELLOW()}produce-block{util.Color.RESET()} -- finish and broadcast current block")
             print(f"  {util.Color.YELLOW()}generate-key <output file>{util.Color.RESET()} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {util.Color.YELLOW()}inspect <block id>{util.Color.RESET()} -- print information about block with <block id>")
             print(f"  {util.Color.YELLOW()}status{util.Color.RESET()} -- print current status of the network")
@@ -364,20 +364,20 @@ def main(argv):
             util.iprint("Disabled verbose logging")
             util.verbose_logging(False)
 
-        elif command.split(" ")[0] == "confirm-coin-tx":
+        elif command.split(" ")[0] == "select-coin-tx":
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
 
             if len(command.split(" ")) != 2:
                 if private_key is None:
-                    util.eprint("Usage: confirm-coin-tx <coin tx index>")
+                    util.eprint("Usage: select-coin-tx <coin tx index>")
                     continue
 
             try:
                 proof_index = int(command.split(" ")[1])
             except ValueError:
-                util.eprint("Usage: confirm-coin-tx <coin tx index>")
+                util.eprint("Usage: select-coin-tx <coin tx index>")
                 continue
 
             if proof_index >= len(network.pending_coin_transactions):
@@ -406,7 +406,7 @@ def main(argv):
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Currently produced partial block status:{util.Color.RESET()}")
 
             if len(network.partial_block_coin_transactions) == 0 and len(network.partial_block_proof_transactions):
-                print(f"  {util.Color.YELLOW()}There is no partical block being produced -- use the 'produce-proof' command to start producing block{util.Color.RESET()}")
+                print(f"  {util.Color.YELLOW()}There is no partical block being produced -- use the 'select-proof-tx' command to start producing block{util.Color.RESET()}")
             else:
                 if len(network.partial_block_proof_transactions) == 0:
                     print(f"  {util.Color.YELLOW()}No confirmed proof transactions{util.Color.RESET()}")
@@ -424,20 +424,20 @@ def main(argv):
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
-        elif command.split(" ")[0] == "produce-proof":
+        elif command.split(" ")[0] == "select-proof-tx":
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
 
             if len(command.split(" ")) != 2:
                 if private_key is None:
-                    util.eprint("Usage: produce-proof <proof index>")
+                    util.eprint("Usage: select-proof-tx <proof index>")
                     continue
 
             try:
                 proof_index = int(command.split(" ")[1])
             except ValueError:
-                util.eprint("Usage: produce-proof <proof index>")
+                util.eprint("Usage: select-proof-tx <proof index>")
                 continue
 
             if proof_index >= len(network.pending_proof_transactions):

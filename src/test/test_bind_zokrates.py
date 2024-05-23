@@ -13,6 +13,7 @@ import shutil
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from bind_zokrates import Zokrates, CIRCUIT_PATH
+import util
 
 EXAMPLE_CORRECT_ZOKRATES = """
 def main() -> bool {
@@ -136,3 +137,9 @@ def test_generate_false_proof():
 def test_generate_proof_invalid_folder():
     with pytest.raises(Exception):
         proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'xyz'), '2 2 4')
+
+def test_get_circuit_hash():
+    hash = util.get_file_hash(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a', 'a.zok'))
+
+    assert hash == "f6d00f1b20054ec6660af23c8b5953ae8799ddbb8c9bd9e1808376fef65d970e"
+

@@ -220,9 +220,42 @@ def test_auth():
     assert "Your address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2" in stdout.decode()
 
 def test_partial_block():
-    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50; confirm-coin-tx 0; partial; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50; select-coin-tx 0; partial; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     process.wait()
     stdout, _ = process.communicate()
 
     assert "Confirmed coin transactions (1)" in stdout.decode()
+
+# test coin tx creation, proof tx creation from client A; confirmation and block generation by client B
+def test_block_construction():
+    CREATE_COIN_TX = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
+    CREATE_PROOF_TX = "request-proof f6d00f1b20054ec6660af23c8b5953ae8799ddbb8c9bd9e1808376fef65d970e 2 3 6"
+
+    requesting_process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "{CREATE_COIN_TX}; {CREATE_PROOF_TX}"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    miner_process = subprocess.Popen(f'python {client_program} -p 3333 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    # wait for miner to sync up
+    time.sleep(0.5)
+
+    miner_process.stdin.write(f"select-coin-tx 0\n".encode())
+    miner_process.stdin.flush()
+
+    miner_process.stdin.write(f"select-proof-tx 0\n".encode())
+    miner_process.stdin.flush()
+
+    miner_process.stdin.write(f"produce-block\n".encode())
+    miner_process.stdin.flush()
+
+    # wait for requester to sync up
+    time.sleep(0.5)
+
+    requesting_process.stdin.write(f"status\nexit\n".encode())
+    requesting_process.stdin.flush()
+
+    requesting_process.wait()
+    stdout, _ = requesting_process.communicate()
+
+    # check if latest block has id of 1
+    assert "(id 1)" in stdout.decode()

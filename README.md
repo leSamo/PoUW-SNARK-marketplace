@@ -26,3 +26,12 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
     -c, --command <command>        Run semicolon separated list of commands just after client initialization
     -f, --config <config file>     Provide a non-default configuration file
     -n, --no-color                 Don't print colored text into the terminal
+
+## Limitations and Future Work
+- Sycomore - prefix splitting
+- Blockchain explorer
+- statically defined circuits - implement circuit mgmt
+- test util class - process inicialisation and communication
+- improved reputation system
+- better interactive console - tabbing and command history accessible with arrow keys
+- hash generation
