@@ -2,7 +2,6 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️❌❌❌❌
 # ####################################################################################################
 
 import socket
@@ -172,7 +171,7 @@ def get_pending_block_integrity(state_tree : StateTree) -> str:
     for tx in partial_block_proof_transactions:
         integrity += tx.get_integrity()
 
-    return hashlib.sha256(integrity).digest().hex()
+    return str(int(hashlib.sha256(integrity).digest().hex(), 16))
 
 def verify_block(previous_block : Block, block : Block) -> bool:
     try:

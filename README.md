@@ -38,6 +38,7 @@ TODO
 - better interactive console - tabbing and command history accessible with arrow keys
 - hash generation
 - difficulty calculation
+- MPT instead of Python dict
 
 ## Adding a New Circuit
 TODO

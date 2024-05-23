@@ -2,7 +2,6 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️✔️❌❌
 # ####################################################################################################
 
 import socket
@@ -90,7 +89,7 @@ def receive_incoming(client_socket, client_address):
 
         data.append(received)
 
-    data =  b''.join(data)
+    data = b''.join(data)
 
     message = None
 
@@ -163,13 +162,17 @@ def receive_incoming(client_socket, client_address):
 
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
+
         new_block.decode(message['block'])
 
         # TODO: verify block
 
+
         if new_block.get_id() != network.blockchain[-1].get_id() + 1:
             util.vprint(f"Received out of order block with id {new_block.get_id()}, expected {network.blockchain[-1].get_id() + 1}")
             return
+
+        util.vprint(f"Accepted block with id {new_block.get_id()}")
 
         network.blockchain.append(new_block)
 
@@ -191,7 +194,7 @@ def receive_incoming(client_socket, client_address):
 
         # TODO: verify tx
 
-        network.pending_pending_transactions.append(new_tx)
+        network.pending_proof_transactions.append(new_tx)
 
         # TODO: propagate tx to all peers except self and sender
 
@@ -392,7 +395,7 @@ def main(argv):
             else:
                 if tx.verify_transaction():
                     network.partial_block_coin_transactions.append(tx)
-                    util.iprint("Successfully included the coin transaction")
+                    util.iprint("Successfully selected the coin transaction")
                 else:
                     util.eprint("The coin transaction is invalid")
                     continue
@@ -405,21 +408,21 @@ def main(argv):
             print()
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Currently produced partial block status:{util.Color.RESET()}")
 
-            if len(network.partial_block_coin_transactions) == 0 and len(network.partial_block_proof_transactions):
-                print(f"  {util.Color.YELLOW()}There is no partical block being produced -- use the 'select-proof-tx' command to start producing block{util.Color.RESET()}")
+            if len(network.partial_block_coin_transactions) == 0 and len(network.partial_block_proof_transactions) == 0:
+                print(f"  {util.Color.YELLOW()}There is no partical block being produced -- use the 'select-coin-tx' or 'select-proof-tx' command to start producing block{util.Color.RESET()}")
             else:
                 if len(network.partial_block_proof_transactions) == 0:
-                    print(f"  {util.Color.YELLOW()}No confirmed proof transactions{util.Color.RESET()}")
+                    print(f"  {util.Color.YELLOW()}No selected proof transactions{util.Color.RESET()}")
                 else:
-                    print(f"  {util.Color.YELLOW()}Generated proofs ({len(network.partial_block_proof_transactions)}):{util.Color.RESET()}")
+                    print(f"  {util.Color.YELLOW()}Selected proof transactions ({len(network.partial_block_proof_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_proof_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
                 if len(network.partial_block_coin_transactions) == 0:
-                    print(f"  {util.Color.YELLOW()}No confirmed coin transactions{util.Color.RESET()}")
+                    print(f"  {util.Color.YELLOW()}No selected coin transactions{util.Color.RESET()}")
                 else:
-                    print(f"  {util.Color.YELLOW()}Confirmed coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET()}")
+                    print(f"  {util.Color.YELLOW()}Selected coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_coin_transactions:
                         # TODO: Highlight stale proofs
                         print(f"    - {tx}")
@@ -446,24 +449,8 @@ def main(argv):
 
             tx = network.pending_proof_transactions[proof_index]
 
-            if tx.get_id() in [t.get_id() for t in network.partial_block_proof_transactions]:
-                util.eprint("The proof transaction is already confirmed in the current partial block")
-                continue
-            else:
-                if tx.verify_transaction():
-                    # TODO: Check if exists in circuits dict
-                    # TODO: Add integrity
-                    proof = Zokrates.generate_proof(network.get_pending_block_integrity(), circuits[tx.get_circuit_hash()], tx.get_parameters())
-                    # TODO: tx.set_proof() ???
-                    # TODO: Recalc hash???
-                    network.partial_block_proof_transactions.append(tx)
-                    util.iprint("Successfully included the proof transaction")
-                else:
-                    util.eprint("The proof transaction is invalid")
-                    continue
-
-
-            # Zokrates.produce_proof and remember it in current partial block
+            network.partial_block_proof_transactions.append(tx)
+            util.iprint("Successfully selected the proof transaction")
 
         elif command.split(" ")[0] == 'balance':
             latest_block = network.blockchain[-1]
@@ -604,9 +591,9 @@ def main(argv):
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Network status:{util.Color.RESET()}")
 
             if len(network.peers) == 0:
-                print(f"  {util.Color.YELLOW()}No connected peers{util.Color.RESET()}")
+                print(f"  {util.Color.YELLOW()}No peers{util.Color.RESET()}")
             else:
-                print(f"  {util.Color.YELLOW()}Connected peers ({len(network.peers)}):{util.Color.RESET()}")
+                print(f"  {util.Color.YELLOW()}Peers ({len(network.peers)}):{util.Color.RESET()}")
 
                 for peer in network.peers:
                     print(f"    - {peer.to_string()} (reputation {peer.get_reputation()})")
@@ -616,16 +603,16 @@ def main(argv):
             else:
                 print(f"  {util.Color.YELLOW()}Pending coin transactions ({len(network.pending_coin_transactions)}):{util.Color.RESET()}")
 
-                for tx in network.pending_coin_transactions:
-                    print(f"    - {tx}")
+                for index, tx in enumerate(network.pending_coin_transactions):
+                    print(f"    - {index}: {tx}")
 
             if len(network.pending_proof_transactions) == 0:
                 print(f"  {util.Color.YELLOW()}No pending proof transactions{util.Color.RESET()}")
             else:
                 print(f"  {util.Color.YELLOW()}Pending proof transactions ({len(network.pending_proof_transactions)}):{util.Color.RESET()}")
 
-                for tx in network.pending_proof_transactions:
-                    print(f"    - {tx}")
+                for index, tx in enumerate(network.pending_proof_transactions):
+                    print(f"    - {index}: {tx}")
 
             print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
             print()
@@ -679,7 +666,7 @@ def main(argv):
 
             for proof in network.partial_block_proof_transactions:
                 try:
-                    circuit_folder = circuits[proof.get_circuit_hash()]
+                    circuit_folder = circuits[proof.get_circuit_hash().hex()]
                 except KeyError:
                     # TODO: Handle better
                     util.eprint("Unknown circuit inside a proof request")
@@ -710,6 +697,16 @@ def main(argv):
             util.iprint("Sucessfully produced a block with id", previous_block.get_id() + 1)
 
             network.broadcast_block(new_block)
+
+            included_coin_tx_ids = [tx.get_id() for tx in network.partial_block_coin_transactions]
+            included_proof_tx_ids = [tx.get_id() for tx in network.partial_block_proof_transactions]
+
+            # 7. remove pending transactions which were just confirmed
+            network.pending_coin_transactions = [tx for tx in network.pending_coin_transactions if tx.get_id() not in included_coin_tx_ids]
+            network.pending_proof_transactions = [tx for tx in network.pending_proof_transactions if tx.get_id() not in included_proof_tx_ids]
+
+            network.partial_block_coin_transactions = []
+            network.partial_block_proof_transactions = []
 
         elif command.split(" ")[0] == 'auth':
             if len(command.split(" ")) != 2:

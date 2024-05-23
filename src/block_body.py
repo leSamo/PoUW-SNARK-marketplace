@@ -2,7 +2,6 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️✔️✔️❌
 # ####################################################################################################
 
 import hashlib
@@ -47,7 +46,7 @@ class BlockBody(Encodeable):
     def encode(self):
         return {
             'coin_txs': [tx.encode() for tx in self.__coin_txs],
-            'proof_txs': [tx.encode() for tx in self.__coin_txs],
+            'proof_txs': [tx.encode() for tx in self.__proof_txs],
             'state_tree': self.__state_tree.encode()
         }
 
@@ -57,12 +56,12 @@ class BlockBody(Encodeable):
 
         for tx in obj['coin_txs']:
             ct = CoinTransaction()
-            ct.setup(tx)
+            ct.decode(tx)
             coin_transactions.append(ct)
 
         for tx in obj['proof_txs']:
             pt = ProofTransaction()
-            pt.setup(tx)
+            pt.decode(tx)
             proof_transactions.append(pt)
 
         state_tree = StateTree()

@@ -2,10 +2,10 @@
 # The analysis of cryptographic techniques for offloading computations and storage in blockchains
 # Master thesis 2023/24
 # Samuel Olekšák
-# ✔️✔️❌❌❌
 # ####################################################################################################
 
 import hashlib
+import ecdsa
 
 from encodeable import Encodeable
 from bind_zokrates import Zokrates
@@ -59,10 +59,8 @@ class ProofTransaction(Encodeable):
     def sign(self, private_key) -> None:
         self.__signature = private_key.sign(self.hash())
 
-    def verify_transaction(self, public_key) -> bool:
-        self.validate()
-
-        if not public_key.verify(self.__signature, self.hash()):
+    def verify_transaction(self) -> bool:
+        if not ecdsa.VerifyingKey.from_string(self.__address_from, curve=ecdsa.SECP256k1).verify(self.__signature, self.hash()):
             return False
 
         return True
@@ -73,7 +71,7 @@ class ProofTransaction(Encodeable):
     # TODO: Check signature
 
     def get_id(self) -> int:
-        return self.__amount
+        return self.__id
 
     def get_circuit_hash(self) -> bytes:
         return self.__circuit_hash
@@ -91,7 +89,7 @@ class ProofTransaction(Encodeable):
         return {
             'id': self.__id.hex(),
             'address_from': self.__address_from.hex(),
-            'proof': self.__proof.hex() if self.__proof is not None else '',
+            'proof': self.__proof if self.__proof is not None else '',
             'circuit_hash': self.__circuit_hash.hex(),
             'parameters': self.__parameters,
             'complexity': self.__complexity,
@@ -101,7 +99,7 @@ class ProofTransaction(Encodeable):
     def decode(self, obj : dict) -> None:
         self.__id = bytes.fromhex(obj['id'])
         self.__address_from = bytes.fromhex(obj['address_from'])
-        self.__proof = obj['proof']
+        self.__proof = None if obj['proof'] == '' else obj['proof']
         self.__circuit_hash = bytes.fromhex(obj['circuit_hash'])
         self.__parameters = obj['parameters']
         self.__complexity = obj['complexity']
