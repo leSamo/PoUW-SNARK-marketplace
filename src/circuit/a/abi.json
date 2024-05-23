@@ -1,0 +1,27 @@
+{
+  "inputs": [
+    {
+      "name": "factor1",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "factor2",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "product",
+      "public": true,
+      "type": "field"
+    },
+    {
+      "name": "integrity",
+      "public": true,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "bool"
+  }
+}

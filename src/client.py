@@ -452,7 +452,8 @@ def main(argv):
             else:
                 if tx.verify_transaction():
                     # TODO: Check if exists in circuits dict
-                    proof = Zokrates.generate_proof(circuits[tx.get_circuit_hash()], tx.get_parameters())
+                    # TODO: Add integrity
+                    proof = Zokrates.generate_proof(network.get_pending_block_integrity(), circuits[tx.get_circuit_hash()], tx.get_parameters())
                     # TODO: tx.set_proof() ???
                     # TODO: Recalc hash???
                     network.partial_block_proof_transactions.append(tx)

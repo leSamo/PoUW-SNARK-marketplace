@@ -5,3 +5,4 @@ src/circuit/*/*
 !src/circuit/*/out
 !src/circuit/*/proving.key
 !src/circuit/*/verification.key
+!src/circuit/*/abi.json

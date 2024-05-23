@@ -162,6 +162,10 @@ def verify_coin_transaction(tx : CoinTransaction, st : StateTree) -> bool:
     except Exception:
         return False, st
 
+# TODO
+def get_pending_block_integrity():
+    return "1"
+
 def verify_block(previous_block : Block, block : Block) -> bool:
     try:
         # header verification

@@ -2,10 +2,12 @@
 /*
     Prove a knowledge of number which equals to 16 when squared.
 
-    Number of constraints: 54
+    Number of constraints: 55
 */
 
-def main(private u16 x) -> bool {
+def main(public u16 x, public field integrity) -> bool {
+    assert (integrity != 0);
+
     u16 x_squared = x * x;
     u16 target = 16;
 

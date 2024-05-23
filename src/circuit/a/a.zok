@@ -1,10 +1,12 @@
 /*
-    Proof a knowledge of two secret factors which make up public product.
+    Prove a knowledge of two factors which make up product.
 
-    Number of constraints: 2
+    Number of constraints: 3
 */
 
-def main(private field factor1, private field factor2, public field product) -> bool {
+def main(public field factor1, public field factor2, public field product, public field integrity) -> bool {
+    assert (integrity != 0);
+
     assert (factor1 * factor2 == product);
     return true;
 }

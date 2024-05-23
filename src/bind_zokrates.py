@@ -8,6 +8,7 @@
 import subprocess
 import re
 import os
+import json
 
 import util
 
@@ -37,11 +38,15 @@ class Zokrates:
             circuit_filepath = os.path.join(subfolder, "out")
             proving_key_filepath = os.path.join(subfolder, "proving.key")
             verification_key_filepath = os.path.join(subfolder, "verification.key")
+            abi_filepath = os.path.join(subfolder, "abi.json")
 
-            assert os.path.exists(zokrates_filepath)
-            assert os.path.exists(circuit_filepath)
-            assert os.path.exists(proving_key_filepath)
-            assert os.path.exists(verification_key_filepath)
+            try:
+                assert os.path.exists(circuit_filepath), "circuit"
+                assert os.path.exists(proving_key_filepath), "proving key"
+                assert os.path.exists(verification_key_filepath), "verification key"
+                assert os.path.exists(abi_filepath), "ABI"
+            except AssertionError as e:
+                util.wprint(f"Circuits: Expected to find {e} file in subfolder {directory}, ignoring directory")
 
             file_hash : str = util.get_file_hash(zokrates_filepath)
 
@@ -93,9 +98,18 @@ class Zokrates:
             raise Exception("Failed to extract constraint count from", circuit_folder)
 
     @staticmethod
-    def verify_proof(circuit_folder : str, proof : str) -> bool:
+    def verify_proof(block_metadata : str, circuit_folder : str, proof : str, parameters : str) -> bool:
         #   1. Write proof to a temp file
         temp_file = os.path.join(circuit_folder, 'temp')
+
+        proof_json = json.loads(proof)
+
+        # check the block metadata integrity
+        assert int(proof_json['inputs'][-2], 0) == int(block_metadata)
+
+        # TODO: Verify proof parameters
+        for i in range(len(proof_json['inputs']) - 2):
+            pass
 
         with open(temp_file, 'w') as file:
             file.write(proof)
@@ -103,16 +117,20 @@ class Zokrates:
         #   2. Verify proof
         process = subprocess.Popen(['zokrates', 'verify', '-j', temp_file, '-v', os.path.join(circuit_folder, 'verification.key')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        return_code = process.wait()
+        stdout, stderr = process.communicate()
+
         #   3. Delete temp proof file
         if os.path.exists(temp_file):
             os.remove(temp_file)
 
-        #   4. Return result
+        print("return code", stdout)
 
-        # TODO: Verify proof public parameters
+        #   4. Return result
+        return return_code == 0
 
     @staticmethod
-    def generate_proof(circuit_folder : str, parameters : str) -> str:
+    def generate_proof(block_metadata : str, circuit_folder : str, parameters : str) -> str:
         circuit_filepath = os.path.join(circuit_folder, "out")
         abi_filepath = os.path.join(circuit_folder, "abi.json")
         proving_key_filepath = os.path.join(circuit_folder, "proving.key")
@@ -120,7 +138,7 @@ class Zokrates:
         circom_witness_filepath = os.path.join(circuit_folder, "out.wtns")
         proof_filepath = os.path.join(circuit_folder, "proof.json")
 
-        process = subprocess.Popen(['zokrates', 'compute-witness', '-i', circuit_filepath, '-s', abi_filepath, '-o', witness_filepath, '--circom-witness', circom_witness_filepath, '-a', *parameters.split(" ")], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(['zokrates', 'compute-witness', '-i', circuit_filepath, '-s', abi_filepath, '-o', witness_filepath, '--circom-witness', circom_witness_filepath, '-a', *parameters.split(" "), block_metadata], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return_code = process.wait()
 

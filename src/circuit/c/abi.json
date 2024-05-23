@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    {
+      "name": "a",
+      "public": false,
+      "type": "u32"
+    },
+    {
+      "name": "integrity",
+      "public": true,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "bool"
+  }
+}

@@ -37,23 +37,23 @@ def cleanup():
             shutil.rmtree(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, folder))
 
 def test_get_constraint_count():
-    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')) == 2
-    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'b')) == 54
-    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'c')) == 760
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')) == 3
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'b')) == 55
+    assert Zokrates.get_constraint_count(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'c')) == 761
 
 def test_prepare_circuits():
     for directory in os.listdir(CIRCUIT_PATH):
             subfolder = os.path.join(CIRCUIT_PATH, directory)
 
             for file in os.listdir(subfolder):
-                if not file.endswith(".zok") and os.path.isfile(os.path.join(subfolder, file)):
+                if not file.endswith(".zok") and file not in ['out', 'proving.key', 'verification.key', 'abi.json'] and os.path.isfile(os.path.join(subfolder, file)):
                     os.remove(os.path.join(subfolder, file))
 
     circuits = Zokrates.prepare_circuits()
 
-    assert circuits['f6d00f1b20054ec6660af23c8b5953ae8799ddbb8c9bd9e1808376fef65d970e'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')
-    assert circuits['94752db6f90ebd65a52a9a148d84264526d5abae2cefbd57bcee330ca6f37dc5'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'b')
-    assert circuits['8bbae86aed9b439ce9dc6b553889c8e8924f3f08bb6ea26ca4c30486e959c747'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'c')
+    assert circuits['00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')
+    assert circuits['bc0bcd9b0e9b8f7fe9efe06ecd55bfd942873fef82dd9476365e94398da48075'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'b')
+    assert circuits['7a6e42a3c43b426aad2e6062d33be7cc0650e8ea724c12574d44a740cfd63319'] == os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'c')
 
     for directory in os.listdir(CIRCUIT_PATH):
             subfolder = os.path.join(CIRCUIT_PATH, directory)
@@ -97,49 +97,56 @@ def test_prepare_circuits_invalid_zokrates(capsys):
     folder = os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'klmnop3')
     os.makedirs(folder, exist_ok=True)
 
-    with open(os.path.join(folder, '1.zok'), 'w') as file:
+    with open(os.path.join(folder, '3.zok'), 'w') as file:
         file.write(EXAMPLE_INCORRECT_ZOKRATES)
 
     Zokrates.prepare_circuits()
     captured = capsys.readouterr()
 
-    assert "Circuits: Failed to compile circuit in subfolder klmnop3, ignoring directory" in captured.out
+    assert "Circuits: Expected to find circuit file in subfolder klmnop3, ignoring directory" in captured.out
 
     shutil.rmtree(folder)
 
 def test_generate_proof():
-    proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 4')
+    proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 4')
 
 def test_verify_proof():
-    proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 4')
+    circuit_folder = os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a')
 
-    assert Zokrates.verify_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), proof)
+    proof = Zokrates.generate_proof('1', circuit_folder, '2 2 4')
+
+    assert Zokrates.verify_proof('1', circuit_folder, proof, '2 2 4')
 
     # TODO: assert temp folder and file was deleted
+    assert not os.path.exists(os.path.join(circuit_folder, 'temp'))
+
+# TODO: verify with invalid integrity
+
+# TODO: verify with invalid parameters
 
 def test_generate_proof_invalid_params():
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '')
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '')
 
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '1')
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '1')
 
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '1 a b')
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '1 a b')
 
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), 123)
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), 123)
 
 def test_generate_false_proof():
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 3')
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a'), '2 2 3')
 
 def test_generate_proof_invalid_folder():
     with pytest.raises(Exception):
-        proof = Zokrates.generate_proof(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'xyz'), '2 2 4')
+        proof = Zokrates.generate_proof('1', os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'xyz'), '2 2 4')
 
 def test_get_circuit_hash():
     hash = util.get_file_hash(os.path.join(os.path.dirname(__file__), CIRCUIT_PATH, 'a', 'a.zok'))
 
-    assert hash == "f6d00f1b20054ec6660af23c8b5953ae8799ddbb8c9bd9e1808376fef65d970e"
+    assert hash == "00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee"
 

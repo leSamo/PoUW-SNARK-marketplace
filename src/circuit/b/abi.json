@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    {
+      "name": "x",
+      "public": true,
+      "type": "u16"
+    },
+    {
+      "name": "integrity",
+      "public": true,
+      "type": "field"
+    }
+  ],
+  "output": {
+    "type": "bool"
+  }
+}

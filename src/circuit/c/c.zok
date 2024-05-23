@@ -1,11 +1,13 @@
 /*
     Check if a prover knows a number would take at least 5 steps to converge to the number 1
-    given the rules of Collatz conjecture without revealing that number to the verifier.
+    given the rules of Collatz conjecture.
 
-    Number of constraints: 760
+    Number of constraints: 761
 */
 
-def main(private u32 a) -> bool {
+def main(private u32 a, public field integrity) -> bool {
+    assert (integrity != 0);
+
     u32 mut b = a;
 
     for u32 i in 0..5 {
