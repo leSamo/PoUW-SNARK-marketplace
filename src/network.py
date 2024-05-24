@@ -171,34 +171,3 @@ def get_block_integrity(block : Block) -> str:
         integrity += tx.get_integrity()
 
     return str(int(hashlib.sha256(integrity).digest().hex(), 16))
-
-# TODO: remove
-def verify_block(previous_block : Block, block : Block) -> bool:
-    try:
-        # header verification
-        #   serial id verification
-        assert(block.get_id() == previous_block.get_id() + 1)
-        #   time verification
-        assert(block.get_timestamp() <= util.get_current_time() + config['time_difference_tolerance'])
-        assert(previous_block.get_timestamp() <= block.get_timestamp())
-
-        #   TODO: difficulty verification
-
-        #   previous hash link
-        assert(previous_block.get_current_block_hash() == block.get_previous_block_hash())
-
-        #   current hash calculation
-        assert(block.verify_hash())
-
-        # TODO: body verification
-            # individual coin transaction verification
-            # individual proof transaction verification
-                # proof verification
-                # proof complexity verification
-                # difficulty threshold verification
-            # state tree verification
-                # check if state tree hash matches
-
-        return True
-    except Exception:
-        return False

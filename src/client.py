@@ -573,8 +573,11 @@ def main(argv):
                 network.broadcast_pending_proof_transaction(new_tx)
 
                 util.iprint("Successfully created and broadcasted proof transaction")
+            except KeyError as e:
+                util.eprint("Failed to create pending proof transaction: Unknown circuit hash")
+                continue
             except Exception as e:
-                util.eprint("Failed to create pending proof transaction:", e)
+                util.eprint("Failed to create pending proof transaction")
                 traceback.print_exc()
                 continue
 
@@ -724,7 +727,6 @@ def main(argv):
                 try:
                     circuit_folder = circuits[proof.get_circuit_hash().hex()]
                 except KeyError:
-                    # TODO: Handle better
                     util.eprint("Unknown circuit inside a proof request")
                     continue
 

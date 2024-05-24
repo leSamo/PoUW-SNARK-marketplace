@@ -116,12 +116,8 @@ def test_verify_proof():
 
     assert Zokrates.verify_proof('1', circuit_folder, proof, '2 2 4')
 
-    # TODO: assert temp folder and file was deleted
+    # check if temp folder and file were deleted
     assert not os.path.exists(os.path.join(circuit_folder, 'temp'))
-
-# TODO: verify with invalid integrity
-
-# TODO: verify with invalid parameters
 
 def test_generate_proof_invalid_params():
     with pytest.raises(Exception):
