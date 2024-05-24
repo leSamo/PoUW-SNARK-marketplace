@@ -24,15 +24,6 @@ class ProofTransaction(Encodeable):
         pass
 
     def setup(self, address_from, circuit_hash, parameters, complexity) -> None:
-        util.validate_address(address_from)
-        util.validate_hash(circuit_hash)
-
-        if type(complexity) != int:
-            raise TypeError("Complexity has to be an integer")
-
-        if complexity <= 0:
-            raise ValueError("Complexity has to be a positive integer")
-
         timestamp = util.get_current_time()
         serialized_tx = "|".join([str(timestamp), address_from.hex(), circuit_hash.hex(), parameters]).encode()
 
@@ -43,6 +34,18 @@ class ProofTransaction(Encodeable):
         self.__parameters = parameters
         self.__complexity = complexity
         self.__signature = None
+
+        self.check_validity()
+
+    def check_validity(self) -> None:
+        util.validate_address(self.__address_from)
+        util.validate_hash(self.__circuit_hash)
+
+        if type(self.__complexity) != int:
+            raise TypeError("Complexity has to be an integer")
+
+        if self.__complexity <= 0:
+            raise ValueError("Complexity has to be a positive integer")
 
     def hash(self) -> bytes:
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()

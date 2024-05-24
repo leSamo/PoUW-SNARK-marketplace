@@ -140,8 +140,10 @@ def receive_incoming(client_socket, client_address):
         util.vprint(f"Received a message not in JSON format")
         return
 
+    sender = f"{client_address[0]}:{message['port']}"
+
     # Process received data (you can modify this part based on your requirements)
-    util.vprint(f"Received from {client_address[0]}:{message['port']}:", json.dumps(message, indent=2))
+    util.vprint(f"Received from {sender}:", json.dumps(message, indent=2))
 
     # Disregard messages which don't have command and peer fields
     if 'command' not in message or 'port' not in message:
@@ -212,27 +214,38 @@ def receive_incoming(client_socket, client_address):
 
         network.blockchain.append(new_block)
 
-        # TODO: propagate block to all peers except self and sender
+        network.broadcast_block(new_tx, sender)
 
     elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
         new_tx = CoinTransaction()
         new_tx.decode(message['tx'])
 
-        # TODO: verify tx
+        try:
+            new_tx.check_validity()
+        except:
+            return
 
-        network.pending_coin_transactions.append(new_tx)
+        if new_tx.verify_transaction():
+            network.pending_coin_transactions.append(new_tx)
 
-        # TODO: propagate tx to all peers except self and sender
+            # propagate tx to all peers except the sender
+            network.broadcast_pending_coin_transaction(new_tx, sender)
+
 
     elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
         new_tx = ProofTransaction()
         new_tx.decode(message['tx'])
 
-        # TODO: verify tx
+        try:
+            new_tx.check_validity()
+        except:
+            return
 
-        network.pending_proof_transactions.append(new_tx)
+        if new_tx.verify_transaction():
+            network.pending_proof_transactions.append(new_tx)
 
-        # TODO: propagate tx to all peers except self and sender
+            # propagate tx to all peers except the sender
+            network.broadcast_pending_proof_transaction(new_tx, sender)
 
     elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
         util.vprint(f"Peer {client_address[0]}:{message['port']} is requesting latest block id")
