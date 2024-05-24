@@ -111,3 +111,6 @@ class BlockHeader(Encodeable):
     def finish_block(self):
         block_hash = self.calculate_hash()
         self.__current_block_hash = block_hash
+
+    def get_miner(self):
+        return self.__miner
