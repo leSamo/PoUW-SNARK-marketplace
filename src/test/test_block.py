@@ -17,6 +17,8 @@ from state_tree import StateTree
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+ADDRESS = bytes.fromhex("0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000")
+
 def test_valid():
     current_time = util.get_current_time()
 

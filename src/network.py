@@ -145,8 +145,6 @@ def broadcast_pending_proof_transaction(tx : CoinTransaction):
 def broadcast_block(block : Block) -> None:
     blockchain.append(block)
 
-    # TODO: Verify block before broadcasting
-
     message = { 'block': block.encode() }
 
     for peer in peers:
@@ -163,6 +161,18 @@ def get_pending_block_integrity(state_tree : StateTree) -> str:
 
     return str(int(hashlib.sha256(integrity).digest().hex(), 16))
 
+def get_block_integrity(block : Block) -> str:
+    integrity = block.get_body().hash_state_tree()
+
+    for tx in block.get_body().get_coin_txs():
+        integrity += tx.get_integrity()
+
+    for tx in block.get_body().get_proof_txs():
+        integrity += tx.get_integrity()
+
+    return str(int(hashlib.sha256(integrity).digest().hex(), 16))
+
+# TODO: remove
 def verify_block(previous_block : Block, block : Block) -> bool:
     try:
         # header verification
