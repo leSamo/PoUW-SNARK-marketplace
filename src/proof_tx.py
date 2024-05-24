@@ -45,10 +45,7 @@ class ProofTransaction(Encodeable):
         self.__signature = None
 
     def hash(self) -> bytes:
-        if self.__proof is None:
-            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
-        else:
-            serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__proof, self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
+        serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()
 
         return hashlib.sha256(serialized_tx).digest()
 

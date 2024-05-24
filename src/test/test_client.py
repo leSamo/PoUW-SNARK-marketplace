@@ -261,5 +261,3 @@ def test_block_construction():
 
     # check if latest block has id of 1
     assert "(id 1)" in stdout.decode()
-
-    # TODO: check if pending transactions and partial txs were removed from both users

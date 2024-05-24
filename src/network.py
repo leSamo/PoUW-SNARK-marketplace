@@ -152,16 +152,6 @@ def broadcast_block(block : Block) -> None:
     for peer in peers:
         send_message(peer.to_tuple(), util.Command.BROADCAST_BLOCK, message)
 
-def verify_coin_transaction(tx : CoinTransaction, st : StateTree) -> bool:
-    try:
-        # TODO: assert sender funds are sufficient
-
-        # TODO: update state tree
-
-        return True, st
-    except Exception:
-        return False, st
-
 def get_pending_block_integrity(state_tree : StateTree) -> str:
     integrity = state_tree.get_hash()
 
