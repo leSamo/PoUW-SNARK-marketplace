@@ -100,7 +100,6 @@ def verify_block(new_block : Block) -> bool:
 
     # calculate metadata integrity
     metadata_integrity = network.get_block_integrity(new_block)
-    print("Metadata", metadata_integrity)
 
     miner_address = new_block.get_header().get_miner()
 
@@ -791,7 +790,6 @@ def main(argv):
 
             # 3. produce metadata integrity
             metadata_integrity = network.get_pending_block_integrity(state_tree)
-            print("Metadata", metadata_integrity)
 
             # 4. prove each proof
 
