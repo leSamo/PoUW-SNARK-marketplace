@@ -22,6 +22,7 @@ from block_header import BlockHeader
 from coin_tx import CoinTransaction
 from proof_tx import ProofTransaction
 from bind_zokrates import Zokrates
+from peer import Peer
 
 USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>] [-n|--no-color]'
 USAGE_ARGUMENTS = """
@@ -118,8 +119,6 @@ def verify_block(new_block : Block) -> bool:
     return True
 
 def receive_incoming(client_socket, client_address):
-    # TODO: Reputation check
-
     data = []
 
     while True:
@@ -141,17 +140,31 @@ def receive_incoming(client_socket, client_address):
 
     sender = f"{client_address[0]}:{message['port']}"
 
-    # Process received data (you can modify this part based on your requirements)
     util.vprint(f"Received from {sender}:", json.dumps(message, indent=2))
+
+    # Disregard reply messages if coming from non-peers
+    if message['command'] in [util.Command.PEERS, util.Command.LATEST_BLOCK_ID, util.Command.BLOCK, util.Command.PENDING_COIN_TXS, util.Command.PENDING_PROOF_TXS] and sender not in [peer.to_string() for peer in network.peers]:
+        util.vprint(f"Received reply message from {sender} which is not a peer")
+        return
+
+    if sender not in [p.to_string() for p in network.peers]:
+        new_peer = Peer()
+        new_peer.setup_from_string(sender)
+        network.peers.append(new_peer)
+
+        sender_peer = new_peer
+    else:
+        for peer in network.peers:
+            if peer.to_string() == sender:
+                sender_peer = peer
+
+    if sender_peer.get_reputation() <= -10:
+        return
 
     # Disregard messages which don't have command and peer fields
     if 'command' not in message or 'port' not in message:
         util.vprint(f"Received a message missing 'command' or 'port' fields")
-        return
-
-    # Disregard reply messages if coming from non-peers
-    if message['command'] in [util.Command.PEERS, util.Command.LATEST_BLOCK_ID, util.Command.BLOCK, util.Command.PENDING_COIN_TXS, util.Command.PENDING_PROOF_TXS] and f"{client_address[0]}:{message['port']}" not in [peer.to_string() for peer in network.peers]:
-        util.vprint(f"Received reply message from {client_address[0]}:{message['port']} which is not a peer")
+        sender_peer.decrease_reputation()
         return
 
     if message['command'] == util.Command.GET_PEERS:
@@ -177,6 +190,8 @@ def receive_incoming(client_socket, client_address):
     elif message['command'] == util.Command.PENDING_COIN_TXS:
         network.receive_pending_coin_transactions(message['pending_txs'])
 
+        sender_peer.increase_reputation()
+
     elif message['command'] == util.Command.GET_PENDING_COIN_TXS:
         util.vprint(f"Sending pending coin txs")
 
@@ -184,6 +199,8 @@ def receive_incoming(client_socket, client_address):
 
     elif message['command'] == util.Command.PENDING_PROOF_TXS:
         network.receive_pending_proof_transactions(message['pending_txs'])
+
+        sender_peer.increase_reputation()
 
     elif message['command'] == util.Command.GET_PENDING_PROOF_TXS:
         util.vprint(f"Sending pending proof txs")
@@ -201,6 +218,8 @@ def receive_incoming(client_socket, client_address):
         network.blockchain.append(received_block)
         util.vprint("Received valid block")
 
+        sender_peer.increase_reputation()
+
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
 
@@ -213,7 +232,9 @@ def receive_incoming(client_socket, client_address):
 
         network.blockchain.append(new_block)
 
-        network.broadcast_block(new_tx, sender)
+        network.broadcast_block(new_block, sender)
+
+        sender_peer.increase_reputation()
 
     elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
         new_tx = CoinTransaction()
@@ -230,6 +251,7 @@ def receive_incoming(client_socket, client_address):
             # propagate tx to all peers except the sender
             network.broadcast_pending_coin_transaction(new_tx, sender)
 
+            sender_peer.increase_reputation()
 
     elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
         new_tx = ProofTransaction()
@@ -246,6 +268,8 @@ def receive_incoming(client_socket, client_address):
             # propagate tx to all peers except the sender
             network.broadcast_pending_proof_transaction(new_tx, sender)
 
+            sender_peer.increase_reputation()
+
     elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
         util.vprint(f"Peer {client_address[0]}:{message['port']} is requesting latest block id")
         network.send_message((client_address[0], message['port']), util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
@@ -257,8 +281,11 @@ def receive_incoming(client_socket, client_address):
             if peer.to_string() == f"{client_address[0]}:{message['port']}":
                 peer.set_latest_block_id(message['latest_id'])
 
+        sender_peer.increase_reputation()
+
     else:
         util.vprint(f"Received unknown message command '{message['command']}' from {client_address[0]}:{message['port']}")
+        sender_peer.decrease_reputation()
 
     # Close the connection when done
     client_socket.close()
@@ -534,7 +561,6 @@ def main(argv):
                 util.eprint("Usage: send <receiver address> <amount>")
                 continue
 
-            # TODO: check if funds are sufficient
             latest_block = network.blockchain[-1]
             sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
             current_sender_balance = latest_block.get_state_tree().get(sender_address) or 0
@@ -569,7 +595,6 @@ def main(argv):
                 util.eprint("Usage: request-proof <circuit hash> <space separated parameters>")
                 continue
 
-            # TODO: check if funds are sufficient
             try:
                 sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
                 new_tx = ProofTransaction()

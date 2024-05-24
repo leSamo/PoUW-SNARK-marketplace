@@ -108,10 +108,6 @@ class Zokrates:
         # check the block metadata integrity
         assert int(proof_json['inputs'][-2], 0) == int(block_metadata)
 
-        # TODO: Verify proof parameters
-        for i in range(len(proof_json['inputs']) - 2):
-            pass
-
         with open(temp_file, 'w') as file:
             file.write(proof)
 
