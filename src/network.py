@@ -120,7 +120,7 @@ def receive_pending_proof_transactions(pending_txs_obj):
             util.vprint(f"Accepted pending proof tx with id {new_tx.get_id()}")
 
 # broadcast newly created coin transaction to the network
-def broadcast_pending_coin_transaction(tx : CoinTransaction):
+def broadcast_pending_coin_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
 
     pending_coin_transactions.append(tx)
@@ -128,10 +128,11 @@ def broadcast_pending_coin_transaction(tx : CoinTransaction):
     message = { 'tx': tx.encode() }
 
     for peer in peers:
-        send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_COIN_TX, message)
+        if peer.to_string() != sender:
+            send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_COIN_TX, message)
 
 # broadcast newly created coin transaction to the network
-def broadcast_pending_proof_transaction(tx : CoinTransaction):
+def broadcast_pending_proof_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned proof transactions cannot be broadcast"
 
     pending_proof_transactions.append(tx)
@@ -139,16 +140,18 @@ def broadcast_pending_proof_transaction(tx : CoinTransaction):
     message = { 'tx': tx.encode() }
 
     for peer in peers:
-        send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_PROOF_TX, message)
+        if peer.to_string() != sender:
+            send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_PROOF_TX, message)
 
 # broadcast newly generated block to the network
-def broadcast_block(block : Block) -> None:
+def broadcast_block(block : Block, sender : str = '') -> None:
     blockchain.append(block)
 
     message = { 'block': block.encode() }
 
     for peer in peers:
-        send_message(peer.to_tuple(), util.Command.BROADCAST_BLOCK, message)
+        if peer.to_string() != sender:
+            send_message(peer.to_tuple(), util.Command.BROADCAST_BLOCK, message)
 
 def get_pending_block_integrity(state_tree : StateTree) -> str:
     integrity = state_tree.get_hash()
