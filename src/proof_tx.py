@@ -85,6 +85,9 @@ class ProofTransaction(Encodeable):
     def get_address_from(self) -> bytes:
         return self.__address_from
 
+    def get_proof(self) -> str:
+        return self.__proof
+
     def encode(self) -> dict:
         return {
             'id': self.__id.hex(),

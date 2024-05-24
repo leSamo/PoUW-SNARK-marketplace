@@ -571,16 +571,16 @@ def main(argv):
             else:
                 print(f"  {util.Color.YELLOW()}Coin transactions ({len(coin_txs)}):{util.Color.RESET()}")
 
-                for tx in coin_txs:
-                    print(f"    - {tx}")
+                for index, tx in enumerate(coin_txs):
+                    print(f"    - {index}: {tx}")
 
             if len(proof_txs) == 0:
                 print(f"  {util.Color.YELLOW()}No proof transactions{util.Color.RESET()}")
             else:
                 print(f"  {util.Color.YELLOW()}Proof transactions ({len(proof_txs)}):{util.Color.RESET()}")
 
-                for tx in proof_txs:
-                    print(f"    - {tx}")
+                for index, tx in enumerate(proof_txs):
+                    print(f"    - {index}: {tx}")
 
             print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
 
@@ -694,7 +694,7 @@ def main(argv):
             # 6. broadcast block
             new_block.finish_block()
 
-            util.iprint("Sucessfully produced a block with id", previous_block.get_id() + 1)
+            util.iprint(f"Sucessfully produced a block with id {previous_block.get_id() + 1}, {len(network.partial_block_coin_transactions)} coin transaction(s) and {len(network.partial_block_proof_transactions)} proof transaction(s)")
 
             network.broadcast_block(new_block)
 
