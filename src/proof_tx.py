@@ -120,5 +120,4 @@ class ProofTransaction(Encodeable):
         self.__proof = Zokrates.generate_proof(block_metadata, circuit_folder, self.__parameters)
 
     def validate(self, block_metadata, circuit_folder) -> bool:
-        Zokrates.verify_proof(block_metadata, circuit_folder, self.__proof, self.__parameters)
-        pass
+        return Zokrates.verify_proof(block_metadata, circuit_folder, self.__proof, self.__parameters)

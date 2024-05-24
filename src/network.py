@@ -161,7 +161,7 @@ def get_pending_block_integrity(state_tree : StateTree) -> str:
     for tx in partial_block_proof_transactions:
         integrity += tx.get_integrity()
 
-    return str(int(hashlib.sha256(integrity).digest().hex(), 16))
+    return str(int(hashlib.sha256(integrity).digest().hex()[4:], 16))
 
 def get_block_integrity(block : Block) -> str:
     integrity = block.get_body().hash_state_tree()
@@ -172,4 +172,4 @@ def get_block_integrity(block : Block) -> str:
     for tx in block.get_body().get_proof_txs():
         integrity += tx.get_integrity()
 
-    return str(int(hashlib.sha256(integrity).digest().hex(), 16))
+    return str(int(hashlib.sha256(integrity).digest().hex()[4:], 16))

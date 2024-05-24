@@ -256,6 +256,8 @@ def test_block_construction():
     requesting_process.wait()
     stdout, _ = requesting_process.communicate()
 
+    print(stdout.decode())
+
     miner_process.stdin.write("exit\n".encode())
     miner_process.stdin.flush()
 

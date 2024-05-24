@@ -121,7 +121,7 @@ class Zokrates:
         if os.path.exists(temp_file):
             os.remove(temp_file)
 
-        print("return code", stdout)
+        print("aaaa", return_code)
 
         #   4. Return result
         return return_code == 0

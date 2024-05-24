@@ -37,6 +37,7 @@ USAGE_ARGUMENTS = """
 
 server_running = True
 private_key = None
+circuits = None
 
 def start_blockchain_sync():
     util.vprint("Synchronization: Looking for peers")
@@ -99,17 +100,20 @@ def verify_block(new_block : Block) -> bool:
 
     # calculate metadata integrity
     metadata_integrity = network.get_block_integrity(new_block)
+    print("Metadata", metadata_integrity)
 
     miner_address = new_block.get_header().get_miner()
 
     # verify each transaction and update state tree
     for tx in new_block.get_body().get_coin_txs():
         if not tx.verify_transaction():
+            util.vprint(f"Failed to verify a coin transaction")
             return False
 
         try:
             tx.check_validity()
         except:
+            util.vprint(f"Failed to verify a coin transaction")
             return False
 
         st.apply_coin_tx(tx, network.config['coin_tx_fee'], miner_address)
@@ -117,16 +121,21 @@ def verify_block(new_block : Block) -> bool:
     # verify each proof transaction and proof and update state tree
     for tx in new_block.get_body().get_proof_txs():
         if not tx.verify_transaction():
+            util.vprint(f"Failed to verify a proof transaction")
             return False
 
         try:
             tx.check_validity()
         except:
+            util.vprint(f"Failed to verify a proof transaction")
             return False
 
         st.apply_proof_tx(tx, network.config['proof_tx_fee'], miner_address)
 
-        # TODO: check proof along with metadata integrity
+        circuit_folder = circuits[tx.get_circuit_hash().hex()]
+        if not tx.validate(metadata_integrity, circuit_folder):
+            util.vprint(f"Failed to verify a proof")
+            return False
 
     # compare state trees and block hashes
     if st.get_hash().hex() != new_block.get_state_tree().get_hash().hex():
@@ -134,6 +143,15 @@ def verify_block(new_block : Block) -> bool:
         return False
 
     util.vprint(f"Received block is OK")
+
+    # Remove newly confirmed transactions from the pending pool
+
+    new_coin_txs_ids = [tx.get_id() for tx in new_block.get_body().get_coin_txs()]
+    new_proof_txs_ids = [tx.get_id() for tx in new_block.get_body().get_proof_txs()]
+
+    network.pending_coin_transactions = [tx for tx in network.pending_coin_transactions if tx.get_id() not in new_coin_txs_ids]
+    network.pending_proof_transactions = [tx for tx in network.pending_proof_transactions if tx.get_id() not in new_proof_txs_ids]
+
     return True
 
 def receive_incoming(client_socket, client_address):
@@ -346,7 +364,7 @@ def generate_key(filename):
     util.iprint(f"Private key saved to the file '{filename}'")
 
 def main(argv):
-    global server_running, verbose_logging, private_key
+    global server_running, verbose_logging, private_key, circuits
 
     try:
         opts, args = getopt.getopt(argv, "hvk:p:c:f:n", ["help", "verbose", "key=", "port=", "command=", "config=", "no-color"])
@@ -773,6 +791,7 @@ def main(argv):
 
             # 3. produce metadata integrity
             metadata_integrity = network.get_pending_block_integrity(state_tree)
+            print("Metadata", metadata_integrity)
 
             # 4. prove each proof
 
