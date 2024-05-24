@@ -76,6 +76,47 @@ def start_pending_tx_sync():
         network.send_message(peer.to_tuple(), util.Command.GET_PENDING_COIN_TXS)
         network.send_message(peer.to_tuple(), util.Command.GET_PENDING_PROOF_TXS)
 
+def verify_block(new_block : Block) -> bool:
+    previous_block = network.blockchain[-1]
+
+    # verify serial id
+    if new_block.get_id() != previous_block.get_id() + 1:
+        util.vprint(f"Received out of order block with id {new_block.get_id()}, expected {network.blockchain[-1].get_id() + 1}")
+        return False
+
+    # verify previous block hash
+    if new_block.get_previous_block_hash() != previous_block.get_current_block_hash():
+        util.vprint(f"Received block with hash not matching")
+        return False
+
+    # verify timestamp
+    if new_block.get_timestamp() < previous_block.get_timestamp() or new_block.get_timestamp() > util.get_current_time() + network.config['time_difference_tolerance']:
+        util.vprint(f"Received block with invalid timestamp")
+        return False
+
+    st = previous_block.get_state_tree()
+
+    # calculate metadata integrity
+    metadata_integrity = network.get_block_integrity(new_block)
+
+    miner_address = new_block.get_header().get_miner()
+
+    # verify each transaction and update state tree
+    for tx in new_block.get_body().get_coin_txs():
+        tx.verify_transaction()
+        st.apply_coin_tx(tx, network.config['coin_tx_fee'], miner_address)
+
+    # verify each proof transaction and proof and update state tree
+    for tx in new_block.get_body().get_proof_txs():
+        tx.verify_transaction()
+        #tx.validate
+        st.apply_proof_tx(tx, network.config['proof_tx_fee'], miner_address)
+
+    # compare state trees and block hashes
+
+    util.vprint(f"Received block is OK")
+    return True
+
 def receive_incoming(client_socket, client_address):
     # TODO: Consider adding client_address to PEERS if not already
     # TODO: Reputation check
@@ -149,27 +190,22 @@ def receive_incoming(client_socket, client_address):
         network.send_message((client_address[0], message['port']), util.Command.PENDING_PROOF_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_proof_transactions] })
 
     elif message['command'] == util.Command.BLOCK:
-        # TODO: verify block
         received_block = Block()
         received_block.decode(message['block'])
 
-        if network.verify_block(network.blockchain[-1], received_block):
-            network.blockchain.append(received_block)
-            util.vprint("Received valid block")
-        else:
-            util.vprint("Received invalid block")
+        if not verify_block(received_block):
+            util.vprint("Failed to verify block")
             return
+
+        network.blockchain.append(received_block)
+        util.vprint("Received valid block")
 
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
 
         new_block.decode(message['block'])
 
-        # TODO: verify block
-
-
-        if new_block.get_id() != network.blockchain[-1].get_id() + 1:
-            util.vprint(f"Received out of order block with id {new_block.get_id()}, expected {network.blockchain[-1].get_id() + 1}")
+        if not verify_block(new_block):
             return
 
         util.vprint(f"Accepted block with id {new_block.get_id()}")
@@ -618,6 +654,8 @@ def main(argv):
             print()
 
         elif command == 'produce-empty':
+            miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
+
             previous_block = network.blockchain[-1]
 
             new_block_body = BlockBody()
