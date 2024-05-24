@@ -14,7 +14,7 @@
 - Genesis blocks includes 1000 coins on account
 
 ## Automated Tests
-Automated tests are located in the `src/test` directory and can be run with `pytest src/test/test_*.py -v`.
+Automated tests are located in the `src/test` directory and can be run with `pytest src/test/test_*.py -v`. Make sure your client is not running during the tests execution as it might interfere with the tests.
 
 ## Usage
     Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>]
@@ -39,7 +39,7 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
     generate-key <output file> -- generate SECP256k1 private key and save it in <output file> in PEM format
     inspect <block id> -- print information about block with <block id>
     status -- print current status of the network
-    produce-empty -- produces an empty dummy block and broadcasts it to the network
+    display-proof <block id> <proof transaction index> -- prints a proof from a block in JSON format.
     auth <private key file> -- switches from anonymous mode to authenticated mode
     balance [<address>] -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided
     logout -- switches to non-authenticated mode

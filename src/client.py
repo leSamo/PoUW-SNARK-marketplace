@@ -353,7 +353,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW()}generate-key <output file>{util.Color.RESET()} -- generate SECP256k1 private key and save it in <output file> in PEM format")
             print(f"  {util.Color.YELLOW()}inspect <block id>{util.Color.RESET()} -- print information about block with <block id>")
             print(f"  {util.Color.YELLOW()}status{util.Color.RESET()} -- print current status of the network")
-            print(f"  {util.Color.YELLOW()}produce-empty{util.Color.RESET()} -- produces an empty dummy block and broadcasts it to the network")
+            print(f"  {util.Color.YELLOW()}display-proof <block id> <proof transaction index>{util.Color.RESET()} -- prints a proof from a block in JSON format.")
             print(f"  {util.Color.YELLOW()}auth <private key file>{util.Color.RESET()} -- switches from anonymous mode to authenticated mode")
             print(f"  {util.Color.YELLOW()}balance [<address>]{util.Color.RESET()} -- prints current (latest known block) balance of <address> or self if authenticated and <address> is not provided")
             print(f"  {util.Color.YELLOW()}logout{util.Color.RESET()} -- switches to non-authenticated mode")
