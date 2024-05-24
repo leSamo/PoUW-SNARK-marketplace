@@ -114,6 +114,9 @@ def verify_block(new_block : Block) -> bool:
         st.apply_proof_tx(tx, network.config['proof_tx_fee'], miner_address)
 
     # compare state trees and block hashes
+    if st.get_hash().hex() != new_block.get_state_tree().get_hash().hex():
+        util.vprint(f"Invalid state tree hash")
+        return False
 
     util.vprint(f"Received block is OK")
     return True
@@ -226,6 +229,7 @@ def receive_incoming(client_socket, client_address):
         new_block.decode(message['block'])
 
         if not verify_block(new_block):
+            util.vprint("Failed to verify block")
             return
 
         util.vprint(f"Accepted block with id {new_block.get_id()}")
