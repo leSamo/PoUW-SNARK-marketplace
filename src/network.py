@@ -99,7 +99,6 @@ def send_message(receiver, command, message = {}):
         util.vprint(f"Successfully sent message {command} to peer {receiver}")
     except Exception as error:
         util.vprint(f"Failed to send message {command} to peer {receiver} - {error}")
-        # TODO: consider removing stale peers after N unsuccessful connections
 
 def receive_pending_coin_transactions(pending_txs_obj):
     for tx in pending_txs_obj:

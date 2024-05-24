@@ -37,7 +37,7 @@ class CoinTransaction(Encodeable):
 
     def check_validity(self) -> None:
         if self.__amount <= 0:
-            raise ValueError("Transaction amount has to be positive")
+            raise ValueError("Transaction amount must be positive")
 
         if self.__address_from == self.__address_to:
             raise ValueError("Sender and receiver addresses cannot be the same")

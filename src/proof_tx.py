@@ -42,10 +42,10 @@ class ProofTransaction(Encodeable):
         util.validate_hash(self.__circuit_hash)
 
         if type(self.__complexity) != int:
-            raise TypeError("Complexity has to be an integer")
+            raise TypeError("Complexity must be an integer")
 
         if self.__complexity <= 0:
-            raise ValueError("Complexity has to be a positive integer")
+            raise ValueError("Complexity must be a positive integer")
 
     def hash(self) -> bytes:
         serialized_tx = "|".join([self.__id.hex(), self.__address_from.hex(), self.__circuit_hash.hex(), self.__parameters, str(self.__complexity)]).encode()

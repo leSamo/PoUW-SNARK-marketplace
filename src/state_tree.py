@@ -41,7 +41,6 @@ class StateTree(Encodeable):
         return {key.hex(): value for key, value in self.__state.items()}
 
     def decode(self, obj):
-        # TODO: Validate
         self.__state = {
             bytes.fromhex(key): value for key, value in obj.items()
         }
