@@ -130,7 +130,6 @@ def test_coin_tx_application():
     assert st.get(receiver) == 10
     assert st.get(miner) == 1
 
-
 def test_proof_tx_application():
     sender = bytes.fromhex("0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2")
     miner = bytes.fromhex("0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000")
@@ -148,4 +147,3 @@ def test_proof_tx_application():
     assert st.get(sender) == 92
     assert st.get(miner) == 8
 
-# TODO: Validate decoding

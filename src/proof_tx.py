@@ -54,6 +54,10 @@ class ProofTransaction(Encodeable):
         return hashlib.sha256(serialized_tx).digest()
 
     def sign(self, private_key) -> None:
+        corresponding_public_key = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
+
+        if corresponding_public_key != self.__address_from: raise ValueError("Incorrect private key used to signed transaction")
+
         self.__signature = private_key.sign(self.hash())
 
     def verify_transaction(self) -> bool:

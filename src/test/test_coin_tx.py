@@ -141,5 +141,3 @@ def test_encode_decode_unsigned():
 
         # Cannot encode unsigned transactions
         tx.encode()
-
-# TODO: Validate decoding, especially signature
