@@ -1,5 +1,14 @@
 # SNARK Marketplace Blockchain
 
+SNARK marketplace with proof of useful work (PoUW) incentive mechanism where clients can request a SNARK proof
+generation by providing either ZoKrates source code or by referencing an existing arithmetic
+circuit known to a network along with proof parameters. Since the proof requester shares
+both their public and private parameters with the rest of the network, this approach foregoes
+the zero-knowledge aspect of zk-SNARKs and ZoKrates and focuses only on plain SNARKs.
+Proof generation is encapsulated within proof transactions. The network also uses coin
+transactions of the native currency, which facilitates block rewards and fees for transaction
+confirmation and proof generation.
+
 ## Requirements
 - Python 3.11 with pip
 - Zokrates 0.8.8
@@ -7,11 +16,6 @@
 ## First Time Setup
 1. Make sure you run `pip install -r requirements.txt` to install dependencies
 2. (Optional) Configure network parameters in `src/config.json`
-
-## Testing Accounts
-**PeerA**
-- Address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2
-- Genesis blocks includes 1000 coins on account
 
 ## Automated Tests
 Automated tests are located in the `src/test` directory and can be run with `pytest src/test/test_*.py -v`. Make sure your client is not running during the tests execution as it might interfere with the tests.
@@ -48,7 +52,6 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
 
 - **Transaction prefix splitting** -- As mentioned in the thesis, there are conflicts possible where two nodes work on the same transactions, which leads to wasted work on the part of the node which fails to publish first. This could be mitigated by allowing miners to only include transactions which match with their address in the prefix.
 - **Blockchain explorer** -- Having a web app that could interact with the network and display data in user-friendly format would make debugging and exploring the network easier.
-- **Statically defined circuits** - implement circuit mgmt
 - **Testing utilities class** -- Writing unit tests involves a lot of boilerplate code for process spawning and communication pipelining. Some test setup code could be abstracted into a class to make writing tests easier.
 - **Improved reputation system** -- Implemented reputation system is very rudimentary and could be abused with manually crafted messages.
 - **Better interactive console** -- User experience when using the client could be improved by implementing support for tab-completion and command history accessible with arrow keys similarly to Shell.
@@ -59,7 +62,7 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
 
 This implementation does not include the circuit subnetwork which uses proof-of-stake-like circuit retrieval and registration using ZoKrates and SMPC. Its function is mocked by statically providing circuits in their source code and circuit form with ABI, proving key and verifying key.
 
-To add a new circuit, just create a new folder under `src/circuits` such as `src/circuits/d` and add the ZoKrates source code file with `.zok` extension into it. Navigate to the directory and run the following commands:
+To add a new circuit, just create a new folder under `src/circuit` such as `src/circuit/d` and add the ZoKrates source code file with `.zok` extension into it. Navigate to the directory and run the following commands:
 
 1. `zokrates compile -i <zokrates source code file>`
 2. `zokrates setup`
@@ -73,16 +76,19 @@ Here are some example commands to demonstrate the network:
 Open two terminals, A and B and run the following commands:
 
 A: `python src/client.py -p 2222 -k src/test/misc/private_key`
+
 B: `python src/client.py -p 3333 -k src/test/misc/private_key_2`
 
 Create a coin and a proof transaction with the client A (who has been given 1000 coins in the genesis block):
 
 A: `send 02d56856ae307c2ff4843366284061f6e68aceb1e217c946d83812c52bdfecd2fc 50`
+
 A: `request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6`
 
 By entering `status` command into either of the terminals, the transactions will now be listed as pending. Select the transactions with client B and produce a block:
 
 B: `select-coin-tx 0`
+
 B: `select-proof-tx 0`
 
 Running the command `partial` will display the transactions we have selected for mining.
@@ -92,14 +98,21 @@ B: `produce-block`
 Block has now been generated along with the proof generation and coin transaction confirmation. Running `status` in either of the terminals will list this block as the latest block and running `inspect 1` will list the information about the new block. Client A can now print the generate proof for future use with `display-proof 1 0`. By running the `balance` the A's terminal we will be able to see that the balance has decreased from the original 1000 to 948 due to coin transfer and fees.
 
 Open a third terminal C and run:
+
 C: `python src/client.py -p 4444`
 
 Client C will synchronize with the network on initialization. This can be checked with the `status` command. Since we have not provided the `-k` switch, the client will be in anonymous mode, which is read-only. Authenticated mode can be entered with `auth` client command.
 
-## Generating a New Account
+## Testing Account
+**PeerA**
+- Address: `0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2`
+- Private key file: `src/test/misc/private_key`
+- Genesis blocks includes 1000 coins on account
 
-TODO
+### Generating a New Account
+
+Running the client command `generate-key <file>` will create a new private key file corresponding to a new account. Account can be chosen by providing the private key file with the `-k` switch when starting the application.
 
 ## Network Configuration
 
-TODO
+The file `src/config.json` contains static network and client parameters along with the definition of the genesis block. The file can be edited manually or separate configuration file can be created and enabled with the `-f` switch.
