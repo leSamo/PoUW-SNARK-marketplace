@@ -118,7 +118,6 @@ def verify_block(new_block : Block) -> bool:
     return True
 
 def receive_incoming(client_socket, client_address):
-    # TODO: Consider adding client_address to PEERS if not already
     # TODO: Reputation check
 
     data = []
@@ -388,7 +387,6 @@ def main(argv):
             break
 
         elif command == "help":
-            # TODO: Autoproduce block
             print()
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Available commands:{util.Color.RESET()}")
             print(f"  {util.Color.YELLOW()}verbose <on|off>{util.Color.RESET()} -- toggles verbose logging")
@@ -465,7 +463,6 @@ def main(argv):
                 else:
                     print(f"  {util.Color.YELLOW()}Selected proof transactions ({len(network.partial_block_proof_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_proof_transactions:
-                        # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
                 if len(network.partial_block_coin_transactions) == 0:
@@ -473,7 +470,6 @@ def main(argv):
                 else:
                     print(f"  {util.Color.YELLOW()}Selected coin transactions ({len(network.partial_block_coin_transactions)}):{util.Color.RESET()}")
                     for tx in network.partial_block_coin_transactions:
-                        # TODO: Highlight stale proofs
                         print(f"    - {tx}")
 
         elif command.split(" ")[0] == "select-proof-tx":

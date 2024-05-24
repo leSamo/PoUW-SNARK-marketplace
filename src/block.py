@@ -62,6 +62,5 @@ class Block(Encodeable):
     def get_body(self):
         return self.__body
 
-    # TODO: check if all txs are proved
     def finish_block(self):
         self.__header.finish_block()

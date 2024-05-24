@@ -72,8 +72,6 @@ class ProofTransaction(Encodeable):
     def is_signed(self) -> bool:
         return self.__signature is not None
 
-    # TODO: Check signature
-
     def get_id(self) -> int:
         return self.__id
 
