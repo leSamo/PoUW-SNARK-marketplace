@@ -104,14 +104,29 @@ def verify_block(new_block : Block) -> bool:
 
     # verify each transaction and update state tree
     for tx in new_block.get_body().get_coin_txs():
-        tx.verify_transaction()
+        if not tx.verify_transaction():
+            return False
+
+        try:
+            tx.check_validity()
+        except:
+            return False
+
         st.apply_coin_tx(tx, network.config['coin_tx_fee'], miner_address)
 
     # verify each proof transaction and proof and update state tree
     for tx in new_block.get_body().get_proof_txs():
-        tx.verify_transaction()
-        #tx.validate
+        if not tx.verify_transaction():
+            return False
+
+        try:
+            tx.check_validity()
+        except:
+            return False
+
         st.apply_proof_tx(tx, network.config['proof_tx_fee'], miner_address)
+
+        # TODO: check proof along with metadata integrity
 
     # compare state trees and block hashes
     if st.get_hash().hex() != new_block.get_state_tree().get_hash().hex():
