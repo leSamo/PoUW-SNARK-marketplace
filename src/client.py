@@ -629,8 +629,10 @@ def main(argv):
 
             current_timestamp = util.get_current_time()
 
+            miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
+
             new_block_header = BlockHeader()
-            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
+            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash, miner_address)
 
             new_block = Block()
             new_block.setup(new_block_header, new_block_body)
@@ -701,7 +703,7 @@ def main(argv):
             current_timestamp = util.get_current_time()
 
             new_block_header = BlockHeader()
-            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash)
+            new_block_header.setup(previous_block.get_id() + 1, current_timestamp, 1, previous_block.get_current_block_hash(), coin_txs_hash, proof_txs_hash, state_root_hash, miner_address)
 
             new_block = Block()
             new_block.setup(new_block_header, new_block_body)

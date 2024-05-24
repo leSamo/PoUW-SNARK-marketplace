@@ -11,7 +11,7 @@
             "timestamp": 1714436126662,
             "difficulty": 1,
             "previous_block_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-            "current_block_hash": "54fa7afc4d8b39df8c1d1600ebbe47e6321555dce83420f180aabb88581ee1d1",
+            "current_block_hash": "6936414ccf1b1df9937d3a6ca1980c8f6571b10603a9e4d2ffde506a6fb8fc1f",
             "coin_txs_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "proof_txs_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "state_root_hash": "a23e4325092d529a03f6acce2664823f68a78acfbe6566936f351d579d8650e7",

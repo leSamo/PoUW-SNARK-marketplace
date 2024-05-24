@@ -111,7 +111,7 @@ def test_initial_peer_discovery():
     assert "127.0.0.1:3333" in stdout1111.decode()
 
 def test_initial_block_discovery():
-    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     time.sleep(0.3)
 
@@ -182,7 +182,7 @@ def test_inspect():
     assert block_id == 0
     assert timestamp == 1714436126662
     assert difficulty == 1
-    assert block_hash == '54fa7afc4d8b39df8c1d1600ebbe47e6321555dce83420f180aabb88581ee1d1'
+    assert block_hash == '6936414ccf1b1df9937d3a6ca1980c8f6571b10603a9e4d2ffde506a6fb8fc1f'
 
 def test_not_auth():
     process = subprocess.Popen(f'python {client_program} -p 2222 -v', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

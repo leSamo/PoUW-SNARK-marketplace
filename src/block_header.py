@@ -17,11 +17,12 @@ class BlockHeader(Encodeable):
     __coin_txs_hash: bytes       # SHA256 hash (32 bytes)
     __proof_txs_hash: bytes      # SHA256 hash (32 bytes)
     __state_root_hash: bytes     # SHA256 hash (32 bytes)
+    __miner: bytes               # SECP256k1 public key in SEC1 format (33 bytes)
 
     def __init__(self):
         pass
 
-    def setup(self, serial_id, timestamp, difficulty, previous_block_hash, coin_txs_hash, proof_txs_hash, state_root_hash):
+    def setup(self, serial_id, timestamp, difficulty, previous_block_hash, coin_txs_hash, proof_txs_hash, state_root_hash, miner):
         self.__serial_id = serial_id
         self.__timestamp = timestamp
         self.__difficulty = difficulty
@@ -29,6 +30,7 @@ class BlockHeader(Encodeable):
         self.__coin_txs_hash = coin_txs_hash
         self.__proof_txs_hash = proof_txs_hash
         self.__state_root_hash = state_root_hash
+        self.__miner = miner
 
         self.validate_block()
 
@@ -40,7 +42,8 @@ class BlockHeader(Encodeable):
             self.__previous_block_hash.hex(),
             self.__coin_txs_hash.hex(),
             self.__proof_txs_hash.hex(),
-            self.__state_root_hash.hex()
+            self.__state_root_hash.hex(),
+            self.__miner.hex()
         ]).encode()
         block_hash = hashlib.sha256(serialized_block).digest()
 
@@ -73,7 +76,8 @@ class BlockHeader(Encodeable):
             'current_block_hash': self.__current_block_hash.hex(),
             'coin_txs_hash': self.__coin_txs_hash.hex(),
             'proof_txs_hash': self.__proof_txs_hash.hex(),
-            'state_root_hash': self.__state_root_hash.hex()
+            'state_root_hash': self.__state_root_hash.hex(),
+            'miner': self.__miner.hex()
         }
 
     def decode(self, obj):
@@ -85,6 +89,7 @@ class BlockHeader(Encodeable):
         self.__coin_txs_hash = bytes.fromhex(obj['coin_txs_hash'])
         self.__proof_txs_hash = bytes.fromhex(obj['proof_txs_hash'])
         self.__state_root_hash = bytes.fromhex(obj['state_root_hash'])
+        self.__miner = bytes.fromhex(obj['miner'])
 
         self.validate_block()
         self.validate_hash()

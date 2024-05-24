@@ -28,7 +28,7 @@ def test_valid():
     body.setup([], [], st)
 
     header = BlockHeader()
-    header.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+    header.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     block = Block()
     block.setup(header, body)
@@ -46,13 +46,13 @@ def test_hashes():
     body.setup([], [], st)
 
     header1 = BlockHeader()
-    header1.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+    header1.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     header2 = BlockHeader()
-    header2.setup(2, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+    header2.setup(2, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     header3 = BlockHeader()
-    header3.setup(2, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+    header3.setup(2, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     block1 = Block()
     block1.setup(header1, body)
@@ -77,7 +77,7 @@ def test_invalid_id():
 
     with pytest.raises(ValueError):
         header = BlockHeader()
-        header.setup(-1, util.get_current_time(), 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+        header.setup(-1, util.get_current_time(), 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
 def test_invalid_difficulty():
     st = StateTree()
@@ -87,11 +87,11 @@ def test_invalid_difficulty():
 
     with pytest.raises(ValueError):
         header = BlockHeader()
-        header.setup(1, util.get_current_time(), 0, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+        header.setup(1, util.get_current_time(), 0, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     with pytest.raises(ValueError):
         header = BlockHeader()
-        header.setup(1, util.get_current_time(), -1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+        header.setup(1, util.get_current_time(), -1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
 def test_encode_decode():
     current_time = util.get_current_time()
@@ -102,7 +102,7 @@ def test_encode_decode():
     body.setup([], [], st)
 
     header = BlockHeader()
-    header.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash())
+    header.setup(1, current_time, 1, hashlib.sha256("abc".encode()).digest(), body.hash_coin_txs(), body.hash_proof_txs(), st.get_hash(), ADDRESS)
 
     block = Block()
     block.setup(header, body)
