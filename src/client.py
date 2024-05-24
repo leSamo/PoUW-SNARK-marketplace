@@ -640,6 +640,22 @@ def main(argv):
 
             network.broadcast_block(new_block)
 
+        elif command.split(" ")[0] == 'display-proof':
+            if len(command.split(" ")) != 3:
+                util.eprint("Usage: display-proof <block id> <proof transaction index>")
+                continue
+
+            block_id = int(command.split(" ")[1])
+            proof_index = int(command.split(" ")[2])
+
+            try:
+                proof = network.blockchain[block_id].get_body().get_proof_txs()[proof_index]
+                print(f"Proof with transaction id {proof.get_id().hex()}")
+
+                print(proof.get_proof())
+            except:
+                util.eprint("Invalid block id or transaction index")
+
         elif command == 'produce-block':
             previous_block = network.blockchain[-1]
 
