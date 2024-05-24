@@ -66,6 +66,40 @@ To add a new circuit, just create a new folder under `src/circuits` such as `src
 
 The circuit will be automatically registered when client is started the next time. To learn the hash of the circuit, start the app with `-v` switch and inspect first few logged messages.
 
-## Example commands
+## Example Commands
+
+Here are some example commands to demonstrate the network:
+
+Open two terminals, A and B and run the following commands:
+
+A: `python src/client.py -p 2222 -k src/test/misc/private_key`
+B: `python src/client.py -p 3333 -k src/test/misc/private_key_2`
+
+Create a coin and a proof transaction with the client A (who has been given 1000 coins in the genesis block):
+
+A: `send 02d56856ae307c2ff4843366284061f6e68aceb1e217c946d83812c52bdfecd2fc 50`
+A: `request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6`
+
+By entering `status` command into either of the terminals, the transactions will now be listed as pending. Select the transactions with client B and produce a block:
+
+B: `select-coin-tx 0`
+B: `select-proof-tx 0`
+
+Running the command `partial` will display the transactions we have selected for mining.
+
+B: `produce-block`
+
+Block has now been generated along with the proof generation and coin transaction confirmation. Running `status` in either of the terminals will list this block as the latest block and running `inspect 1` will list the information about the new block. Client A can now print the generate proof for future use with `display-proof 1 0`. By running the `balance` the A's terminal we will be able to see that the balance has decreased from the original 1000 to 948 due to coin transfer and fees.
+
+Open a third terminal C and run:
+C: `python src/client.py -p 4444`
+
+Client C will synchronize with the network on initialization. This can be checked with the `status` command. Since we have not provided the `-k` switch, the client will be in anonymous mode, which is read-only. Authenticated mode can be entered with `auth` client command.
+
+## Generating a New Account
+
+TODO
+
+## Network Configuration
 
 TODO
