@@ -193,13 +193,9 @@ def receive_incoming(client_socket, client_address):
             if peer.to_string() == sender:
                 sender_peer = peer
 
-    if sender_peer.get_reputation() <= -10:
-        return
-
     # Disregard messages which don't have command and peer fields
     if 'command' not in message or 'port' not in message:
         util.vprint(f"Received a message missing 'command' or 'port' fields")
-        sender_peer.decrease_reputation()
         return
 
     if message['command'] == util.Command.GET_PEERS:
@@ -225,8 +221,6 @@ def receive_incoming(client_socket, client_address):
     elif message['command'] == util.Command.PENDING_COIN_TXS:
         network.receive_pending_coin_transactions(message['pending_txs'])
 
-        sender_peer.increase_reputation()
-
     elif message['command'] == util.Command.GET_PENDING_COIN_TXS:
         util.vprint(f"Sending pending coin txs")
 
@@ -234,8 +228,6 @@ def receive_incoming(client_socket, client_address):
 
     elif message['command'] == util.Command.PENDING_PROOF_TXS:
         network.receive_pending_proof_transactions(message['pending_txs'])
-
-        sender_peer.increase_reputation()
 
     elif message['command'] == util.Command.GET_PENDING_PROOF_TXS:
         util.vprint(f"Sending pending proof txs")
@@ -253,8 +245,6 @@ def receive_incoming(client_socket, client_address):
         network.blockchain.append(received_block)
         util.vprint("Received valid block")
 
-        sender_peer.increase_reputation()
-
     elif message['command'] == util.Command.BROADCAST_BLOCK:
         new_block = Block()
 
@@ -269,8 +259,6 @@ def receive_incoming(client_socket, client_address):
         network.blockchain.append(new_block)
 
         network.broadcast_block(new_block, sender)
-
-        sender_peer.increase_reputation()
 
     elif message['command'] == util.Command.BROADCAST_PENDING_COIN_TX:
         new_tx = CoinTransaction()
@@ -287,8 +275,6 @@ def receive_incoming(client_socket, client_address):
             # propagate tx to all peers except the sender
             network.broadcast_pending_coin_transaction(new_tx, sender)
 
-            sender_peer.increase_reputation()
-
     elif message['command'] == util.Command.BROADCAST_PENDING_PROOF_TX:
         new_tx = ProofTransaction()
         new_tx.decode(message['tx'])
@@ -304,8 +290,6 @@ def receive_incoming(client_socket, client_address):
             # propagate tx to all peers except the sender
             network.broadcast_pending_proof_transaction(new_tx, sender)
 
-            sender_peer.increase_reputation()
-
     elif message['command'] == util.Command.GET_LATEST_BLOCK_ID:
         util.vprint(f"Peer {client_address[0]}:{message['port']} is requesting latest block id")
         network.send_message((client_address[0], message['port']), util.Command.LATEST_BLOCK_ID, { 'latest_id': network.blockchain[-1].get_id() })
@@ -317,11 +301,8 @@ def receive_incoming(client_socket, client_address):
             if peer.to_string() == f"{client_address[0]}:{message['port']}":
                 peer.set_latest_block_id(message['latest_id'])
 
-        sender_peer.increase_reputation()
-
     else:
         util.vprint(f"Received unknown message command '{message['command']}' from {client_address[0]}:{message['port']}")
-        sender_peer.decrease_reputation()
 
     # Close the connection when done
     client_socket.close()
@@ -705,7 +686,7 @@ def main(argv):
                 print(f"  {util.Color.YELLOW()}Peers ({len(network.peers)}):{util.Color.RESET()}")
 
                 for peer in network.peers:
-                    print(f"    - {peer.to_string()} (reputation {peer.get_reputation()})")
+                    print(f"    - {peer.to_string()}")
 
             if len(network.pending_coin_transactions) == 0:
                 print(f"  {util.Color.YELLOW()}No pending coin transactions{util.Color.RESET()}")
