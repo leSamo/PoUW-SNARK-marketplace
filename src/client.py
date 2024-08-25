@@ -16,6 +16,7 @@ import os
 
 import util
 import network
+import rpc_interface
 from block import Block
 from block_body import BlockBody
 from block_header import BlockHeader
@@ -24,15 +25,16 @@ from proof_tx import ProofTransaction
 from bind_zokrates import Zokrates
 from peer import Peer
 
-USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>] [-n|--no-color]'
+USAGE = 'Usage: python client.py [-k|--key <private key file>] [-v|--verbose] [-h|--help] [-p|--port <port number>] [-c|--command <command>] [-f|--config <config file>] [-n|--no-color] [-r|--rpc <port number>]'
 USAGE_ARGUMENTS = """
     -k, --key <private key file>   Authenticate using an existing private key file
     -v, --verbose                  Show more detailed log messages
     -h, --help                     Print this message
-    -p, --port <port number>       Open the listening socket on a specific port number
+    -p, --port <port number>       Open the P2P listening socket on a speficied port number
     -c, --command <command>        Run semicolon separated list of commands just after client initialization
     -f, --config <config file>     Provide a non-default configuration file
     -n, --no-color                 Don't print colored text into the terminal
+    -r, --rpc <port number>        Start RPC server
 """
 
 server_running = True
@@ -346,8 +348,10 @@ def generate_key(filename):
 def main(argv):
     global server_running, verbose_logging, private_key, circuits
 
+    rpc_port = None
+
     try:
-        opts, args = getopt.getopt(argv, "hvk:p:c:f:n", ["help", "verbose", "key=", "port=", "command=", "config=", "no-color"])
+        opts, args = getopt.getopt(argv, "hvk:p:c:f:nr:", ["help", "verbose", "key=", "port=", "command=", "config=", "no-color", "rpc="])
     except getopt.GetoptError:
         print(USAGE)
         print(USAGE_ARGUMENTS)
@@ -380,6 +384,12 @@ def main(argv):
             cli_commands = arg.split(";")
         elif opt in ['-f', '--config']:
             config_file = arg
+        elif opt in ['-r', '--rpc']:
+            try:
+                rpc_port = int(arg)
+            except ValueError:
+                util.eprint("Expected -r/--rpc argument to be an integer")
+                sys.exit(-1)
 
     Zokrates.check_version()
 
@@ -409,6 +419,10 @@ def main(argv):
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
         time.sleep(0.1)
+
+    if rpc_port is not None:
+        rpc_thread = threading.Thread(target=rpc_interface.start_json_rpc_server(rpc_port))
+        rpc_thread.start()
 
     while True:
         try:
