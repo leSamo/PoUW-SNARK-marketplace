@@ -1,10 +1,9 @@
-import net from "node:net"
-import PromiseSocket from "promise-socket"
+import axios from 'axios'
 
 const HOST = "127.0.0.1"
 const PORT = 12346
 
-const COMMANDS = {
+export const COMMANDS = {
     GET_PEERS: 'GET_PEERS',
     PEERS: 'PEERS',
     GET_LATEST_BLOCK_ID: 'GET_LATEST_BLOCK_ID',
@@ -21,17 +20,24 @@ const COMMANDS = {
     BROADCAST_PENDING_PROOF_TX: 'BROADCAST_PENDING_PROOF_TX',
 }
 
-export const sendMessage = async (receiver, command, message = {}) => {
-    const socket = new net.Socket();
-    const promiseSocket = new PromiseSocket(socket);
+export const sendMessage = async (command, params = {}) => {
+    if (!command in COMMANDS) {
+        throw Error("Invalid RPC command");
+    }
 
-    await promiseSocket.connect({port: 2222, host: "localhost"});
-
-    promiseSocket.setTimeout(1000)
-    const chunk = await promiseSocket.readAll()
-
-    console.log(chunk);
-}
+    return axios.post(`http://localhost:9545/`, {
+        jsonrpc: "2.0",
+        id: 0,
+        method: command,
+        params
+      })
+      .then(function (response) {
+        return response.data.result;
+      })
+      .catch(function (error) {
+        throw error;
+      });
+};
 
 /*
 def send_message(receiver, command, message = {}):
