@@ -379,7 +379,11 @@ def main(argv):
                 util.eprint("Failed to load private key file:", e)
                 sys.exit(-1)
         elif opt in ['-p', '--port']:
-            network.port = int(arg)
+            try:
+                network.port = int(arg)
+            except ValueError:
+                util.eprint("Expected -p/--port argument to be an integer")
+                sys.exit(-1)
         elif opt in ['-c', '--command']:
             cli_commands = arg.split(";")
         elif opt in ['-f', '--config']:
@@ -421,7 +425,7 @@ def main(argv):
         time.sleep(0.1)
 
     if rpc_port is not None:
-        rpc_thread = threading.Thread(target=rpc_interface.start_json_rpc_server(rpc_port))
+        rpc_thread = threading.Thread(target=rpc_interface.start_json_rpc_server, args=(rpc_port,))
         rpc_thread.start()
 
     while True:
@@ -721,6 +725,7 @@ def main(argv):
             print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
             print()
 
+        # TODO: Check if not in anonymous mode
         elif command == 'produce-empty':
             miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 
@@ -856,6 +861,7 @@ def main(argv):
         else:
             util.eprint(f"Unknown command '{command}'. Type 'help' to see a list of commands.")
 
+    #rpc_thread.join()
     server_thread.join()
     block_sync_thread.join()
     pending_tx_sync_thread.join()
