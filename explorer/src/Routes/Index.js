@@ -1,8 +1,8 @@
 import { Fragment, React, useEffect, useState } from "react";
 import { COMMANDS, sendMessage } from "../Helpers/network";
-import { Bullseye, Button, EmptyState, EmptyStateHeader, EmptyStateIcon, Label, Spinner, Split, SplitItem, Title } from "@patternfly/react-core";
-import { ExclamationCircleIcon, RedoIcon } from "@patternfly/react-icons";
-import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
+import { Bullseye, Button, EmptyState, EmptyStateHeader, EmptyStateIcon, Label, Spinner, Split, SplitItem, Tab, TabTitleText, Tabs, Title } from "@patternfly/react-core";
+import { DownloadIcon, ExclamationCircleIcon, RedoIcon } from "@patternfly/react-icons";
+import { Table, Thead, Tbody, Tr, Th, Td, ExpandableRowContent } from '@patternfly/react-table';
 import Hash from "../Hash";
 import { formatTimestamp } from "../Helpers/date";
 
@@ -15,6 +15,7 @@ const Index = () => {
     const [blocks, setBlocks] = useState([]);
 
     const [isExpanded, setExpanded] = useState(new Set());
+    const [selectedTab, setSelectedTab] = useState({});
 
     useEffect(() => {
         setLoading(true);
@@ -39,7 +40,7 @@ const Index = () => {
             })
         }, [refreshCounter]);
 
-    const onToggle = (id) => {
+    const onToggle = (e, id) => {
         const newSet = new Set(isExpanded);
 
         if (isExpanded.has(id)) {
@@ -54,6 +55,15 @@ const Index = () => {
 
     const refresh = () => {
         setRefreshCounter(refreshCounter + 1);
+    }
+
+    const downloadString = (filename, string) => {
+        const element = document.createElement("a");
+        const file = new Blob([string], {type: 'text/plain'});
+        element.href = URL.createObjectURL(file);
+        element.download = filename;
+        document.body.appendChild(element);
+        element.click();
     }
 
     console.log(">>>>>", blocks);
@@ -86,6 +96,7 @@ const Index = () => {
                             <Table variant="compact">
                                 <Thead>
                                     <Tr>
+                                        <Th screenReaderText="Expand row"/>
                                         <Th>Serial ID</Th>
                                         <Th>Block hash</Th>
                                         <Th>Mined by</Th>
@@ -96,33 +107,125 @@ const Index = () => {
                                 </Thead>
                                 <Tbody>
                                     {blocks.map(({ block }, index) => (
-                                        <Tr key={index}>
-                                            <Td dataLabel="Serial ID">
-                                                <Split>
-                                                    <SplitItem>
-                                                        {block.header.serial_id}
-                                                    </SplitItem>
-                                                    <SplitItem>
-                                                        {block.header.serial_id === 0 && <Label isCompact color="green" style={{ marginLeft: 8 }}>Genesis</Label>}
-                                                    </SplitItem>
-                                                </Split>
-                                            </Td>
-                                            <Td dataLabel="Block hash">
-                                                <Hash>{block.header.current_block_hash}</Hash>
-                                            </Td>
-                                            <Td dataLabel="Mined by">
-                                                <Hash>{block.header.miner}</Hash>
-                                            </Td>
-                                            <Td dataLabel="Produced at">
-                                                {formatTimestamp(block.header.timestamp)}
-                                            </Td>
-                                            <Td dataLabel="Coin transaction count">
-                                                {block.body.coin_txs.length}
-                                            </Td>
-                                            <Td dataLabel="Proof transaction count">
-                                                {block.body.proof_txs.length}
-                                            </Td>
-                                        </Tr>
+                                        <Fragment key={index}>
+                                            <Tr>
+                                                <Td
+                                                    expand={{
+                                                        rowIndex: index,
+                                                        isExpanded: isExpanded.has(index),
+                                                        onToggle,
+                                                        expandId: index
+                                                    }}
+                                                    />
+                                                <Td dataLabel="Serial ID">
+                                                    <Split>
+                                                        <SplitItem>
+                                                            {block.header.serial_id}
+                                                        </SplitItem>
+                                                        <SplitItem>
+                                                            {block.header.serial_id === 0 && <Label isCompact color="green" style={{ marginLeft: 8 }}>Genesis</Label>}
+                                                        </SplitItem>
+                                                    </Split>
+                                                </Td>
+                                                <Td dataLabel="Block hash">
+                                                    <Hash>{block.header.current_block_hash}</Hash>
+                                                </Td>
+                                                <Td dataLabel="Mined by">
+                                                    <Hash>{block.header.miner}</Hash>
+                                                </Td>
+                                                <Td dataLabel="Produced at">
+                                                    {formatTimestamp(block.header.timestamp)}
+                                                </Td>
+                                                <Td dataLabel="Coin transaction count">
+                                                    {block.body.coin_txs.length}
+                                                </Td>
+                                                <Td dataLabel="Proof transaction count">
+                                                    {block.body.proof_txs.length}
+                                                </Td>
+                                            </Tr>
+                                            <Tr isExpanded={isExpanded.has(index)}>
+                                                <Td colSpan={100}>
+                                                    <ExpandableRowContent>
+                                                        <Tabs
+                                                            activeKey={selectedTab[index] ?? 0}
+                                                            onSelect={(e, v) => setSelectedTab({ ...selectedTab, [index]: v})}
+                                                            isBox
+                                                        >
+                                                            <Tab eventKey={0} title={<TabTitleText>Coin transactions</TabTitleText>}>
+                                                                Coin transactions
+                                                            </Tab>
+                                                            <Tab eventKey={1} title={<TabTitleText>Proof transactions</TabTitleText>}>
+                                                                <Table style={{ border: "1px solid lightgray", borderTop: 0 }}>
+                                                                    <Thead>
+                                                                        <Tr>
+                                                                            <Th>Transaction ID</Th>
+                                                                            <Th>Address from</Th>
+                                                                            <Th>Circuit hash</Th>
+                                                                            <Th>Complexity</Th>
+                                                                            <Th>Parameters</Th>
+                                                                            <Th>Proof</Th>
+                                                                        </Tr>
+                                                                    </Thead>
+                                                                    <Tbody>
+                                                                        {block.body.proof_txs.map((proof) => (
+                                                                            <Tr key={proof.id}>
+                                                                                <Td dataLabel="Transaction ID">
+                                                                                    <Hash>{proof.id}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Address from">
+                                                                                    <Hash>{proof.address_from}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Circuit hash">
+                                                                                    <Hash>{proof.circuit_hash}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Complexity">
+                                                                                    {proof.complexity}
+                                                                                </Td>
+                                                                                <Td dataLabel="Parameters">
+                                                                                    {proof.parameters}
+                                                                                </Td>
+                                                                                <Td dataLabel="Proof">
+                                                                                    <Button
+                                                                                        variant="link"
+                                                                                        style={{ padding: 0, width: "fit-content" }}
+                                                                                        icon={<DownloadIcon />}
+                                                                                        onClick={() => downloadString(`proof-${proof.id.slice(0, 12)}.json`, proof.proof)}
+                                                                                    >
+                                                                                        Download
+                                                                                    </Button>
+                                                                                </Td>
+                                                                            </Tr>
+                                                                        ))}
+                                                                    </Tbody>
+                                                                </Table>
+                                                            </Tab>
+                                                            <Tab eventKey={2} title={<TabTitleText>Account state</TabTitleText>}>
+                                                                <Table style={{ border: "1px solid lightgray", borderTop: 0 }}>
+                                                                    <Thead>
+                                                                        <Tr>
+                                                                            <Th>Account address</Th>
+                                                                            <Th>Balance</Th>
+                                                                        </Tr>
+                                                                    </Thead>
+                                                                    <Tbody>
+                                                                        {Object.entries(block.body.state_tree).map(([key, value]) => (
+                                                                            <Tr key={key}>
+                                                                                <Td dataLabel="Account address">
+                                                                                    <Hash>{key}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Balance">
+                                                                                    {value}
+                                                                                </Td>
+                                                                            </Tr>
+                                                                        ))}
+                                                                    </Tbody>
+                                                                </Table>
+                                                            </Tab>
+                                                        </Tabs>
+                                                    </ExpandableRowContent>
+                                                </Td>
+                                            </Tr>
+                                        </Fragment>
                                     ))}
                                 </Tbody>
                             </Table>

@@ -6,11 +6,21 @@ const Hash = ({ children }) => (
     <Split>
         <SplitItem>
         <Popover bodyContent={children}>
-            <Button isInline variant="plain" style={{ textDecoration: "underline", textDecorationStyle: "dotted", padding: 0, width: "fit-content" }}>{children.slice(0, 8)}</Button>
+            <Button
+                isInline
+                variant="plain"
+                style={{ textDecoration: "underline", textDecorationStyle: "dotted", padding: 0, width: "fit-content" }}
+            >
+                {children.slice(0, 12)}
+            </Button>
         </Popover>
         </SplitItem>
         <SplitItem>
-        <Button variant="plain" aria-label="Copy" onClick={() => navigator.clipboard.writeText(children)} style={{ padding: 0, paddingLeft: 8 }}>
+        <Button
+            variant="plain"
+            aria-label="Copy"
+            onClick={() => navigator.clipboard.writeText(children)} style={{ padding: 0, paddingLeft: 8 }}
+        >
             <CopyIcon />
         </Button>
         </SplitItem>
