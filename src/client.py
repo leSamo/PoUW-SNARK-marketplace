@@ -13,6 +13,7 @@ import json
 import traceback
 import time
 import os
+import copy
 
 import util
 import network
@@ -98,7 +99,7 @@ def verify_block(new_block : Block) -> bool:
         util.vprint(f"Received block with invalid timestamp")
         return False
 
-    st = previous_block.get_state_tree()
+    st = copy.deepcopy(previous_block.get_state_tree())
 
     # calculate metadata integrity
     metadata_integrity = network.get_block_integrity(new_block)
@@ -668,6 +669,7 @@ def main(argv):
             coin_txs = block.get_body().get_coin_txs()
             proof_txs = block.get_body().get_proof_txs()
 
+            # TODO: print timestamp in human readable form
             print()
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Block {current_block_id}:{util.Color.RESET()}")
             print(f"  {util.Color.YELLOW()}Timestamp:{util.Color.RESET()}", block.get_timestamp())
@@ -732,7 +734,7 @@ def main(argv):
             previous_block = network.blockchain[-1]
 
             new_block_body = BlockBody()
-            new_block_body.setup([], [], previous_block.get_state_tree())
+            new_block_body.setup([], [], copy.deepcopy(previous_block.get_state_tree()))
 
             coin_txs_hash = new_block_body.hash_coin_txs()
             proof_txs_hash = new_block_body.hash_proof_txs()
@@ -772,13 +774,10 @@ def main(argv):
         elif command == 'produce-block':
             previous_block = network.blockchain[-1]
 
-            new_block_body = BlockBody()
-            new_block_body.setup(network.partial_block_coin_transactions, [], previous_block.get_state_tree())
-
             # 1. verify if block requirements are met -- minimum/maximum coin/proofs tx, block difficulty
 
             # 2. validate txs and perform state change
-            state_tree = previous_block.get_state_tree()
+            state_tree = copy.deepcopy(previous_block.get_state_tree())
 
             miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 
@@ -802,7 +801,8 @@ def main(argv):
 
                 proof.prove(metadata_integrity, circuit_folder)
 
-            new_block_body.set_proof_txs(network.partial_block_proof_transactions)
+            new_block_body = BlockBody()
+            new_block_body.setup(network.partial_block_coin_transactions, network.partial_block_proof_transactions, state_tree)
 
             # 5. construct block
 
