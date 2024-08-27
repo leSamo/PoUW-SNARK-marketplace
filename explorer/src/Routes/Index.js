@@ -162,7 +162,16 @@ const Index = () => {
                                                                         </Tr>
                                                                     </Thead>
                                                                     <Tbody>
-                                                                        {block.body.coin_txs.map((tx) => (
+                                                                        {block.body.coin_txs.length === 0 
+                                                                            ? (
+                                                                                <Tr>
+                                                                                    <Td colSpan={100} style={{ backgroundColor: "#EEE"}}>
+                                                                                        <Bullseye>
+                                                                                            This block does not contain any coin transactions
+                                                                                        </Bullseye>
+                                                                                    </Td>
+                                                                                </Tr>
+                                                                            ) : block.body.coin_txs.map((tx) => (
                                                                             <Tr key={tx.id}>
                                                                                 <Td dataLabel="Transaction ID">
                                                                                     <Hash>{tx.id}</Hash>
@@ -194,7 +203,16 @@ const Index = () => {
                                                                         </Tr>
                                                                     </Thead>
                                                                     <Tbody>
-                                                                        {block.body.proof_txs.map((tx) => (
+                                                                        {block.body.proof_txs.length === 0 
+                                                                        ? (
+                                                                            <Tr>
+                                                                                <Td colSpan={100} style={{ backgroundColor: "#EEE"}}>
+                                                                                    <Bullseye>
+                                                                                        This block does not contain any proof transactions
+                                                                                    </Bullseye>
+                                                                                </Td>
+                                                                            </Tr>
+                                                                        ) : block.body.proof_txs.map((tx) => (
                                                                             <Tr key={tx.id}>
                                                                                 <Td dataLabel="Transaction ID">
                                                                                     <Hash>{tx.id}</Hash>
@@ -235,7 +253,16 @@ const Index = () => {
                                                                         </Tr>
                                                                     </Thead>
                                                                     <Tbody>
-                                                                        {Object.entries(block.body.state_tree).map(([key, value]) => (
+                                                                        {Object.entries(block.body.state_tree).length === 0
+                                                                        ? (
+                                                                            <Tr>
+                                                                                <Td colSpan={100} style={{ backgroundColor: "#EEE"}}>
+                                                                                    <Bullseye>
+                                                                                        This block does not contain any account state data
+                                                                                    </Bullseye>
+                                                                                </Td>
+                                                                            </Tr>
+                                                                        ) : Object.entries(block.body.state_tree).map(([key, value]) => (
                                                                             <Tr key={key}>
                                                                                 <Td dataLabel="Account address">
                                                                                     <Hash>{key}</Hash>
