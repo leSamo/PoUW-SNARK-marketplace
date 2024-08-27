@@ -1,8 +1,5 @@
 import axios from 'axios'
 
-const HOST = "127.0.0.1"
-const PORT = 12346
-
 export const COMMANDS = {
     GET_PEERS: 'GET_PEERS',
     PEERS: 'PEERS',
@@ -38,20 +35,3 @@ export const sendMessage = async (command, params = {}) => {
         throw error;
       });
 };
-
-/*
-def send_message(receiver, command, message = {}):
-    try:
-        sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sending_socket.connect(receiver)
-
-        sending_socket.send(json.dumps({
-            'command': command,
-            'port': port,
-            **message
-        }).encode())
-
-        util.vprint(f"Successfully sent message {command} to peer {receiver}")
-    except Exception as error:
-        util.vprint(f"Failed to send message {command} to peer {receiver} - {error}")
-*/
