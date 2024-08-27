@@ -152,7 +152,34 @@ const Index = () => {
                                                             isBox
                                                         >
                                                             <Tab eventKey={0} title={<TabTitleText>Coin transactions</TabTitleText>}>
-                                                                Coin transactions
+                                                                <Table style={{ border: "1px solid lightgray", borderTop: 0 }}>
+                                                                    <Thead>
+                                                                        <Tr>
+                                                                            <Th>Transaction ID</Th>
+                                                                            <Th>Address from</Th>
+                                                                            <Th>Address to</Th>
+                                                                            <Th>Amount</Th>
+                                                                        </Tr>
+                                                                    </Thead>
+                                                                    <Tbody>
+                                                                        {block.body.coin_txs.map((tx) => (
+                                                                            <Tr key={tx.id}>
+                                                                                <Td dataLabel="Transaction ID">
+                                                                                    <Hash>{tx.id}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Address from">
+                                                                                    <Hash>{tx.address_from}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Address to">
+                                                                                    <Hash>{tx.address_to}</Hash>
+                                                                                </Td>
+                                                                                <Td dataLabel="Amount">
+                                                                                    {tx.amount}
+                                                                                </Td>
+                                                                            </Tr>
+                                                                        ))}
+                                                                    </Tbody>
+                                                                </Table>
                                                             </Tab>
                                                             <Tab eventKey={1} title={<TabTitleText>Proof transactions</TabTitleText>}>
                                                                 <Table style={{ border: "1px solid lightgray", borderTop: 0 }}>
@@ -167,29 +194,29 @@ const Index = () => {
                                                                         </Tr>
                                                                     </Thead>
                                                                     <Tbody>
-                                                                        {block.body.proof_txs.map((proof) => (
-                                                                            <Tr key={proof.id}>
+                                                                        {block.body.proof_txs.map((tx) => (
+                                                                            <Tr key={tx.id}>
                                                                                 <Td dataLabel="Transaction ID">
-                                                                                    <Hash>{proof.id}</Hash>
+                                                                                    <Hash>{tx.id}</Hash>
                                                                                 </Td>
                                                                                 <Td dataLabel="Address from">
-                                                                                    <Hash>{proof.address_from}</Hash>
+                                                                                    <Hash>{tx.address_from}</Hash>
                                                                                 </Td>
                                                                                 <Td dataLabel="Circuit hash">
-                                                                                    <Hash>{proof.circuit_hash}</Hash>
+                                                                                    <Hash>{tx.circuit_hash}</Hash>
                                                                                 </Td>
                                                                                 <Td dataLabel="Complexity">
-                                                                                    {proof.complexity}
+                                                                                    {tx.complexity}
                                                                                 </Td>
                                                                                 <Td dataLabel="Parameters">
-                                                                                    {proof.parameters}
+                                                                                    {tx.parameters.split(" ").join(", ")}
                                                                                 </Td>
                                                                                 <Td dataLabel="Proof">
                                                                                     <Button
                                                                                         variant="link"
                                                                                         style={{ padding: 0, width: "fit-content" }}
                                                                                         icon={<DownloadIcon />}
-                                                                                        onClick={() => downloadString(`proof-${proof.id.slice(0, 12)}.json`, proof.proof)}
+                                                                                        onClick={() => downloadString(`proof-${tx.id.slice(0, 12)}.json`, tx.proof)}
                                                                                     >
                                                                                         Download
                                                                                     </Button>
