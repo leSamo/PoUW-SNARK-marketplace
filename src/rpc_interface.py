@@ -5,6 +5,8 @@ import network
 
 """ curl -X POST http://localhost:9545 -H "Content-Type: application/json" -d '{"params": [0], "method":"GET_BLOCK", "id": 123}' """
 
+server = None
+
 class CustomJSONRPCRequestHandler(SimpleJSONRPCRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200, "ok")
@@ -50,6 +52,8 @@ class CustomJSONRPCRequestHandler(SimpleJSONRPCRequestHandler):
         self.connection.shutdown(1)
 
 def start_json_rpc_server(port):
+    global server
+
     server = SimpleJSONRPCServer(('localhost', port), requestHandler=CustomJSONRPCRequestHandler, logRequests=False)
 
     util.vprint(f"Starting RPC server on port {port}")
@@ -58,5 +62,4 @@ def start_json_rpc_server(port):
     # TODO: try-except int cast, check list bounds
     server.register_function(lambda block_id: { 'block': network.blockchain[int(block_id)].encode() }, util.Command.GET_BLOCK)
 
-    # TODO: Handle KeyboardInterrupt
     server.serve_forever()

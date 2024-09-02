@@ -441,6 +441,9 @@ def main(argv):
         if command == "exit":
             server_running = False
 
+            if rpc_port is not None:
+                rpc_interface.server.shutdown()
+
             try:
                 terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 terminating_socket.connect((network.self_ip_address, network.port))
