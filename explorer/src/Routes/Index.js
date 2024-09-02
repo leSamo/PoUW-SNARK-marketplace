@@ -283,25 +283,6 @@ const Index = () => {
                                     ))}
                                 </Tbody>
                             </Table>
-                            {/*
-                            <Accordion isBordered togglePosition="start">
-                                {blocks.map((block, index) => (
-                                    <AccordionItem key={index}>
-                                        <AccordionToggle
-                                            onClick={() => {
-                                                onToggle(index);
-                                            }}
-                                            isExpanded={isExpanded.has(index)}
-                                        >
-                                            {index}: {block.block.header.current_block_hash}
-                                        </AccordionToggle>
-                                        <AccordionContent isHidden={!isExpanded.has(index)}>
-                                            Miner: {block.block.header.miner}
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                            </Accordion>
-                            */}
                         </Fragment>
                     )
             }
