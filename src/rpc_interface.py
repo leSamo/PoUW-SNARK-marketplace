@@ -51,7 +51,15 @@ class CustomJSONRPCRequestHandler(SimpleJSONRPCRequestHandler):
         self.wfile.flush()
         self.connection.shutdown(1)
 
-def start_json_rpc_server(port):
+def get_block_response(block_id : str) -> dict:
+    try:
+        return { 'block': network.blockchain[int(block_id)].encode() }
+    except ValueError:
+        return { 'error': 'Invalid block_id provided: id cannot be converted to int' }
+    except IndexError:
+        return { 'error': 'Invalid block_id provided: id is out of bounds' }
+
+def start_json_rpc_server(port : int) -> None:
     global server
 
     server = SimpleJSONRPCServer(('localhost', port), requestHandler=CustomJSONRPCRequestHandler, logRequests=False)
@@ -59,7 +67,6 @@ def start_json_rpc_server(port):
     util.vprint(f"Starting RPC server on port {port}")
 
     server.register_function(lambda: { 'latest_id': network.blockchain[-1].get_id() }, util.Command.GET_LATEST_BLOCK_ID)
-    # TODO: try-except int cast, check list bounds
-    server.register_function(lambda block_id: { 'block': network.blockchain[int(block_id)].encode() }, util.Command.GET_BLOCK)
+    server.register_function(get_block_response, util.Command.GET_BLOCK)
 
     server.serve_forever()
