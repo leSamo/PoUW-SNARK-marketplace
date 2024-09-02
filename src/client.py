@@ -669,10 +669,11 @@ def main(argv):
             coin_txs = block.get_body().get_coin_txs()
             proof_txs = block.get_body().get_proof_txs()
 
-            # TODO: print timestamp in human readable form
+            readable_time = time.strftime('(%Y-%m-%d %H:%M:%S)', time.localtime(block.get_timestamp() / 1000))
+
             print()
             print(f"{util.Color.YELLOW()}{util.Color.BOLD()}Block {current_block_id}:{util.Color.RESET()}")
-            print(f"  {util.Color.YELLOW()}Timestamp:{util.Color.RESET()}", block.get_timestamp())
+            print(f"  {util.Color.YELLOW()}Timestamp:{util.Color.RESET()}", block.get_timestamp(), readable_time)
             print(f"  {util.Color.YELLOW()}Difficulty:{util.Color.RESET()}", block.get_difficulty())
             print(f"  {util.Color.YELLOW()}Current block hash:{util.Color.RESET()}", block.get_current_block_hash().hex())
 
