@@ -728,8 +728,11 @@ def main(argv):
             print(f"  {util.Color.YELLOW()}Latest block:{util.Color.RESET()} {network.blockchain[-1].get_current_block_hash().hex()[0:6]}… (id {network.blockchain[-1].get_id()})")
             print()
 
-        # TODO: Check if not in anonymous mode
         elif command == 'produce-empty':
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+            
             miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 
             previous_block = network.blockchain[-1]
@@ -773,6 +776,10 @@ def main(argv):
                 util.eprint("Invalid block id or transaction index")
 
         elif command == 'produce-block':
+            if private_key is None:
+                util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
+                continue
+
             previous_block = network.blockchain[-1]
 
             # 1. verify if block requirements are met -- minimum/maximum coin/proofs tx, block difficulty
@@ -852,7 +859,7 @@ def main(argv):
 
         elif command == 'logout':
             if private_key is None:
-                util.eprint("You are not currently authenticated, therefore you cannot log out")
+                util.eprint("You already are logged out")
                 continue
             else:
                 util.iprint("Successfully logged out")
