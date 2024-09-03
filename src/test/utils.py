@@ -22,16 +22,24 @@ class Client:
             bufsize=1  # line buffering
         )
 
-        os.set_blocking(self.__process.stdout.fileno(), False)
-
         print(f'python {client_program} {arguments}')
+
+    def __del__(self):
+        self.close_stdin()
 
     def return_code(self):
         self.__process.wait()
         return self.__process.returncode
 
+    def stdout_blocking(self):
+        os.set_blocking(self.__process.stdout.fileno(), True)
+    
+        return self.__process.stdout.read()
+
     def stdout(self):
         time.sleep(0.2)
+
+        os.set_blocking(self.__process.stdout.fileno(), False)
     
         return self.__process.stdout.read()
 

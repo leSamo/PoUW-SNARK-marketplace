@@ -11,11 +11,11 @@ import socket
 import time
 import re
 
+# TODO: Kill all ports from previous test runs
+
 from utils import Client, load_ecdsa_private_key
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-client_program = os.path.join(os.path.dirname(__file__), "..", "client.py")
 
 def test_help():
     client = Client('-h')
@@ -119,51 +119,50 @@ def test_initial_block_discovery():
 
     assert latest_block_id == 1
 
-    client2222.close_stdin()
-    client3333.close_stdin()
-
 def test_initial_tx_discovery():
-    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50; status"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    config = os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+    send_command = "send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50"
+
+    client2222 = Client(f'-p 2222 -k {private_key} -f {config} -c "{send_command}; status"')
 
     time.sleep(0.3)
 
-    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    client3333 = Client(f'-p 3333 -f {config}')
 
-    time.sleep(1)
+    time.sleep(0.5)
 
-    stdout2222, _ = process2222.communicate()
+    assert "Pending coin transactions (1)" in client2222.stdout()
 
-    assert "Pending coin transactions (1)" in stdout2222.decode()
+    client3333.stdin("status\n")
 
-    process3333.stdin.write("status\n".encode())
-    process3333.stdin.flush()
-
-    stdout3333, _ = process3333.communicate()
-
-    assert "Pending coin transactions (1)" in stdout3333.decode()
+    assert "Pending coin transactions (1)" in client3333.stdout()
 
 def test_balance():
-    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "balance; balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2; balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+    balance1_command = "balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"
+    balance2_command = "balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000"
 
-    stdout, _ = process.communicate()
+    client = Client(f'-p 2222 -k {private_key} -c "balance; {balance1_command}; {balance2_command}; exit"')
 
     pattern = r"Current balance \(block \d+\): (\d+)"
 
-    balances = re.findall(pattern, stdout.decode())
+    balances = re.findall(pattern, client.stdout_blocking())
 
     assert int(balances[0]) == 1000
     assert int(balances[1]) == 1000
     assert int(balances[2]) == 0
 
 def test_inspect():
-    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "inspect 0; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+    client = Client(f'-p 2222 -k {private_key} -c "inspect 0; exit"')
 
-    stdout, _ = process.communicate()
+    output = client.stdout_blocking()
 
-    block_id = int(re.findall(r'Block (\d+):', stdout.decode())[0])
-    timestamp = int(re.findall(r'Timestamp:\033\[0m (\d+)', stdout.decode())[0])
-    difficulty = int(re.findall(r'Difficulty:\033\[0m (\d+)', stdout.decode())[0])
-    block_hash = re.findall(r'Current block hash:\033\[0m ([0-9a-z]+)', stdout.decode())[0]
+    block_id = int(re.findall(r'Block (\d+):', output)[0])
+    timestamp = int(re.findall(r'Timestamp:\033\[0m (\d+)', output)[0])
+    difficulty = int(re.findall(r'Difficulty:\033\[0m (\d+)', output)[0])
+    block_hash = re.findall(r'Current block hash:\033\[0m ([0-9a-z]+)', output)[0]
 
     assert block_id == 0
     assert timestamp == 1714436126662
@@ -171,81 +170,61 @@ def test_inspect():
     assert block_hash == '6936414ccf1b1df9937d3a6ca1980c8f6571b10603a9e4d2ffde506a6fb8fc1f'
 
 def test_not_auth():
-    process = subprocess.Popen(f'python {client_program} -p 2222 -v', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    client = Client(f'-p 2222')
 
-    process.stdin.write("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\n".encode())
-    process.stdin.flush()
+    client.stdin("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\n")
 
-    process.stdin.write(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n".encode())
-    process.stdin.flush()
+    client.stdin(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n")
 
-    process.stdin.write("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\nexit\n".encode())
-    process.stdin.flush()
+    client.stdin("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\nexit\n")
 
-    time.sleep(0.5)
+    output = client.stdout_blocking()
 
-    process.wait()
-    stdout, _ = process.communicate()
-
-    assert "This command requires authentication" in stdout.decode()
-    assert "Private key file loaded successfully" in stdout.decode()
-    assert "Successfully created and broadcasted coin transaction" in stdout.decode()
+    assert "This command requires authentication" in output
+    assert "Private key file loaded successfully" in output
+    assert "Successfully created and broadcasted coin transaction" in output
 
 def test_auth():
-    process = subprocess.Popen(f'python {client_program} -p 2222', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    client = Client(f'-p 2222')
 
-    process.stdin.write(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n".encode())
-    process.stdin.flush()
+    assert "Private key file was not provided, running in anonymous mode" in client.stdout()
 
-    stdout, _ = process.communicate()
+    client.stdin(f"auth {os.path.join(os.path.dirname(__file__), 'misc/private_key')}\n")
 
-    assert "Private key file was not provided, running in anonymous mode" in stdout.decode()
+    output = client.stdout()
 
-    assert "Private key file loaded successfully" in stdout.decode()
-    assert "Your address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2" in stdout.decode()
+    assert "Private key file loaded successfully" in output
+    assert "Your address: 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2" in output
 
 def test_partial_block():
-    process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50; select-coin-tx 0; partial; exit"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+    send_command = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
 
-    process.wait()
-    stdout, _ = process.communicate()
+    client = Client(f'-p 2222 -k {private_key} -c "{send_command}; select-coin-tx 0; partial; exit"')
 
-    assert "Selected coin transactions (1)" in stdout.decode()
+    assert "Selected coin transactions (1)" in client.stdout_blocking()
 
 # test coin tx creation, proof tx creation from client A; confirmation and block generation by client B
+
 def test_block_construction():
-    CREATE_COIN_TX = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
-    CREATE_PROOF_TX = "request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6"
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+    coin_tx_command = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
+    proof_tx_command = "request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6"
 
-    requesting_process = subprocess.Popen(f'python {client_program} -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -v -c "{CREATE_COIN_TX}; {CREATE_PROOF_TX}"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    requesting_process = Client(f'-p 2222 -k {private_key} -v -c "{coin_tx_command}; {proof_tx_command}"')
 
-    miner_process = subprocess.Popen(f'python {client_program} -p 3333 -v -k {os.path.join(os.path.dirname(__file__), "misc/private_key")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    miner_process = Client(f'-p 3333 -v -k {private_key}')
 
-    # wait for miner to sync up
-    time.sleep(1)
+    time.sleep(1) # wait for miner to sync up
 
-    miner_process.stdin.write(f"select-coin-tx 0\n".encode())
-    miner_process.stdin.flush()
+    miner_process.stdin(f"select-coin-tx 0\n")
+    miner_process.stdin(f"select-proof-tx 0\n")
+    miner_process.stdin(f"produce-block\n")
 
-    miner_process.stdin.write(f"select-proof-tx 0\n".encode())
-    miner_process.stdin.flush()
+    time.sleep(1) # wait for requester to sync up
 
-    miner_process.stdin.write(f"produce-block\n".encode())
-    miner_process.stdin.flush()
+    requesting_process.stdin(f"status\nexit\n")
 
-    # wait for requester to sync up
-    time.sleep(1)
+    miner_process.stdin("exit\n")
 
-    requesting_process.stdin.write(f"status\nexit\n".encode())
-    requesting_process.stdin.flush()
-
-    requesting_process.wait()
-    stdout, _ = requesting_process.communicate()
-
-    print(stdout.decode())
-
-    miner_process.stdin.write("exit\n".encode())
-    miner_process.stdin.flush()
-
-    # check if latest block has id of 1
-    assert "(id 1)" in stdout.decode()
+    assert "(id 1)" in requesting_process.stdout() # check if latest block has id of 1
