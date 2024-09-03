@@ -429,6 +429,9 @@ def main(argv):
         rpc_thread = threading.Thread(target=rpc_interface.start_json_rpc_server, args=(rpc_port,))
         rpc_thread.start()
 
+    # TODO: Improve command handling code
+    # TODO: handle "verbose" without "on|off"
+    # TODO: handle verbose on/off when already on/off
     while True:
         try:
             if len(cli_commands) > 0:
@@ -478,7 +481,7 @@ def main(argv):
 
         elif command == "verbose off":
             util.iprint("Disabled verbose logging")
-            util.verbose_logging(False)
+            util.verbose_logging = False
 
         elif command.split(" ")[0] == "select-coin-tx":
             if private_key is None:
