@@ -6,6 +6,7 @@
 
 from encodeable import Encodeable
 
+# TODO: Add boolean whether active
 class Peer(Encodeable):
     __ip_address: str
     __port: int

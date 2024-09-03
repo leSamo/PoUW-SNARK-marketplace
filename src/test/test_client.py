@@ -6,37 +6,29 @@
 
 import os
 import sys
-import ecdsa
 import subprocess
 import socket
 import time
 import re
 
+from utils import Client, load_ecdsa_private_key
+
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 client_program = os.path.join(os.path.dirname(__file__), "..", "client.py")
 
-def load_ecdsa_private_key(filename):
-    with open(filename, "r") as key_file:
-        key_str = key_file.read()
-        private_key = ecdsa.SigningKey.from_pem(key_str)
-        return private_key
-
 def test_help():
-    process = subprocess.Popen(f'python {client_program} -h', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.wait()
-    stdout, _ = process.communicate()
+    client = Client('-h')
 
-    assert "Usage:" in stdout.decode()
-    assert process.returncode == 0
+    assert "Usage:" in client.stdout()
+    assert client.return_code() == 0
 
 def test_generate_key():
     file = os.path.join(os.path.dirname(__file__), "./abc")
 
-    process = subprocess.Popen(f'python {client_program} -c "generate-key {file}; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.wait()
+    client = Client(f'-c "generate-key {file}; exit"')
 
-    assert process.returncode == 0
+    assert client.return_code() == 0
     assert os.path.exists(file)
 
     load_ecdsa_private_key(file)
@@ -44,32 +36,31 @@ def test_generate_key():
     os.remove(file)
 
 def test_available_commands():
-    process = subprocess.Popen(f'python {client_program} -c "help; exit" -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.wait()
-    stdout, _ = process.communicate()
+    client = Client('-c "help; exit"')
 
-    assert process.returncode == 0
-    assert 'Available commands:' in stdout.decode()
+    assert client.return_code() == 0
+    assert 'Available commands:' in client.stdout()
 
 def test_verbose():
-    process = subprocess.Popen(f'python {client_program} -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.wait()
-    stdout, _ = process.communicate()
+    client = Client('-v -c "exit"')
 
-    assert process.returncode == 0
-    assert 'VERBOSE:' in stdout.decode()
+    assert client.return_code() == 0
+    assert 'VERBOSE:' in client.stdout()
 
-    process = subprocess.Popen(f'python {client_program}', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.wait()
-    stdout, _ = process.communicate()
+    client = Client()
 
-    assert process.returncode == 0
-    assert 'VERBOSE:' not in stdout.decode()
+    client.stdin("verbose on\n")
+
+    assert 'Enabled verbose logging' in client.stdout()
+
+    client.stdin("verbose off\n")
+    client.stdin("exit\n")
+
+    assert 'Disabled verbose logging' in client.stdout()
+    assert client.return_code() == 0
 
 def test_port():
-    process = subprocess.Popen(f'python {client_program} -v -p 6464', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    process.stdin.write("status\n".encode())
-    process.stdin.flush()
+    client = Client(f'-p 6464 -c "status"')
 
     time.sleep(0.1)
 
@@ -77,64 +68,59 @@ def test_port():
         result = sock.connect_ex(('127.0.0.1', 6464))
         assert result == 0
 
-    process.stdin.write("exit\n".encode())
-    process.stdin.flush()
-    stdout, _ = process.communicate()
-    process.stdin.close()
-    process.wait()
-
-    assert process.returncode == 0
+    client.stdin("exit\n")
+    assert client.return_code() == 0
 
 def test_initial_peer_discovery():
-    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    config3333 = os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")
+    config1111 = os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")
+
+    client3333 = Client(f'-p 3333 -f {config3333}')
     time.sleep(0.3)
-    process1111 = subprocess.Popen(f'python {client_program} -v -p 1111 -f {os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    client1111 = Client(f'-p 1111 -f {config1111}')
     time.sleep(0.3)
-    process1111.stdin.write("status\n".encode())
-    process1111.stdin.flush()
 
-    process3333.stdin.write("exit\n".encode())
-    process3333.stdin.flush()
-
-    process1111.stdin.write("exit\n".encode())
-    process1111.stdin.flush()
-
-    stdout1111, _ = process1111.communicate()
+    client1111.stdin("status\n")
+    client3333.stdin("exit\n")
+    client1111.stdin("exit\n")
 
     pattern = r"Peers \((\d+)\):"
 
-    match = re.search(pattern, stdout1111.decode())
+    output = client1111.stdout()
+
+    assert "127.0.0.1:2222" in output
+    assert "127.0.0.1:3333" in output
+
+    match = re.search(pattern, output)
     peer_count = int(match.group(1))
 
     assert peer_count == 2
-    assert "127.0.0.1:2222" in stdout1111.decode()
-    assert "127.0.0.1:3333" in stdout1111.decode()
 
 def test_initial_block_discovery():
-    process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -c "produce-empty"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    config = os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")
+    private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
+
+    client2222 = Client(f'-p 2222 -f {config} -k {private_key} -c "produce-empty"')
 
     time.sleep(0.3)
 
-    process3333 = subprocess.Popen(f'python {client_program} -v -p 3333 -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")}', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    client3333 = Client(f'-p 3333 -f {config}')
 
     time.sleep(1)
 
-    process3333.stdin.write("status\n".encode())
-    process3333.stdin.flush()
+    client3333.stdin("status\n")
 
     time.sleep(0.3)
 
-    stdout3333, _ = process3333.communicate()
-
     pattern = r"Latest block:\033\[0m [0-9a-f]{6}… \(id (\d+)\)"
 
-    match = re.search(pattern, stdout3333.decode())
+    match = re.search(pattern, client3333.stdout())
     latest_block_id = int(match.group(1))
 
     assert latest_block_id == 1
 
-    process2222.stdin.close()
-    process3333.stdin.close()
+    client2222.close_stdin()
+    client3333.close_stdin()
 
 def test_initial_tx_discovery():
     process2222 = subprocess.Popen(f'python {client_program} -v -p 2222 -k {os.path.join(os.path.dirname(__file__), "misc/private_key")} -f {os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")} -c "send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50; status"', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

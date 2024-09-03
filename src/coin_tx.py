@@ -10,6 +10,7 @@ import util
 from encodeable import Encodeable
 import ecdsa
 
+# TODO: Add timestamp
 class CoinTransaction(Encodeable):
     __id: bytes           # SHA256 hash (32 bytes)
     __address_from: bytes # SECP256k1 public key in SEC1 format (33 bytes)
