@@ -22,8 +22,6 @@ class Client:
             bufsize=1  # line buffering
         )
 
-        print(f'python {client_program} {arguments}')
-
     def __del__(self):
         self.close_stdin()
 

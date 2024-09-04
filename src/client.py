@@ -47,7 +47,7 @@ def start_blockchain_sync():
 
     time.sleep(0.3)
 
-    util.vprint("Synchronization: Searching for longest chain")
+    util.vprint("Synchronization: Searching for the longest chain")
 
     for peer in network.peers:
         network.send_message(peer.to_tuple(), util.Command.GET_LATEST_BLOCK_ID)
