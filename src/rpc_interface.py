@@ -51,6 +51,9 @@ class CustomJSONRPCRequestHandler(SimpleJSONRPCRequestHandler):
         self.wfile.flush()
         self.connection.shutdown(1)
 
+def get_latest_block_id_response() -> dict:
+    return { 'latest_id': network.blockchain[-1].get_id() }
+
 def get_block_response(block_id : str) -> dict:
     try:
         return { 'block': network.blockchain[int(block_id)].encode() }
@@ -59,6 +62,12 @@ def get_block_response(block_id : str) -> dict:
     except IndexError:
         return { 'error': 'Invalid block_id provided: id is out of bounds' }
 
+def get_pending_coin_txs_response() -> dict:
+    return { 'pending_coin_txs': network.pending_coin_transactions }
+
+def get_pending_proof_txs_response() -> dict:
+    return { 'pending_proof_txs': network.pending_proof_transactions }
+
 def start_json_rpc_server(port : int) -> None:
     global server
 
@@ -66,7 +75,9 @@ def start_json_rpc_server(port : int) -> None:
 
     util.vprint(f"Starting RPC server on port {port}")
 
-    server.register_function(lambda: { 'latest_id': network.blockchain[-1].get_id() }, util.Command.GET_LATEST_BLOCK_ID)
+    server.register_function(get_latest_block_id_response, util.Command.GET_LATEST_BLOCK_ID)
     server.register_function(get_block_response, util.Command.GET_BLOCK)
+    server.register_function(get_pending_coin_txs_response, util.Command.GET_PENDING_COIN_TXS)
+    server.register_function(get_pending_proof_txs_response, util.Command.GET_PENDING_PROOF_TXS)
 
     server.serve_forever()

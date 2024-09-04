@@ -40,3 +40,26 @@ def test_rpc_interface():
 
     assert response.status_code == 200
     assert response.json()["result"]["block"]["header"]["serial_id"] == 0
+
+    data = {
+        "id": 2,
+        "method": "GET_PENDING_COIN_TXS",
+        "params": [],
+    }
+
+    response = requests.post('http://localhost:9545', data=json.dumps(data))
+
+    assert response.status_code == 200
+    assert response.json()["result"]["pending_coin_txs"] == []
+
+    data = {
+        "id": 2,
+        "method": "GET_PENDING_PROOF_TXS",
+        "params": [],
+    }
+
+    response = requests.post('http://localhost:9545', data=json.dumps(data))
+
+    assert response.status_code == 200
+    assert response.json()["result"]["pending_proof_txs"] == []
+
