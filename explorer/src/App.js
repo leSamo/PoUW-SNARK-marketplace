@@ -10,10 +10,6 @@ const App = () => {
             <Router>
                 <Routes>
                     <Route path="/" element={<Index />} />
-                    {/*
-                    <Route path="/block/:blockId" element={<BlockDetail />} />
-                    <Route path="*" element={<NotFound />} />
-                     */}
                 </Routes>
             </Router>
         </Fragment>
