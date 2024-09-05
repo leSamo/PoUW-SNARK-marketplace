@@ -1,6 +1,6 @@
 import { Fragment, React, useEffect, useState } from "react";
 import { COMMANDS, sendMessage } from "../Helpers/network";
-import { Bullseye, Button, EmptyState, EmptyStateHeader, EmptyStateIcon, Label, Spinner, Split, SplitItem, Tab, TabTitleText, Tabs, Title } from "@patternfly/react-core";
+import { Bullseye, Button, EmptyState, EmptyStateBody, EmptyStateHeader, EmptyStateIcon, Label, Spinner, Split, SplitItem, Tab, TabTitleText, Tabs, Title } from "@patternfly/react-core";
 import { DownloadIcon, ExclamationCircleIcon, RedoIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tbody, Tr, Th, Td, ExpandableRowContent } from '@patternfly/react-table';
 import Hash from "../Hash";
@@ -75,11 +75,14 @@ const Index = () => {
                     <EmptyState>
                         <EmptyStateHeader
                             titleText="An error occured"
-                            icon={<EmptyStateIcon icon={ExclamationCircleIcon} />}
+                            icon={<EmptyStateIcon icon={ExclamationCircleIcon} color="var(--pf-v5-global--danger-color--100)"/>}
                         />
+                        <EmptyStateBody>
+                            Is your client running with RPC interface on port 9545?
+                        </EmptyStateBody>
                     </EmptyState>
                 ) : isLoading
-                    ? <Bullseye><Spinner /></Bullseye>
+                    ? <Bullseye style={{ height: 150 }}><Spinner /></Bullseye>
                     : (
                         <Fragment>
                             <Split hasGutter style={{ margin: 16 }}>
