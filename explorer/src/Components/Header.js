@@ -14,7 +14,7 @@ const Header = () => {
                     <SplitItem isFilled />
                     <SplitItem>
                         <SearchInput
-                            placeholder="Search by address or tx hash"
+                            placeholder="Search by address or hash"
                             value={searchValue}
                             onChange={(_event, value) => setSearchValue(value)}
                             onClear={() => setSearchValue('')}

@@ -10,7 +10,7 @@ export const COMMANDS = {
     BROADCAST_PENDING_PROOF_TX: 'BROADCAST_PENDING_PROOF_TX',
 }
 
-export const sendMessage = async (command, params = {}) => {
+export const sendRpcRequest = async (command, params = {}) => {
     if (!command in COMMANDS) {
         throw Error("Invalid RPC command");
     }
