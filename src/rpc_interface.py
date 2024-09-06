@@ -63,10 +63,10 @@ def get_block_response(block_id : str) -> dict:
         return { 'error': 'Invalid block_id provided: id is out of bounds' }
 
 def get_pending_coin_txs_response() -> dict:
-    return { 'pending_coin_txs': network.pending_coin_transactions }
+    return { 'pending_coin_txs': [tx.encode() for tx in network.pending_coin_transactions] }
 
 def get_pending_proof_txs_response() -> dict:
-    return { 'pending_proof_txs': network.pending_proof_transactions }
+    return { 'pending_proof_txs': [tx.encode() for tx in network.pending_proof_transactions] }
 
 def start_json_rpc_server(port : int) -> None:
     global server

@@ -10,7 +10,7 @@ import { downloadString } from "../Helpers/download";
 
 const ConfirmedBlocksTab = ({ addAlert }) => {
     const [isLoading, setLoading] = useState(true);
-    const [isError, setBlocksError] = useState(false);
+    const [isError, setError] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
 
     const [latestBlockId, setLatestBlockId] = useState(null);
@@ -26,8 +26,6 @@ const ConfirmedBlocksTab = ({ addAlert }) => {
             .then((response) => {
                 setLatestBlockId(response.latest_id);
 
-                console.log(response.latest_id);
-
                 const sequence = Array.from({ length: response.latest_id + 1 }, (_, i) => i);
 
                 Promise.all(sequence.map(block_id => sendRpcRequest(COMMANDS.GET_BLOCK, [block_id])))
@@ -37,7 +35,7 @@ const ConfirmedBlocksTab = ({ addAlert }) => {
                     })
             })
             .catch((response) => {
-                setBlocksError(true);
+                setError(true);
                 setLoading(false);
 
                 addAlert(AlertVariant.danger, "Failed to fetch blocks");

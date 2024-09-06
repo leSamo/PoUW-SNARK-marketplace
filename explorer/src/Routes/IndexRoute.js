@@ -1,7 +1,9 @@
 import { Fragment, useState } from "react";
-import ConfirmedBlocksTab from "../Tabs/ConfirmedBlocksTab";
 import { Tab, Tabs, TabTitleText } from "@patternfly/react-core";
+import ConfirmedBlocksTab from "../Tabs/ConfirmedBlocksTab";
+import TransactionsTab from "../Tabs/TransactionsTab";
 
+// TODO: 1 route per tab
 const IndexRoute = ({ addAlert }) => {
     const [pageSelectedTab, setPageSelectedTab] = useState(0);
 
@@ -11,8 +13,8 @@ const IndexRoute = ({ addAlert }) => {
                 <Tab eventKey={0} title={<TabTitleText>Confirmed Blocks</TabTitleText>}>
                     <ConfirmedBlocksTab addAlert={addAlert} />
                 </Tab>
-                <Tab eventKey={1} title={<TabTitleText>Unconfirmed transactions</TabTitleText>}>
-                    Unconfirmed transactions
+                <Tab eventKey={1} title={<TabTitleText>Transactions</TabTitleText>}>
+                    <TransactionsTab addAlert={addAlert} />
                 </Tab>
                 <Tab eventKey={2} title={<TabTitleText>Circuits</TabTitleText>}>
                     Circuits

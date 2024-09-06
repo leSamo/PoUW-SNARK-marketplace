@@ -11,7 +11,7 @@ const Hash = ({ children }) => (
                 variant="plain"
                 style={{ textDecoration: "underline", textDecorationStyle: "dotted", padding: 0, width: "fit-content" }}
             >
-                {children.slice(0, 12)}
+                {children?.slice(0, 12)}
             </Button>
         </Popover>
         </SplitItem>
