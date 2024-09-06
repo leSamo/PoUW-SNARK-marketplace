@@ -376,7 +376,7 @@ def main(argv):
         elif opt in ['-k', '--key']:
             try:
                 private_key = load_ecdsa_private_key(arg)
-            except e:
+            except Exception as e:
                 util.eprint("Failed to load private key file:", e)
                 sys.exit(-1)
         elif opt in ['-p', '--port']:
@@ -738,7 +738,7 @@ def main(argv):
             if private_key is None:
                 util.eprint("This command requires authentication, you can use the 'auth' command to authenticate")
                 continue
-            
+
             miner_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
 
             previous_block = network.blockchain[-1]
@@ -860,7 +860,7 @@ def main(argv):
 
                 util.iprint("Private key file loaded successfully")
                 util.iprint(f"Your address: {private_key.get_verifying_key().to_string('compressed').hex()}")
-            except e:
+            except Exception as e:
                 util.eprint("Failed to load private key file:", e)
 
         elif command == 'logout':

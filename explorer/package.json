@@ -1,5 +1,5 @@
 {
-  "name": "pouw-snark-marketplace",
+  "name": "pouw-snark-marketplace-explorer",
   "dependencies": {
     "@patternfly/react-core": "^5.3.4",
     "@patternfly/react-icons": "^5.3.2",
@@ -19,7 +19,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
-    "client": "python ../src/client.py -v -p 3333 -f /home/lesamo/PoUW-SNARK-marketplace/src/test/misc/config/1_peer.json -k /home/lesamo/PoUW-SNARK-marketplace/src/test/misc/private_key -r 9545 -c \"produce-empty; send 02d56856ae307c2ff4843366284061f6e68aceb1e217c946d83812c52bdfecd2fc 50; request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6; select-coin-tx 0; select-proof-tx 0; produce-block\""
+    "client": "python ../src/client.py -v -p 3333 -f ../src/test/misc/config/1_peer.json -k ../src/test/misc/private_key -r 9545 -c \"produce-empty; send 02d56856ae307c2ff4843366284061f6e68aceb1e217c946d83812c52bdfecd2fc 50; request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6; select-coin-tx 0; select-proof-tx 0; produce-block\""
   },
   "eslintConfig": {
     "extends": [
