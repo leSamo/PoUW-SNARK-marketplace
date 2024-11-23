@@ -13,12 +13,12 @@ import re
 
 # TODO: Kill all ports from previous test runs
 
-from utils import Client, load_ecdsa_private_key
+from utils import MockClient, load_ecdsa_private_key
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 def test_help():
-    client = Client('-h')
+    client = MockClient('-h')
 
     assert "Usage:" in client.stdout()
     assert client.return_code() == 0
@@ -26,7 +26,7 @@ def test_help():
 def test_generate_key():
     file = os.path.join(os.path.dirname(__file__), "./abc")
 
-    client = Client(f'-c "generate-key {file}; exit"')
+    client = MockClient(f'-c "generate-key {file}; exit"')
 
     assert client.return_code() == 0
     assert os.path.exists(file)
@@ -36,18 +36,18 @@ def test_generate_key():
     os.remove(file)
 
 def test_available_commands():
-    client = Client('-c "help; exit"')
+    client = MockClient('-c "help; exit"')
 
     assert client.return_code() == 0
     assert 'Available commands:' in client.stdout()
 
 def test_verbose():
-    client = Client('-v -c "exit"')
+    client = MockClient('-v -c "exit"')
 
     assert client.return_code() == 0
     assert 'VERBOSE:' in client.stdout()
 
-    client = Client()
+    client = MockClient()
 
     client.stdin("verbose on\n")
 
@@ -60,7 +60,7 @@ def test_verbose():
     assert client.return_code() == 0
 
 def test_port():
-    client = Client(f'-p 6464 -c "status"')
+    client = MockClient(f'-p 6464 -c "status"')
 
     time.sleep(0.1)
 
@@ -75,9 +75,9 @@ def test_initial_peer_discovery():
     config3333 = os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")
     config1111 = os.path.join(os.path.dirname(__file__), "misc/config/1_peer.json")
 
-    client3333 = Client(f'-p 3333 -f {config3333}')
+    client3333 = MockClient(f'-p 3333 -f {config3333}')
     time.sleep(0.3)
-    client1111 = Client(f'-p 1111 -f {config1111}')
+    client1111 = MockClient(f'-p 1111 -f {config1111}')
     time.sleep(0.3)
 
     client1111.stdin("status\n")
@@ -100,11 +100,11 @@ def test_initial_block_discovery():
     config = os.path.join(os.path.dirname(__file__), "misc/config/2_peers.json")
     private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
 
-    client2222 = Client(f'-p 2222 -f {config} -k {private_key} -c "produce-empty"')
+    client2222 = MockClient(f'-p 2222 -f {config} -k {private_key} -c "produce-empty"')
 
     time.sleep(0.3)
 
-    client3333 = Client(f'-p 3333 -f {config}')
+    client3333 = MockClient(f'-p 3333 -f {config}')
 
     time.sleep(1)
 
@@ -124,11 +124,11 @@ def test_initial_tx_discovery():
     private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
     send_command = "send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50"
 
-    client2222 = Client(f'-p 2222 -k {private_key} -f {config} -c "{send_command}; status"')
+    client2222 = MockClient(f'-p 2222 -k {private_key} -f {config} -c "{send_command}; status"')
 
     time.sleep(0.3)
 
-    client3333 = Client(f'-p 3333 -f {config}')
+    client3333 = MockClient(f'-p 3333 -f {config}')
 
     time.sleep(0.5)
 
@@ -143,7 +143,7 @@ def test_balance():
     balance1_command = "balance 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f2"
     balance2_command = "balance 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000"
 
-    client = Client(f'-p 2222 -k {private_key} -c "balance; {balance1_command}; {balance2_command}; exit"')
+    client = MockClient(f'-p 2222 -k {private_key} -c "balance; {balance1_command}; {balance2_command}; exit"')
 
     pattern = r"Current balance \(block \d+\): (\d+)"
 
@@ -155,7 +155,7 @@ def test_balance():
 
 def test_inspect():
     private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
-    client = Client(f'-p 2222 -k {private_key} -c "inspect 0; exit"')
+    client = MockClient(f'-p 2222 -k {private_key} -c "inspect 0; exit"')
 
     output = client.stdout_blocking()
 
@@ -170,7 +170,7 @@ def test_inspect():
     assert block_hash == '6936414ccf1b1df9937d3a6ca1980c8f6571b10603a9e4d2ffde506a6fb8fc1f'
 
 def test_not_auth():
-    client = Client(f'-p 2222')
+    client = MockClient(f'-p 2222')
 
     client.stdin("send 0008b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f000 50\n")
 
@@ -185,7 +185,7 @@ def test_not_auth():
     assert "Successfully created and broadcasted coin transaction" in output
 
 def test_auth():
-    client = Client(f'-p 2222')
+    client = MockClient(f'-p 2222')
 
     assert "Private key file was not provided, running in anonymous mode" in client.stdout()
 
@@ -200,7 +200,7 @@ def test_partial_block():
     private_key = os.path.join(os.path.dirname(__file__), "misc/private_key")
     send_command = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
 
-    client = Client(f'-p 2222 -k {private_key} -c "{send_command}; select-coin-tx 0; partial; exit"')
+    client = MockClient(f'-p 2222 -k {private_key} -c "{send_command}; select-coin-tx 0; partial; exit"')
 
     assert "Selected coin transactions (1)" in client.stdout_blocking()
 
@@ -211,9 +211,9 @@ def test_block_construction():
     coin_tx_command = "send 0318b58b73bbfd6ec26f599649ecc624863c775e034c2afea0c94a1c0641d8f6f0 50"
     proof_tx_command = "request-proof 00845b36c160d19764a21fc5fcadd5e6a28c29d5fa6fd307026e0ecb8305e1ee 2 3 6"
 
-    requesting_process = Client(f'-p 2222 -k {private_key} -v -c "{coin_tx_command}; {proof_tx_command}"')
+    requesting_process = MockClient(f'-p 2222 -k {private_key} -v -c "{coin_tx_command}; {proof_tx_command}"')
 
-    miner_process = Client(f'-p 3333 -v -k {private_key}')
+    miner_process = MockClient(f'-p 3333 -v -k {private_key}')
 
     time.sleep(1) # wait for miner to sync up
 

@@ -14,10 +14,13 @@ from proof_tx import ProofTransaction
 from block import Block
 from state_tree import StateTree
 from peer import Peer
+from bind_zokrates import Zokrates
 
 port = 12346
 
 peers = []
+circuits = None
+
 pending_coin_transactions : list[CoinTransaction] = []
 pending_proof_transactions : list[ProofTransaction] = []
 
@@ -62,6 +65,12 @@ def setup_peers():
             break
 
         send_message(peerObj.to_tuple(), util.Command.GET_PEERS)
+
+def setup_circuits():
+    global circuits
+
+    circuits = Zokrates.prepare_circuits()
+    print(circuits)
 
 def accept_peers(received_peers : list[Peer]):
     global peers

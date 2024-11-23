@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 client_program = os.path.join(os.path.dirname(__file__), "..", "client.py")
 
-class Client:
+class MockClient:
     __process = None
 
     def __init__(self, arguments = ""):
@@ -31,20 +31,20 @@ class Client:
 
     def stdout_blocking(self):
         os.set_blocking(self.__process.stdout.fileno(), True)
-    
+
         return self.__process.stdout.read()
 
     def stdout(self):
         time.sleep(0.2)
 
         os.set_blocking(self.__process.stdout.fileno(), False)
-    
+
         return self.__process.stdout.read()
 
     def stdin(self, string):
         self.__process.stdin.write(string)
         self.__process.stdin.flush()
-    
+
     def close_stdin(self):
         self.__process.stdin.close()
 

@@ -40,7 +40,6 @@ USAGE_ARGUMENTS = """
 
 server_running = True
 private_key = None
-circuits = None
 
 def start_blockchain_sync():
     util.vprint("Synchronization: Looking for peers")
@@ -134,7 +133,7 @@ def verify_block(new_block : Block) -> bool:
 
         st.apply_proof_tx(tx, network.config['proof_tx_fee'], miner_address)
 
-        circuit_folder = circuits[tx.get_circuit_hash().hex()]
+        circuit_folder = network.circuits[tx.get_circuit_hash().hex()]
         if not tx.validate(metadata_integrity, circuit_folder):
             util.vprint(f"Failed to verify a proof")
             return False
@@ -347,7 +346,7 @@ def generate_key(filename):
     util.iprint(f"Private key saved to the file '{filename}'")
 
 def main(argv):
-    global server_running, verbose_logging, private_key, circuits
+    global server_running, verbose_logging, private_key
 
     rpc_port = None
 
@@ -412,14 +411,13 @@ def main(argv):
     time.sleep(0.1)
 
     network.setup_peers()
+    network.setup_circuits()
 
     block_sync_thread = threading.Thread(target=start_blockchain_sync)
     block_sync_thread.start()
 
     pending_tx_sync_thread = threading.Thread(target=start_pending_tx_sync)
     pending_tx_sync_thread.start()
-
-    circuits = Zokrates.prepare_circuits()
 
     # prevent 'terminating' (exit) socket being open before 'server' socket
     if len(cli_commands) > 0:
@@ -640,7 +638,7 @@ def main(argv):
             try:
                 sender_address = bytes.fromhex(private_key.get_verifying_key().to_string('compressed').hex())
                 new_tx = ProofTransaction()
-                complexity = Zokrates.get_constraint_count(circuits[command.split(" ")[1]])
+                complexity = Zokrates.get_constraint_count(network.circuits[command.split(" ")[1]])
 
                 new_tx.setup(sender_address, bytes.fromhex(command.split(" ")[1]), " ".join(command.split(" ")[2:]), complexity)
 
@@ -808,7 +806,7 @@ def main(argv):
 
             for proof in network.partial_block_proof_transactions:
                 try:
-                    circuit_folder = circuits[proof.get_circuit_hash().hex()]
+                    circuit_folder = network.circuits[proof.get_circuit_hash().hex()]
                 except KeyError:
                     util.eprint("Unknown circuit inside a proof request")
                     continue

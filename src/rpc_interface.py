@@ -2,6 +2,7 @@ from jsonrpclib.SimpleJSONRPCServer import SimpleJSONRPCServer, SimpleJSONRPCReq
 
 import util
 import network
+from bind_zokrates import Zokrates
 
 """ curl -X POST http://localhost:9545 -H "Content-Type: application/json" -d '{"params": [0], "method":"GET_BLOCK", "id": 123}' """
 
@@ -68,6 +69,9 @@ def get_pending_coin_txs_response() -> dict:
 def get_pending_proof_txs_response() -> dict:
     return { 'pending_proof_txs': [tx.encode() for tx in network.pending_proof_transactions] }
 
+def get_circuits() -> dict:
+    return { 'circuits': [{ 'hash': hash, 'constraint_count': Zokrates.get_constraint_count(filepath) } for hash, filepath in network.circuits.items()] }
+
 def start_json_rpc_server(port : int) -> None:
     global server
 
@@ -79,5 +83,6 @@ def start_json_rpc_server(port : int) -> None:
     server.register_function(get_block_response, util.Command.GET_BLOCK)
     server.register_function(get_pending_coin_txs_response, util.Command.GET_PENDING_COIN_TXS)
     server.register_function(get_pending_proof_txs_response, util.Command.GET_PENDING_PROOF_TXS)
+    server.register_function(get_circuits, util.Command.GET_CIRCUITS)
 
     server.serve_forever()
