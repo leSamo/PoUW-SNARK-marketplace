@@ -9,7 +9,7 @@ const Hash = ({ children }) => (
             <Button
                 isInline
                 variant="plain"
-                style={{ textDecoration: "underline", textDecorationStyle: "dotted", padding: 0, width: "fit-content" }}
+                style={{ textDecoration: "underline", textDecorationStyle: "dotted", padding: 0, width: "fit-content", fontFamily: 'monospace' }}
             >
                 {children?.slice(0, 12)}
             </Button>

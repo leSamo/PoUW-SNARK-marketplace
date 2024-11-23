@@ -6,7 +6,7 @@ import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
 import { AlertVariant, Bullseye, Button, Label, Spinner, Split, SplitItem, Switch, Title } from "@patternfly/react-core";
 import ErrorState from "../Components/ErrorState";
 
-const TransactionsTab = ({ addAlert }) => {
+const CoinTransactionsTab = ({ addAlert }) => {
     const [arePendingTxsLoading, setPendingTxsLoading] = useState(true);
     const [areConfirmedTxsLoading, setConfirmedTxsLoading] = useState(true);
     const [isError, setError] = useState(false);
@@ -81,7 +81,7 @@ const TransactionsTab = ({ addAlert }) => {
                     <Split hasGutter style={{ margin: 16 }}>
                         <SplitItem>
                             <Title headingLevel="h1">
-                                Transactions
+                                Coin Transactions
                             </Title>
                         </SplitItem>
                         <SplitItem isFilled />
@@ -166,4 +166,4 @@ const TransactionsTab = ({ addAlert }) => {
 }
 
 
-export default TransactionsTab;
+export default CoinTransactionsTab;
