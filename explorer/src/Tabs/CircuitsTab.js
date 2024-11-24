@@ -70,13 +70,13 @@ const CircuitsTab = ({ addAlert }) => {
                                             </Bullseye>
                                         </Td>
                                     </Tr>
-                                ) : circuits.map((tx) => (
-                                    <Tr key={tx.id}>
+                                ) : circuits.map((circuit) => (
+                                    <Tr key={circuit.hash}>
                                         <Td dataLabel="Hash">
-                                            <Hash>{tx.hash}</Hash>
+                                            <Hash>{circuit.hash}</Hash>
                                         </Td>
                                         <Td dataLabel="Constraint count">
-                                            {tx.constraint_count}
+                                            {circuit.constraint_count}
                                         </Td>
                                     </Tr>
                                 ))}
