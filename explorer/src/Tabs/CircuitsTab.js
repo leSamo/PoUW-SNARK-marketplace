@@ -57,7 +57,7 @@ const CircuitsTab = ({ addAlert }) => {
                         <Thead>
                             <Tr>
                                 <Th>Hash</Th>
-                                <Th>Constraint count</Th>
+                                <Th>Complexity</Th>
                             </Tr>
                         </Thead>
                         <Tbody>
@@ -75,7 +75,7 @@ const CircuitsTab = ({ addAlert }) => {
                                         <Td dataLabel="Hash">
                                             <Hash>{circuit.hash}</Hash>
                                         </Td>
-                                        <Td dataLabel="Constraint count">
+                                        <Td dataLabel="Complexity">
                                             {circuit.constraint_count}
                                         </Td>
                                     </Tr>
