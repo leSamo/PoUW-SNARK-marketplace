@@ -5,6 +5,7 @@ import CoinTransactionsTab from "../Tabs/CoinTransactionsTab";
 import CircuitsTab from "../Tabs/CircuitsTab";
 import BalancesTab from "../Tabs/BalancesTab";
 import ProofTransactionsTab from "../Tabs/ProofTransactionsTab";
+import SimulatorTab from "../Tabs/SimulatorTab";
 
 // TODO: 1 route per tab
 const IndexRoute = ({ addAlert }) => {
@@ -27,6 +28,9 @@ const IndexRoute = ({ addAlert }) => {
                 </Tab>
                 <Tab eventKey={4} title={<TabTitleText>Balances</TabTitleText>}>
                     <BalancesTab addAlert={addAlert} />
+                </Tab>
+                <Tab eventKey={5} title={<TabTitleText>Simulator</TabTitleText>}>
+                    <SimulatorTab addAlert={addAlert} />
                 </Tab>
             </Tabs>
         </Fragment>

@@ -3,7 +3,7 @@ import { RedoIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import Hash from "../Components/Hash";
 import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
-import { AlertVariant, Bullseye, Button, Label, Spinner, Split, SplitItem, Switch, Title } from "@patternfly/react-core";
+import { AlertVariant, Bullseye, Button, Spinner, Split, SplitItem, Title } from "@patternfly/react-core";
 import ErrorState from "../Components/ErrorState";
 
 const CircuitsTab = ({ addAlert }) => {
