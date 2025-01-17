@@ -1,4 +1,4 @@
-import { Button, ButtonVariant, Form, FormGroup, MenuToggle, NumberInput, Select, SelectList, SelectOption, Sidebar, SidebarContent, SidebarPanel, Slider, Tab, Tabs, TabTitleText, TextInput, TextInputTypes, Title } from '@patternfly/react-core';
+import { Button, ButtonVariant, Form, FormGroup, MenuToggle, NumberInput, Select, SelectList, SelectOption, Sidebar, SidebarContent, SidebarPanel, Slider, Tab, Tabs, TabTitleText, Text, TextInput, TextInputTypes, Title } from '@patternfly/react-core';
 import React, { useEffect, useRef, useState } from 'react';
 import { Network } from 'vis-network';
 
@@ -47,66 +47,80 @@ const SimulatorTab = ({ addAlert }) => {
 
     const [randomSeed, setRandomSeed] = useState(0);
     const [stopTime, setStopTime] = useState(1000);
-    const [nodeCount, setNodeCount] = useState(3);
+    const [nodeCount, setNodeCount] = useState(4);
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [selected, setSelected] = useState(NETWORK_TYPE.FULLY_CONNECTED);
+    const [isNetworkTypeDropwdownOpen, setNetworkTypeDropdownOpen] = useState(false);
+    const [networkTypeSelected, setNetworkTypeSelected] = useState(NETWORK_TYPE.FULLY_CONNECTED);
 
     const [simulationRefreshCounter, setSimulationRefreshCounter] = useState(0);
 
     const [currentTimeValue, setCurrentTimeValue] = useState(0);
     const [inputCurrentTimeValue, setInputCurrentTimeValue] = useState(0);
 
-    const onToggleClick = () => {
-        setIsOpen(!isOpen);
-    };
+    const [selectedNodeId, setSelectedNodeId] = useState(null);
 
-    const onSelect = (_event, value) => {
-        setSelected(value);
-        setIsOpen(false);
+    const onNetworkTypeSelect = (_event, value) => {
+        setNetworkTypeSelected(value);
+        setNetworkTypeDropdownOpen(false);
     };
 
     const containerRef = useRef(null);
 
-    useEffect(() => {
-        const nodes = [...Array(nodeCount)].map((_, id) => ({ id, label: `Node ${id}` }))
-        let edges;
+    const nodes = [...Array(nodeCount)].map((_, id) => ({ id, label: `Node ${id}` }))
+    let edges;
 
-        switch (selected) {
-            case NETWORK_TYPE.FULLY_CONNECTED: {
-                edges = generateFullyConnectedTopologyEdges(nodeCount);
-                break;
-            }
-            case NETWORK_TYPE.LINE: {
-                edges = generateLineTopologyEdges(nodeCount);
-                break;
-            }
-            case NETWORK_TYPE.RING: {
-                edges = generateRingTopologyEdges(nodeCount);
-                break;
-            }
+    switch (networkTypeSelected) {
+        case NETWORK_TYPE.FULLY_CONNECTED: {
+            edges = generateFullyConnectedTopologyEdges(nodeCount);
+            break;
         }
+        case NETWORK_TYPE.LINE: {
+            edges = generateLineTopologyEdges(nodeCount);
+            break;
+        }
+        case NETWORK_TYPE.RING: {
+            edges = generateRingTopologyEdges(nodeCount);
+            break;
+        }
+    }
 
-        const data = { nodes, edges };
-        const options = {
-            nodes: {
-                shape: 'dot',
-                size: 16,
-                font: { color: '#000' },
-                color: { background: '#0074D9' }
-            },
-            edges: {
-                color: '#ccc',
-            },
-            interaction: { hover: true }
-        };
+    const data = { nodes, edges };
+    const options = {
+        nodes: {
+            shape: 'dot',
+            size: 16,
+            font: { color: '#000' },
+            color: { background: '#0074D9' }
+        },
+        edges: {
+            color: '#ccc',
+        },
+        interaction: {
+            hover: true,
+            dragView: false,
+            zoomView: false
+        }
+    };
 
+    useEffect(() => {
         const network = new Network(containerRef.current, data, options);
 
         network.on('click', (params) => {
             if (params.nodes.length > 0) {
-                alert(`Clicked on node: ${params.nodes[0]}`);
+                setSelectedNodeId(params.nodes[0]);
             }
+        });
+
+        network.on('deselectNode', (params) => {
+            setSelectedNodeId(null);
+        });
+
+        network.on("hoverNode", function (params) {
+            network.canvas.body.container.style.cursor = 'pointer';
+        });
+
+        network.on("blurNode", function (params) {
+            network.canvas.body.container.style.cursor = 'default';
         });
 
         return () => network.destroy();
@@ -118,7 +132,9 @@ const SimulatorTab = ({ addAlert }) => {
                 Simulator
             </Title>
             <Sidebar hasGutter hasBorder>
-                <SidebarPanel>
+                <SidebarPanel width={{
+                    default: "width_25"
+                }}>
                     <Form>
                         <Tabs activeKey={pageSelectedTab} onSelect={(e, index) => setPageSelectedTab(index)}>
                             <Tab eventKey={0} title={<TabTitleText>Simulation</TabTitleText>}>
@@ -148,18 +164,18 @@ const SimulatorTab = ({ addAlert }) => {
                                 </FormGroup>
                                 <FormGroup label="Connection type">
                                     <Select
-                                        isOpen={isOpen}
-                                        selected={selected}
-                                        onSelect={onSelect}
-                                        onOpenChange={(isOpen) => setIsOpen(isOpen)}
+                                        isOpen={isNetworkTypeDropwdownOpen}
+                                        selected={networkTypeSelected}
+                                        onSelect={onNetworkTypeSelect}
+                                        onOpenChange={(isOpen) => setNetworkTypeDropdownOpen(isOpen)}
                                         toggle={(toggleRef) => (
                                             <MenuToggle
                                                 ref={toggleRef}
-                                                onClick={onToggleClick}
-                                                isExpanded={isOpen}
+                                                onClick={() => setNetworkTypeDropdownOpen(!isNetworkTypeDropwdownOpen)}
+                                                isExpanded={isNetworkTypeDropwdownOpen}
                                                 style={{ width: "100%" }}
                                             >
-                                                {selected}
+                                                {networkTypeSelected}
                                             </MenuToggle>
                                         )}
                                         shouldFocusToggleOnSelect
@@ -174,12 +190,49 @@ const SimulatorTab = ({ addAlert }) => {
                                     </Select>
                                 </FormGroup>
                             </Tab>
+                            <Tab eventKey={2} title={<TabTitleText>Events</TabTitleText>}>
+                                There are currently no events logged
+                            </Tab>
+                            <Tab eventKey={3} title={<TabTitleText>Node detail</TabTitleText>}>
+                                {selectedNodeId == null
+                                    ? "Select a node to display its details"
+                                    : (
+                                        <Form>
+                                            <FormGroup label="Peers">
+                                                <Text>
+                                                    TODO: Peer count
+                                                </Text>
+                                            </FormGroup>
+                                            <FormGroup label="Pending coin txs">
+                                                <Text>
+                                                    TODO: Pending coin txs
+                                                </Text>
+                                            </FormGroup>
+                                            <FormGroup label="Pending proof txs">
+                                                <Text>
+                                                    TODO: Pending proof txs
+                                                </Text>
+                                            </FormGroup>
+                                            <FormGroup label="Known blocks">
+                                                <Text>
+                                                    TODO: Known blocks
+                                                </Text>
+                                            </FormGroup>
+                                            <FormGroup label="Mining">
+                                                <Text>
+                                                    TODO: Mining
+                                                </Text>
+                                            </FormGroup>
+                                        </Form>
+                                    )
+                                }
+                            </Tab>
                         </Tabs>
                         <Button
                             variant={ButtonVariant.primary}
                             onClick={() => setSimulationRefreshCounter(simulationRefreshCounter + 1)}
                         >
-                            Simulate
+                            Run simulation
                         </Button>
                     </Form>
                 </SidebarPanel>
