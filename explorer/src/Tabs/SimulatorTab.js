@@ -1,6 +1,9 @@
-import { Button, ButtonVariant, Form, FormGroup, MenuToggle, NumberInput, Select, SelectList, SelectOption, Sidebar, SidebarContent, SidebarPanel, Slider, Tab, Tabs, TabTitleText, Text, TextInput, TextInputTypes, Title } from '@patternfly/react-core';
-import React, { useEffect, useRef, useState } from 'react';
+import { Button, ButtonVariant, Form, FormGroup, List, ListItem, MenuToggle, NumberInput, Select, SelectList, SelectOption, Sidebar, SidebarContent, SidebarPanel, Slider, Tab, Tabs, TabTitleText, Text, TextContent, TextInput, TextInputTypes, Title } from '@patternfly/react-core';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { Network } from 'vis-network';
+
+const NODE = 0;
+const EDGE = 1;
 
 const NETWORK_TYPE = {
     FULLY_CONNECTED: "Fully connected",
@@ -57,7 +60,10 @@ const SimulatorTab = ({ addAlert }) => {
     const [currentTimeValue, setCurrentTimeValue] = useState(0);
     const [inputCurrentTimeValue, setInputCurrentTimeValue] = useState(0);
 
-    const [selectedNodeId, setSelectedNodeId] = useState(null);
+    const [selectedObjectId, setSelectedObjectId] = useState(null);
+    const [selectedObjectType, setSelectedObjectType] = useState(null);
+
+    const [isEditingTopology, setEditingTopology] = useState(false);
 
     const onNetworkTypeSelect = (_event, value) => {
         setNetworkTypeSelected(value);
@@ -98,7 +104,9 @@ const SimulatorTab = ({ addAlert }) => {
         interaction: {
             hover: true,
             dragView: false,
-            zoomView: false
+            zoomView: false,
+            selectConnectedEdges: false,
+            hoverConnectedEdges: false
         }
     };
 
@@ -107,12 +115,36 @@ const SimulatorTab = ({ addAlert }) => {
 
         network.on('click', (params) => {
             if (params.nodes.length > 0) {
-                setSelectedNodeId(params.nodes[0]);
+                setSelectedObjectId(params.nodes[0]);
+                setSelectedObjectType(NODE);
+                setPageSelectedTab(3);
+            }
+
+            if (params.edges.length > 0) {
+                setSelectedObjectId(params.edges[0]);
+                setSelectedObjectType(EDGE);
+                setPageSelectedTab(3);
+            }
+        });
+
+        network.on("oncontext", (params) => {
+            params.event.preventDefault();
+
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+            } else if (params.edges.length > 0) {
+                const edgeId = params.edges[0];
             }
         });
 
         network.on('deselectNode', (params) => {
-            setSelectedNodeId(null);
+            setSelectedObjectId(null);
+            setSelectedObjectType(null);
+        });
+
+        network.on('deselectEdge', (params) => {
+            setSelectedObjectId(null);
+            setSelectedObjectType(null);
         });
 
         network.on("hoverNode", function (params) {
@@ -189,42 +221,94 @@ const SimulatorTab = ({ addAlert }) => {
                                         </SelectList>
                                     </Select>
                                 </FormGroup>
+                                {isEditingTopology
+                                    ? (
+                                        <Button variant="warning" style={{ width: "100%", marginTop: 16 }} onClick={() => setEditingTopology(false)}>
+                                            Edit topology
+                                        </Button>
+                                    )
+                                    : (
+                                        <div style={{ marginTop: 16 }}>
+                                            <List>
+                                                <ListItem>
+                                                    Right click to remove a node or a connection
+                                                </ListItem>
+                                                <ListItem>
+                                                    Hover over a node and scroll to change its consensual power
+                                                </ListItem>
+                                                <ListItem>
+                                                    Hover over a connection and scroll to change its latency
+                                                </ListItem>
+                                            </List>
+                                            <Button variant="warning" style={{ width: "100%", marginTop: 16 }} onClick={() => setEditingTopology(true)}>
+                                                Stop editing topology
+                                            </Button>
+                                        </div>
+                                    )
+                                }
                             </Tab>
                             <Tab eventKey={2} title={<TabTitleText>Events</TabTitleText>}>
                                 There are currently no events logged
                             </Tab>
-                            <Tab eventKey={3} title={<TabTitleText>Node detail</TabTitleText>}>
-                                {selectedNodeId == null
+                            <Tab eventKey={3} title={<TabTitleText>Inspect</TabTitleText>}>
+                                {selectedObjectId == null
                                     ? "Select a node to display its details"
-                                    : (
-                                        <Form>
-                                            <FormGroup label="Peers">
-                                                <Text>
-                                                    TODO: Peer count
-                                                </Text>
-                                            </FormGroup>
-                                            <FormGroup label="Pending coin txs">
-                                                <Text>
-                                                    TODO: Pending coin txs
-                                                </Text>
-                                            </FormGroup>
-                                            <FormGroup label="Pending proof txs">
-                                                <Text>
-                                                    TODO: Pending proof txs
-                                                </Text>
-                                            </FormGroup>
-                                            <FormGroup label="Known blocks">
-                                                <Text>
-                                                    TODO: Known blocks
-                                                </Text>
-                                            </FormGroup>
-                                            <FormGroup label="Mining">
-                                                <Text>
-                                                    TODO: Mining
-                                                </Text>
-                                            </FormGroup>
-                                        </Form>
-                                    )
+                                    : selectedObjectType === NODE
+                                        ? (
+                                            <Form>
+                                                <TextContent>
+                                                    <Text component="h5">{nodes[selectedObjectId].label}</Text>
+                                                </TextContent>
+                                                <FormGroup label="Peers">
+                                                    <Text>
+                                                        TODO: Peer count
+                                                    </Text>
+                                                </FormGroup>
+                                                <FormGroup label="Pending coin txs">
+                                                    <Text>
+                                                        TODO: Pending coin txs
+                                                    </Text>
+                                                </FormGroup>
+                                                <FormGroup label="Pending proof txs">
+                                                    <Text>
+                                                        TODO: Pending proof txs
+                                                    </Text>
+                                                </FormGroup>
+                                                <FormGroup label="Known blocks">
+                                                    <Text>
+                                                        TODO: Known blocks
+                                                    </Text>
+                                                </FormGroup>
+                                                <FormGroup label="Mining">
+                                                    <Text>
+                                                        TODO: Mining
+                                                    </Text>
+                                                </FormGroup>
+                                            </Form>
+                                        )
+                                        : (
+                                            <Form>
+                                                <FormGroup label="Latency (TODO)">
+                                                    <Text>
+                                                        <TextInput
+                                                            isDisabled
+                                                            value={0}
+                                                            type={TextInputTypes.number}
+                                                            onChange={(_event, value) => setStopTime(value)}
+                                                        />
+                                                    </Text>
+                                                </FormGroup>
+                                                <FormGroup label="Throughput (TODO)">
+                                                    <Text>
+                                                        <TextInput
+                                                            isDisabled
+                                                            value="∞"
+                                                            onChange={(_event, value) => setStopTime(value)}
+                                                        />
+                                                    </Text>
+                                                </FormGroup>
+                                            </Form>
+                                        )
                                 }
                             </Tab>
                         </Tabs>
@@ -233,6 +317,12 @@ const SimulatorTab = ({ addAlert }) => {
                             onClick={() => setSimulationRefreshCounter(simulationRefreshCounter + 1)}
                         >
                             Run simulation
+                        </Button>
+                        <Button
+                            variant={ButtonVariant.secondary}
+                            onClick={() => { }}
+                        >
+                            Save configuration
                         </Button>
                     </Form>
                 </SidebarPanel>
