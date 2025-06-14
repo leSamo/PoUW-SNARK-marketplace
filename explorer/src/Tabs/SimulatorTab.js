@@ -65,6 +65,9 @@ const SimulatorTab = ({ addAlert }) => {
 
     const [isEditingTopology, setEditingTopology] = useState(false);
 
+    const [nodes, setNodes] = useState([]);
+    const [edges, setEdges] = useState([]);
+
     const onNetworkTypeSelect = (_event, value) => {
         setNetworkTypeSelected(value);
         setNetworkTypeDropdownOpen(false);
@@ -72,22 +75,27 @@ const SimulatorTab = ({ addAlert }) => {
 
     const containerRef = useRef(null);
 
-    const nodes = [...Array(nodeCount)].map((_, id) => ({ id, label: `Node ${id}` }))
-    let edges;
+    const generateNetwork = () => {
+        const _nodes = [...Array(nodeCount)].map((_, id) => ({ id, label: `Node ${id}` }))
+        let _edges;
 
-    switch (networkTypeSelected) {
-        case NETWORK_TYPE.FULLY_CONNECTED: {
-            edges = generateFullyConnectedTopologyEdges(nodeCount);
-            break;
+        switch (networkTypeSelected) {
+            case NETWORK_TYPE.FULLY_CONNECTED: {
+                _edges = generateFullyConnectedTopologyEdges(nodeCount);
+                break;
+            }
+            case NETWORK_TYPE.LINE: {
+                _edges = generateLineTopologyEdges(nodeCount);
+                break;
+            }
+            case NETWORK_TYPE.RING: {
+                _edges = generateRingTopologyEdges(nodeCount);
+                break;
+            }
         }
-        case NETWORK_TYPE.LINE: {
-            edges = generateLineTopologyEdges(nodeCount);
-            break;
-        }
-        case NETWORK_TYPE.RING: {
-            edges = generateRingTopologyEdges(nodeCount);
-            break;
-        }
+
+        setNodes(_nodes);
+        setEdges(_edges);
     }
 
     const data = { nodes, edges };
@@ -130,10 +138,22 @@ const SimulatorTab = ({ addAlert }) => {
         network.on("oncontext", (params) => {
             params.event.preventDefault();
 
+            setSelectedObjectId(null);
+            setSelectedObjectType(null);
+
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
+                const nodeIndex = nodes.findIndex(node => node.id === nodeId);
+
+                setNodes([...nodes.slice(0, nodeIndex), ...nodes.slice(nodeIndex + 1)]);
+
             } else if (params.edges.length > 0) {
                 const edgeId = params.edges[0];
+                const edgeIndex = edges.findIndex(edge => edge.id === edgeId);
+
+                setEdges([...edges.slice(0, edgeIndex), ...edges.slice(edgeIndex + 1)]);
+
+                console.log("edge", edgeId, edges);
             }
         });
 
@@ -156,7 +176,7 @@ const SimulatorTab = ({ addAlert }) => {
         });
 
         return () => network.destroy();
-    }, [simulationRefreshCounter]);
+    }, [nodes, edges]);
 
     return (
         <div style={{ margin: 16 }}>
@@ -221,6 +241,9 @@ const SimulatorTab = ({ addAlert }) => {
                                         </SelectList>
                                     </Select>
                                 </FormGroup>
+                                <Button variant="secondary" style={{ width: "100%", marginTop: 16 }} onClick={() => generateNetwork()}>
+                                    Generate network
+                                </Button>
                                 {isEditingTopology
                                     ? (
                                         <Button variant="warning" style={{ width: "100%", marginTop: 16 }} onClick={() => setEditingTopology(false)}>
@@ -231,7 +254,7 @@ const SimulatorTab = ({ addAlert }) => {
                                         <div style={{ marginTop: 16 }}>
                                             <List>
                                                 <ListItem>
-                                                    Right click to remove a node or a connection
+                                                    Select and right click to remove a node or a connection
                                                 </ListItem>
                                                 <ListItem>
                                                     Hover over a node and scroll to change its consensual power
@@ -257,7 +280,7 @@ const SimulatorTab = ({ addAlert }) => {
                                         ? (
                                             <Form>
                                                 <TextContent>
-                                                    <Text component="h5">{nodes[selectedObjectId].label}</Text>
+                                                    <Text component="h5">{nodes.find(node => node.id === selectedObjectId).label}</Text>
                                                 </TextContent>
                                                 <FormGroup label="Peers">
                                                     <Text>
@@ -288,6 +311,12 @@ const SimulatorTab = ({ addAlert }) => {
                                         )
                                         : (
                                             <Form>
+                                                <TextContent>
+                                                    <Text component="h5">
+                                                        Edge between&nbsp;
+                                                        {edges.find(edge => edge.id === selectedObjectId).from} and&nbsp;
+                                                        {edges.find(edge => edge.id === selectedObjectId).to}</Text>
+                                                </TextContent>
                                                 <FormGroup label="Latency (TODO)">
                                                     <Text>
                                                         <TextInput
