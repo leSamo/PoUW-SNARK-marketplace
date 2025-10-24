@@ -51,7 +51,6 @@ Automated tests are located in the `src/test` directory and can be run with `pyt
 ## Limitations and Future Work
 
 - **Transaction prefix splitting** -- As mentioned in the thesis, there are conflicts possible where two nodes work on the same transactions, which leads to wasted work on the part of the node which fails to publish first. This could be mitigated by allowing miners to only include transactions which match with their address in the prefix.
-- **Blockchain explorer** -- Having a web app that could interact with the network and display data in user-friendly format would make debugging and exploring the network easier.
 - **Testing utilities class** -- Writing unit tests involves a lot of boilerplate code for process spawning and communication pipelining. Some test setup code could be abstracted into a class to make writing tests easier.
 - **No reputation system** -- The network assumes the adversaries attack only the blockchain system not the underlying network architecture (there is no protection against DoS attacks etc.)
 - **Better interactive console** -- User experience when using the client could be improved by implementing support for tab-completion and command history accessible with arrow keys similarly to Shell.
@@ -116,3 +115,7 @@ Running the client command `generate-key <file>` will create a new private key f
 ## Network Configuration
 
 The file `src/config.json` contains static network and client parameters along with the definition of the genesis block. The file can be edited manually or separate configuration file can be created and enabled with the `-f` switch.
+
+## Blockchain Explorer
+
+Follow the instructions in the `explorer/` folder to run the blockchain explorer.
