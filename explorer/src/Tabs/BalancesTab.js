@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useMemo, useState } from 'react';
-import { Chart, ChartAxis, ChartGroup, ChartLine, ChartThemeColor, ChartLegendTooltip, createContainer } from '@patternfly/react-charts/victory';
+import { Chart, ChartAxis, ChartGroup, ChartLine, ChartThemeColor, ChartLegendTooltip, createContainer, ChartScatter } from '@patternfly/react-charts/victory';
 import { AlertVariant, Button, Split, SplitItem, Title } from '@patternfly/react-core';
 import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
 import { RedoIcon } from '@patternfly/react-icons';
@@ -107,6 +107,21 @@ const BalancesTab = ({ addAlert }) => {
                                         ))
                                     }
                                     name={account}
+                                />
+                            ))
+                        }
+                        {
+                            [...allAccounts].map(account => (
+                                <ChartScatter
+                                    data={blocks.map((block, index) => (
+                                        {
+                                            x: index.toString(),
+                                            y: block[account] ?? 0
+                                        }
+                                    ))}
+                                    name={`${account}-points`}
+                                    size={5}
+                                    symbol="square"
                                 />
                             ))
                         }
