@@ -1,11 +1,31 @@
-import React, { Fragment, useState } from 'react';
+import React, { createContext, Fragment, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import IndexRoute from './Routes/IndexRoute';
 import Header from './Components/Header';
 import { Alert, AlertActionCloseButton, AlertGroup, AlertVariant } from '@patternfly/react-core';
 
+export const AccountContext = createContext(null);
+export const ACCOUNTS_LOCAL_STORAGE_KEY = "accounts";
+
+const loadAccounts = () => {
+    const string = localStorage.getItem(ACCOUNTS_LOCAL_STORAGE_KEY);
+
+    try {
+        return JSON.parse(string) ?? [];
+    }
+    catch {
+        return [];
+    }
+}
+
 const App = () => {
     const [alerts, setAlerts] = useState([]);
+    const [accounts, setAccounts] = useState(null);
+    const [accountsRefreshCounter, setAccountsRefreshCounter] = useState(0);
+
+    useEffect(() => {
+        setAccounts(loadAccounts());
+    }, [accountsRefreshCounter]);
 
     const addAlert = (variant, title, description) => {
         setAlerts((prevAlerts) => [...prevAlerts, { variant, title, description }]);
@@ -16,8 +36,8 @@ const App = () => {
     };
 
     return (
-        <Fragment>
-            <Header />
+        <AccountContext.Provider value={accounts}>
+            <Header refreshAccounts={() => setAccountsRefreshCounter(accountsRefreshCounter + 1)}/>
             <Router>
                 <Routes>
                     <Route path="/" element={<IndexRoute addAlert={addAlert}/>} />
@@ -42,7 +62,7 @@ const App = () => {
                 )
                 )}
             </AlertGroup>
-        </Fragment>
+        </AccountContext.Provider>
     );
 }
 

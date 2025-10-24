@@ -1,7 +1,8 @@
-import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea } from "@patternfly/react-core";
-import { PlusCircleIcon } from "@patternfly/react-icons";
-import { useEffect, useState } from "react";
+import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea, TextInput, Divider, Bullseye, Spinner, spinnerSize, ButtonSize, Tooltip } from "@patternfly/react-core";
+import { PlusCircleIcon, TrashIcon, WalletIcon } from "@patternfly/react-icons";
+import { useContext, useEffect, useState } from "react";
 import { ECPrivateKey, pemToBuffer } from "../Helpers/key";
+import { AccountContext, ACCOUNTS_LOCAL_STORAGE_KEY } from "../App";
 const secp256k1 = require('secp256k1');
 var asn1 = require('asn1.js');
 
@@ -10,7 +11,7 @@ const PRIVATE_KEY_METHOD = {
     uploadFile: "uploadFile"
 }
 
-const Header = () => {
+const Header = ({ refreshAccounts }) => {
     // const [searchValue, setSearchValue] = useState("");
     const [isUserDropdownOpen, setUserDropdownOpen] = useState(false);
     const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -18,33 +19,52 @@ const Header = () => {
     // This is not a good practice in production applications, this explorer exists just for demonstration purposes
     const [privateKey, setPrivateKey] = useState(null);
 
+    const [modalAccountName, setModalAccountName] = useState("");
     const [modalInputField, setModalInputField] = useState("");
     const [modalFilename, setModalFilename] = useState("");
     const [modalPrivateKeyMethodSelected, setModalPrivateKeyMethodSelected] = useState(PRIVATE_KEY_METHOD.enterText);
-    const [modalEnterText, setModalEnterText] = useState("");
+    const [modalPrivateKeyString, setModalPrivateKeyString] = useState("");
 
-    useEffect(() => {
-        // TODO: Validate if private key is valid
-        const privateKeyLoaded = localStorage.getItem("privateKey")
-
-        if (privateKeyLoaded !== null) {
-            setPrivateKey(privateKeyLoaded);
-        }
-    }, [])
+    const accounts = useContext(AccountContext);
 
     const isKeyValid = (value) => {
         try {
             const buffer = pemToBuffer(value);
-
             const decodedKey = ECPrivateKey.decode(buffer, 'der');
-
             const isValid = secp256k1.privateKeyVerify(decodedKey.privateKey);
+
+            return isValid;
         }
         catch {
             return false;
         }
+    }
 
-        return true;
+    const onUserModalClose = () => {
+        setUserModalOpen(!isUserModalOpen);
+        setModalPrivateKeyString("");
+        setModalPrivateKeyMethodSelected(PRIVATE_KEY_METHOD.enterText);
+        // TODO: Clear uploaded file
+    }
+
+    const addNewAccount = () => {
+        // TODO: Forbid duplicate names
+        onUserModalClose();
+
+        const newAccount = {
+            name: modalAccountName,
+            privateKey: modalPrivateKeyString
+        };
+
+        localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify([...accounts, newAccount]));
+        refreshAccounts();
+    }
+
+    const removeAccount = (name) => {
+        const filteredAccounts = accounts.filter(acc => acc.name !== name);
+
+        localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify(filteredAccounts));
+        refreshAccounts();
     }
 
     return (
@@ -61,17 +81,54 @@ const Header = () => {
                             onSelect={() => setUserDropdownOpen(false)}
                             onOpenChange={(isOpen) => setUserDropdownOpen(isOpen)}
                             toggle={(toggleRef) => (
-                                <MenuToggle ref={toggleRef} onClick={() => setUserDropdownOpen(!isUserDropdownOpen)} isExpanded={isUserDropdownOpen}>
-                                    No account
+                                <MenuToggle style={{ minWidth: 250 }} ref={toggleRef} onClick={() => setUserDropdownOpen(!isUserDropdownOpen)} isExpanded={isUserDropdownOpen}>
+                                    Select account
                                 </MenuToggle>
                             )}
                             shouldFocusToggleOnSelect
                         >
                             <DropdownList>
-                                <DropdownItem value={0} onClick={() => setUserModalOpen(true)}>
-                                    <PlusCircleIcon style={{ marginRight: 4 }} />
-                                    Add account
-                                </DropdownItem>
+                                {accounts === null ?
+                                    (
+                                        <Bullseye>
+                                            <Spinner size={spinnerSize.lg} />
+                                        </Bullseye>
+                                    ) : accounts.length === 0 ? (
+                                        <Bullseye>
+                                            <span style={{ padding: 4, fontSize: 12, color: 'gray' }}>
+                                                No accounts set up yet
+                                            </span>
+                                        </Bullseye>
+                                    ) : (
+                                        accounts.map(account => (
+                                            <div key={account.name} style={{ paddingLeft: 12, paddingRight: 12, paddingTop: 4, paddingBottom: 4 }}>
+                                                <Split hasGutter>
+                                                    <SplitItem>
+                                                        <WalletIcon />
+                                                    </SplitItem>
+                                                    <SplitItem>
+                                                        {account.name}
+                                                    </SplitItem>
+                                                    <SplitItem isFilled />
+                                                    <SplitItem>
+                                                        <Tooltip content="Delete account">
+                                                            <Button variant="danger" size={ButtonSize.sm} onClick={() => window.confirm(`Are you sure you want to delete account '${account.name}'?`) && removeAccount(account.name)}>
+                                                                <TrashIcon />
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </SplitItem>
+                                                </Split>
+                                            </div>
+                                        ))
+                                    )
+                                }
+                                <Divider />
+                                <Bullseye>
+                                    <Button onClick={() => setUserModalOpen(true)}>
+                                        <PlusCircleIcon style={{ marginRight: 4 }} />
+                                        Add account
+                                    </Button>
+                                </Bullseye>
                             </DropdownList>
                         </Dropdown>
                     </SplitItem>
@@ -95,18 +152,31 @@ const Header = () => {
                 variant={ModalVariant.small}
                 title="Add account"
                 isOpen={isUserModalOpen}
-                onClose={() => setUserModalOpen(!isUserModalOpen)}
+                onClose={onUserModalClose}
                 actions={[
-                    <Button key="confirm" variant="primary" onClick={() => setUserModalOpen(!isUserModalOpen)}>
-                        {/* TODO: Disable when key invalid */}
+                    <Button
+                        key="confirm"
+                        variant="primary"
+                        onClick={addNewAccount}
+                        isDisabled={
+                            !isKeyValid(modalPrivateKeyString) || modalAccountName.trim() == ""
+                        }
+                    >
                         Confirm
                     </Button>,
-                    <Button key="cancel" variant="link" onClick={() => setUserModalOpen(!isUserModalOpen)}>
+                    <Button key="cancel" variant="link" onClick={onUserModalClose}>
                         Cancel
                     </Button>
                 ]}
             >
                 <Form>
+                    <FormGroup label="Account name">
+                        <TextInput
+                            value={modalAccountName}
+                            onChange={(e, value) => setModalAccountName(value)}
+                            placeholder="Enter custom account name"
+                        />
+                    </FormGroup>
                     <FormGroup label="Supply private key">
                         <Tile
                             title="Enter text"
@@ -117,7 +187,10 @@ const Header = () => {
                             title="Upload from file"
                             isSelected={modalPrivateKeyMethodSelected === PRIVATE_KEY_METHOD.uploadFile}
                             onClick={() => setModalPrivateKeyMethodSelected(PRIVATE_KEY_METHOD.uploadFile)}
-                        />
+                            isDisabled
+                        >
+                            To be implemented
+                        </Tile>
                     </FormGroup>
 
                     {modalPrivateKeyMethodSelected === PRIVATE_KEY_METHOD.enterText && (
@@ -127,11 +200,11 @@ const Header = () => {
                                 resizeOrientation="vertical"
                                 placeholder={"Enter private key in PEM or base64 format"}
                                 autoResize
-                                value={modalEnterText}
+                                value={modalPrivateKeyString}
                                 onChange={(e, value) => {
-                                    setModalEnterText(value);
+                                    setModalPrivateKeyString(value);
                                 }}
-                                validated={(isKeyValid(modalEnterText) || modalEnterText.length === 0) || "error"}
+                                validated={(isKeyValid(modalPrivateKeyString) || modalPrivateKeyString.length === 0) || "error"}
                             />
                         </FormGroup>
                     )}
