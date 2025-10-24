@@ -1,3 +1,4 @@
 ecdsa==0.19.0
 pytest==8.2.0
 jsonrpclib==0.2.1
+prompt_toolkit==3.0.52

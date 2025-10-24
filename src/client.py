@@ -15,6 +15,9 @@ import time
 import os
 import copy
 
+from prompt_toolkit import prompt
+from prompt_toolkit.history import InMemoryHistory
+
 import util
 import network
 import rpc_interface
@@ -427,6 +430,8 @@ def main(argv):
         rpc_thread = threading.Thread(target=rpc_interface.start_json_rpc_server, args=(rpc_port,))
         rpc_thread.start()
 
+    prompt_history = InMemoryHistory()
+
     # TODO: Improve command handling code
     # TODO: handle "verbose" without "on|off"
     # TODO: handle verbose on/off when already on/off
@@ -435,7 +440,7 @@ def main(argv):
             if len(cli_commands) > 0:
                 command = cli_commands.pop(0).strip()
             else:
-                command = input().strip()
+                command = prompt(history=prompt_history).strip()
         except:
             command = "exit"
 
