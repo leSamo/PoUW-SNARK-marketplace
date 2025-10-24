@@ -29,9 +29,11 @@ const IndexRoute = ({ addAlert }) => {
                 <Tab eventKey={4} title={<TabTitleText>Balances</TabTitleText>}>
                     <BalancesTab addAlert={addAlert} />
                 </Tab>
+                {/*
                 <Tab eventKey={5} title={<TabTitleText>Simulator</TabTitleText>}>
                     <SimulatorTab addAlert={addAlert} />
                 </Tab>
+                */}
             </Tabs>
         </Fragment>
     );
