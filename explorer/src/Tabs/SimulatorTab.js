@@ -152,8 +152,6 @@ const SimulatorTab = ({ addAlert }) => {
                 const edgeIndex = edges.findIndex(edge => edge.id === edgeId);
 
                 setEdges([...edges.slice(0, edgeIndex), ...edges.slice(edgeIndex + 1)]);
-
-                console.log("edge", edgeId, edges);
             }
         });
 

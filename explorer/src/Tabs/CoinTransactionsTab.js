@@ -41,8 +41,6 @@ const CoinTransactionsTab = ({ addAlert }) => {
                     .then(result => {
                         setConfirmedTxsLoading(false);
 
-                        console.log(">>>>", result);
-
                         setConfirmedCoinTxs(
                             result.flatMap(({ block }) =>
                                 block.body.coin_txs.flatMap((tx) => ({
@@ -68,9 +66,6 @@ const CoinTransactionsTab = ({ addAlert }) => {
     const coinsTxs = shouldShowUnconfirmed
         ? [...pendingCoinTxs, ...confirmedCoinTxs]
         : confirmedCoinTxs;
-
-    console.log("pending", pendingCoinTxs)
-    console.log("confirmed", confirmedCoinTxs)
 
     return (arePendingTxsLoading || areConfirmedTxsLoading)
         ? <Bullseye style={{ height: 150 }}><Spinner /></Bullseye>

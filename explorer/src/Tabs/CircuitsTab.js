@@ -23,6 +23,7 @@ const CircuitsTab = ({ addAlert }) => {
                 setCircuitsLoading(false);
             })
             .catch((response) => {
+                console.log(response);
                 setError(true);
                 setCircuitsLoading(false);
 
@@ -33,8 +34,6 @@ const CircuitsTab = ({ addAlert }) => {
     const refresh = () => {
         setRefreshCounter(refreshCounter + 1);
     }
-
-    console.log("circuits", circuits)
 
     return areCircuitsLoading
         ? <Bullseye style={{ height: 150 }}><Spinner /></Bullseye>

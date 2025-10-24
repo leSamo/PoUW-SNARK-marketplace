@@ -42,8 +42,6 @@ const ProofTransactionsTab = ({ addAlert }) => {
                     .then(result => {
                         setConfirmedTxsLoading(false);
 
-                        console.log(">>>>", result);
-
                         setConfirmedProofTxs(
                             result.flatMap(({ block }) =>
                                 block.body.proof_txs.flatMap((tx) => ({
@@ -69,9 +67,6 @@ const ProofTransactionsTab = ({ addAlert }) => {
     const proofsTxs = shouldShowUnconfirmed
         ? [...pendingProofTxs, ...confirmedProofTxs]
         : confirmedProofTxs;
-
-    console.log("pending", pendingProofTxs)
-    console.log("confirmed", confirmedProofTxs)
 
     return (arePendingTxsLoading || areConfirmedTxsLoading)
         ? <Bullseye style={{ height: 150 }}><Spinner /></Bullseye>

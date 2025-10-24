@@ -39,7 +39,6 @@ const Header = () => {
             const decodedKey = ECPrivateKey.decode(buffer, 'der');
 
             const isValid = secp256k1.privateKeyVerify(decodedKey.privateKey);
-            console.log(isValid);
         }
         catch {
             return false;

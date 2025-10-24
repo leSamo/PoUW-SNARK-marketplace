@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useMemo, useState } from 'react';
 import { Chart, ChartAxis, ChartGroup, ChartLine, ChartThemeColor, ChartLegendTooltip, createContainer, ChartScatter } from '@patternfly/react-charts/victory';
-import { AlertVariant, Button, Split, SplitItem, Title } from '@patternfly/react-core';
+import { AlertVariant, Bullseye, Button, Spinner, Split, SplitItem, Title } from '@patternfly/react-core';
 import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
 import { RedoIcon } from '@patternfly/react-icons';
 
@@ -32,8 +32,6 @@ const BalancesTab = ({ addAlert }) => {
             })
     }, [refreshCounter]);
 
-    console.log("blocks", blocks)
-
     const allAccounts = useMemo(() => {
         const accounts = new Set();
 
@@ -41,8 +39,6 @@ const BalancesTab = ({ addAlert }) => {
 
         return accounts;
     }, [refreshCounter, blocks]);
-
-    console.log("allAccounts", allAccounts)
 
     const refresh = () => {
         setRefreshCounter(refreshCounter + 1);
@@ -64,70 +60,79 @@ const BalancesTab = ({ addAlert }) => {
                     <Button onClick={refresh} icon={<RedoIcon />}>Refresh</Button>
                 </SplitItem>
             </Split>
-            <div style={{ height: '500px', width: '100%' }}>
-                <Chart
-                    ariaDesc="Balances of accounts across blocks"
-                    ariaTitle="Balances of accounts across blocks"
-                    containerComponent={
-                        <CursorVoronoiContainer
-                            cursorDimension="x"
-                            labels={({ datum }) => `${datum.y}`}
-                            labelComponent={<ChartLegendTooltip legendData={legendData} title={(datum) => `Block with serial ID ${datum.x}`} />}
-                            mouseFollowTooltips
-                            voronoiDimension="x"
-                            voronoiPadding={50}
-                        />
-                    }
-                    legendData={legendData}
-                    legendPosition="bottom"
-                    height={500}
-                    width={1500}
-                    maxDomain={{ y: 1000 }}
-                    minDomain={{ y: 0 }}
-                    padding={{
-                        bottom: 75, // Adjusted to accommodate legend
-                        left: 50,
-                        right: 50,
-                        top: 50
-                    }}
-                    themeColor={ChartThemeColor.blue}
-                >
-                    <ChartAxis tickValues={[...Array(blocks.length).keys()]} />
-                    <ChartAxis dependentAxis showGrid />
-                    <ChartGroup>
-                        {
-                            [...allAccounts].map(account => (
-                                <ChartLine
-                                    data={
-                                        blocks.map((block, index) => (
-                                            {
-                                                x: index.toString(),
-                                                y: block[account] ?? 0
+            {areBlocksLoading ? (
+                <Bullseye>
+                    <Spinner />
+                </Bullseye>
+            )
+                : (
+                    <div style={{ height: '500px', width: '100%' }}>
+                        <Chart
+                            ariaDesc="Balances of accounts across blocks"
+                            ariaTitle="Balances of accounts across blocks"
+                            containerComponent={
+                                <CursorVoronoiContainer
+                                    cursorDimension="x"
+                                    labels={({ datum }) => `${datum.y}`}
+                                    labelComponent={<ChartLegendTooltip legendData={legendData} title={(datum) => `Block with serial ID ${datum.x}`} />}
+                                    mouseFollowTooltips
+                                    voronoiDimension="x"
+                                    voronoiPadding={50}
+                                />
+                            }
+                            legendData={legendData}
+                            legendPosition="bottom"
+                            height={500}
+                            width={1500}
+                            maxDomain={{ y: 1000 }}
+                            minDomain={{ y: 0 }}
+                            padding={{
+                                bottom: 75, // Adjusted to accommodate legend
+                                left: 50,
+                                right: 50,
+                                top: 50
+                            }}
+                            themeColor={ChartThemeColor.blue}
+                        >
+                            <ChartAxis tickValues={[...Array(blocks.length).keys()]} />
+                            <ChartAxis dependentAxis showGrid />
+                            <ChartGroup>
+                                {
+                                    [...allAccounts].map(account => (
+                                        <ChartLine
+                                            key={`${account}-lines`}
+                                            name={`${account}-lines`}
+                                            data={
+                                                blocks.map((block, index) => (
+                                                    {
+                                                        x: index.toString(),
+                                                        y: block[account] ?? 0
+                                                    }
+                                                ))
                                             }
-                                        ))
-                                    }
-                                    name={account}
-                                />
-                            ))
-                        }
-                        {
-                            [...allAccounts].map(account => (
-                                <ChartScatter
-                                    data={blocks.map((block, index) => (
-                                        {
-                                            x: index.toString(),
-                                            y: block[account] ?? 0
-                                        }
-                                    ))}
-                                    name={`${account}-points`}
-                                    size={5}
-                                    symbol="square"
-                                />
-                            ))
-                        }
-                    </ChartGroup>
-                </Chart>
-            </div>
+                                        />
+                                    ))
+                                }
+                                {
+                                    [...allAccounts].map(account => (
+                                        <ChartScatter
+                                            key={`${account}-points`}
+                                            name={`${account}-points`}
+                                            data={blocks.map((block, index) => (
+                                                {
+                                                    x: index.toString(),
+                                                    y: block[account] ?? 0
+                                                }
+                                            ))}
+                                            size={5}
+                                            symbol="square"
+                                        />
+                                    ))
+                                }
+                            </ChartGroup>
+                        </Chart>
+                    </div>
+                )}
         </Fragment>
     );
 };
