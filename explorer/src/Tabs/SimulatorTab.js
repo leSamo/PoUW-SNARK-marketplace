@@ -272,7 +272,7 @@ const SimulatorTab = ({ addAlert }) => {
                                 There are currently no events logged
                             </Tab>
                             <Tab eventKey={3} title={<TabTitleText>Inspect</TabTitleText>}>
-                                {selectedObjectId == null
+                                {selectedObjectId === null
                                     ? "Select a node to display its details"
                                     : selectedObjectType === NODE
                                         ? (

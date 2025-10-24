@@ -159,7 +159,7 @@ const Header = ({ refreshAccounts }) => {
                         variant="primary"
                         onClick={addNewAccount}
                         isDisabled={
-                            !isKeyValid(modalPrivateKeyString) || modalAccountName.trim() == ""
+                            !isKeyValid(modalPrivateKeyString) || modalAccountName.trim() === ""
                         }
                     >
                         Confirm
