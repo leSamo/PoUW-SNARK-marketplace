@@ -1,6 +1,6 @@
-import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea, TextInput, Divider, Bullseye, Spinner, spinnerSize, ButtonSize, Tooltip } from "@patternfly/react-core";
+import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea, TextInput, Divider, Bullseye, Spinner, spinnerSize, ButtonSize, Tooltip, Badge, HelperText, HelperTextItem } from "@patternfly/react-core";
 import { PlusCircleIcon, TrashIcon, WalletIcon } from "@patternfly/react-icons";
-import { useContext, useEffect, useState } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import { ECPrivateKey, pemToBuffer } from "../Helpers/key";
 import { AccountContext, ACCOUNTS_LOCAL_STORAGE_KEY } from "../App";
 const secp256k1 = require('secp256k1');
@@ -42,6 +42,7 @@ const Header = ({ refreshAccounts }) => {
 
     const onUserModalClose = () => {
         setUserModalOpen(!isUserModalOpen);
+        setModalAccountName("");
         setModalPrivateKeyString("");
         setModalPrivateKeyMethodSelected(PRIVATE_KEY_METHOD.enterText);
         // TODO: Clear uploaded file
@@ -53,19 +54,33 @@ const Header = ({ refreshAccounts }) => {
 
         const newAccount = {
             name: modalAccountName,
-            privateKey: modalPrivateKeyString
+            privateKey: modalPrivateKeyString,
+            isActive: false
         };
 
         localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify([...accounts, newAccount]));
         refreshAccounts();
     }
 
-    const removeAccount = (name) => {
+    const removeAccount = (e, name) => {
         const filteredAccounts = accounts.filter(acc => acc.name !== name);
 
         localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify(filteredAccounts));
         refreshAccounts();
+
+        e.stopPropagation();
     }
+
+    const selectAccount = (accountToSelect) => {
+        const newAccounts = accounts
+            .map(account => ({ ...account, isActive: false }))
+            .map(account => account.name === accountToSelect.name ? { ...account, isActive: true } : account);
+
+        localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify(newAccounts));
+        refreshAccounts();
+    }
+
+    const activeAccount = accounts.find(account => account.isActive === true) ?? null;
 
     return (
         <Masthead>
@@ -82,7 +97,12 @@ const Header = ({ refreshAccounts }) => {
                             onOpenChange={(isOpen) => setUserDropdownOpen(isOpen)}
                             toggle={(toggleRef) => (
                                 <MenuToggle style={{ minWidth: 250 }} ref={toggleRef} onClick={() => setUserDropdownOpen(!isUserDropdownOpen)} isExpanded={isUserDropdownOpen}>
-                                    Select account
+                                    {activeAccount ? (
+                                        <Fragment>
+                                            <WalletIcon style={{ marginRight: 8 }} />
+                                            {activeAccount.name}
+                                        </Fragment>
+                                    ) : 'Select account'}
                                 </MenuToggle>
                             )}
                             shouldFocusToggleOnSelect
@@ -101,7 +121,7 @@ const Header = ({ refreshAccounts }) => {
                                         </Bullseye>
                                     ) : (
                                         accounts.map(account => (
-                                            <div key={account.name} style={{ paddingLeft: 12, paddingRight: 12, paddingTop: 4, paddingBottom: 4 }}>
+                                            <DropdownItem key={account.name} onClick={() => selectAccount(account)}>
                                                 <Split hasGutter>
                                                     <SplitItem>
                                                         <WalletIcon />
@@ -109,16 +129,21 @@ const Header = ({ refreshAccounts }) => {
                                                     <SplitItem>
                                                         {account.name}
                                                     </SplitItem>
+                                                    {account.isActive &&
+                                                        <SplitItem>
+                                                            <Badge>Active</Badge>
+                                                        </SplitItem>
+                                                    }
                                                     <SplitItem isFilled />
                                                     <SplitItem>
                                                         <Tooltip content="Delete account">
-                                                            <Button variant="danger" size={ButtonSize.sm} onClick={() => window.confirm(`Are you sure you want to delete account '${account.name}'?`) && removeAccount(account.name)}>
+                                                            <Button variant="danger" size={ButtonSize.sm} onClick={(e) => window.confirm(`Are you sure you want to delete account '${account.name}'?`) && removeAccount(e, account.name)}>
                                                                 <TrashIcon />
                                                             </Button>
                                                         </Tooltip>
                                                     </SplitItem>
                                                 </Split>
-                                            </div>
+                                            </DropdownItem>
                                         ))
                                     )
                                 }
@@ -159,7 +184,9 @@ const Header = ({ refreshAccounts }) => {
                         variant="primary"
                         onClick={addNewAccount}
                         isDisabled={
-                            !isKeyValid(modalPrivateKeyString) || modalAccountName.trim() === ""
+                            !isKeyValid(modalPrivateKeyString) ||
+                            modalAccountName.trim() === "" ||
+                            accounts.some(account => account.name === modalAccountName)
                         }
                     >
                         Confirm
@@ -175,7 +202,17 @@ const Header = ({ refreshAccounts }) => {
                             value={modalAccountName}
                             onChange={(e, value) => setModalAccountName(value)}
                             placeholder="Enter custom account name"
+                            validated={accounts.some(account => account.name === modalAccountName) && "error"}
                         />
+                        {
+                            accounts.some(account => account.name === modalAccountName) && (
+                                <HelperText>
+                                    <HelperTextItem variant="error" hasIcon>
+                                        An account with this name already exists
+                                    </HelperTextItem>
+                                </HelperText>
+                            )
+                        }
                     </FormGroup>
                     <FormGroup label="Supply private key">
                         <Tile
