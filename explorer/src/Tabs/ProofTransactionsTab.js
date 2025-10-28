@@ -3,7 +3,7 @@ import { DownloadIcon, RedoIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import Hash from "../Components/Hash";
 import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
-import { AlertVariant, Bullseye, Button, Label, Spinner, Split, SplitItem, Switch, Title } from "@patternfly/react-core";
+import { AlertVariant, Bullseye, Button, ButtonVariant, Label, Spinner, Split, SplitItem, Switch, Title } from "@patternfly/react-core";
 import ErrorState from "../Components/ErrorState";
 import { downloadString } from "../Helpers/download";
 
@@ -90,7 +90,7 @@ const ProofTransactionsTab = ({ addAlert }) => {
                             />
                         </SplitItem>
                         <SplitItem>
-                            <Button onClick={refresh} icon={<RedoIcon />}>Refresh</Button>
+                            <Button variant={ButtonVariant.secondary} onClick={refresh} icon={<RedoIcon />}>Refresh</Button>
                         </SplitItem>
                     </Split>
                     <Table variant="compact" style={{ border: "1px solid lightgray", borderTop: 0 }}>

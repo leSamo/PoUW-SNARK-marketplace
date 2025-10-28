@@ -1,10 +1,9 @@
-import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea, TextInput, Divider, Bullseye, Spinner, spinnerSize, ButtonSize, Tooltip, Badge, HelperText, HelperTextItem } from "@patternfly/react-core";
+import { Masthead, MastheadContent, MastheadMain, Split, SplitItem, Dropdown, MenuToggle, DropdownList, DropdownItem, Modal, Button, ModalVariant, FileUpload, Tile, Form, FormGroup, TextArea, TextInput, Divider, Bullseye, Spinner, spinnerSize, ButtonSize, Tooltip, HelperText, HelperTextItem, Label, ButtonVariant } from "@patternfly/react-core";
 import { PlusCircleIcon, TrashIcon, WalletIcon } from "@patternfly/react-icons";
 import { Fragment, useContext, useEffect, useState } from "react";
 import { ECPrivateKey, pemToBuffer } from "../Helpers/key";
 import { AccountContext, ACCOUNTS_LOCAL_STORAGE_KEY } from "../App";
 const secp256k1 = require('secp256k1');
-var asn1 = require('asn1.js');
 
 const PRIVATE_KEY_METHOD = {
     enterText: "enterText",
@@ -80,7 +79,15 @@ const Header = ({ refreshAccounts }) => {
         refreshAccounts();
     }
 
-    const activeAccount = accounts.find(account => account.isActive === true) ?? null;
+    const deactivateAllAccounts = () => {
+        const newAccounts = accounts
+            .map(account => ({ ...account, isActive: false }))
+
+        localStorage.setItem(ACCOUNTS_LOCAL_STORAGE_KEY, JSON.stringify(newAccounts));
+        refreshAccounts();
+    }
+
+    const activeAccount = accounts?.find(account => account.isActive === true) ?? null;
 
     return (
         <Masthead>
@@ -90,73 +97,82 @@ const Header = ({ refreshAccounts }) => {
             <MastheadContent>
                 <Split hasGutter style={{ width: '100%' }}>
                     <SplitItem isFilled />
-                    <SplitItem>
-                        <Dropdown
-                            isOpen={isUserDropdownOpen}
-                            onSelect={() => setUserDropdownOpen(false)}
-                            onOpenChange={(isOpen) => setUserDropdownOpen(isOpen)}
-                            toggle={(toggleRef) => (
-                                <MenuToggle style={{ minWidth: 250 }} ref={toggleRef} onClick={() => setUserDropdownOpen(!isUserDropdownOpen)} isExpanded={isUserDropdownOpen}>
-                                    {activeAccount ? (
-                                        <Fragment>
-                                            <WalletIcon style={{ marginRight: 8 }} />
-                                            {activeAccount.name}
-                                        </Fragment>
-                                    ) : 'Select account'}
-                                </MenuToggle>
-                            )}
-                            shouldFocusToggleOnSelect
-                        >
-                            <DropdownList>
-                                {accounts === null ?
-                                    (
-                                        <Bullseye>
-                                            <Spinner size={spinnerSize.lg} />
-                                        </Bullseye>
-                                    ) : accounts.length === 0 ? (
-                                        <Bullseye>
-                                            <span style={{ padding: 4, fontSize: 12, color: 'gray' }}>
-                                                No accounts set up yet
-                                            </span>
-                                        </Bullseye>
-                                    ) : (
-                                        accounts.map(account => (
-                                            <DropdownItem key={account.name} onClick={() => selectAccount(account)}>
-                                                <Split hasGutter>
-                                                    <SplitItem>
-                                                        <WalletIcon />
-                                                    </SplitItem>
-                                                    <SplitItem>
-                                                        {account.name}
-                                                    </SplitItem>
-                                                    {account.isActive &&
+                    {accounts === null ? <Spinner /> :
+                        <SplitItem>
+                            <Dropdown
+                                isOpen={isUserDropdownOpen}
+                                onSelect={() => setUserDropdownOpen(false)}
+                                onOpenChange={(isOpen) => setUserDropdownOpen(isOpen)}
+                                toggle={(toggleRef) => (
+                                    <MenuToggle style={{ minWidth: 250 }} ref={toggleRef} onClick={() => setUserDropdownOpen(!isUserDropdownOpen)} isExpanded={isUserDropdownOpen}>
+                                        {activeAccount ? (
+                                            <Fragment>
+                                                <WalletIcon style={{ marginRight: 8 }} />
+                                                {activeAccount.name}
+                                            </Fragment>
+                                        ) : 'Select account'}
+                                    </MenuToggle>
+                                )}
+                                shouldFocusToggleOnSelect
+                            >
+                                <DropdownList>
+                                    {accounts === null ?
+                                        (
+                                            <Bullseye>
+                                                <Spinner size={spinnerSize.lg} />
+                                            </Bullseye>
+                                        ) : accounts.length === 0 ? (
+                                            <Bullseye>
+                                                <span style={{ padding: 4, fontSize: 12, color: 'gray' }}>
+                                                    No accounts set up yet
+                                                </span>
+                                            </Bullseye>
+                                        ) : (
+                                            accounts.map(account => (
+                                                <DropdownItem key={account.name} onClick={() => selectAccount(account)}>
+                                                    <Split hasGutter>
                                                         <SplitItem>
-                                                            <Badge>Active</Badge>
+                                                            <WalletIcon />
                                                         </SplitItem>
-                                                    }
-                                                    <SplitItem isFilled />
-                                                    <SplitItem>
-                                                        <Tooltip content="Delete account">
-                                                            <Button variant="danger" size={ButtonSize.sm} onClick={(e) => window.confirm(`Are you sure you want to delete account '${account.name}'?`) && removeAccount(e, account.name)}>
-                                                                <TrashIcon />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </SplitItem>
-                                                </Split>
-                                            </DropdownItem>
-                                        ))
-                                    )
-                                }
-                                <Divider />
-                                <Bullseye>
-                                    <Button onClick={() => setUserModalOpen(true)}>
-                                        <PlusCircleIcon style={{ marginRight: 4 }} />
-                                        Add account
-                                    </Button>
-                                </Bullseye>
-                            </DropdownList>
-                        </Dropdown>
-                    </SplitItem>
+                                                        <SplitItem>
+                                                            {account.name}
+                                                        </SplitItem>
+                                                        {account.isActive &&
+                                                            <SplitItem>
+                                                                <Label isCompact color="green">Active</Label>
+                                                            </SplitItem>
+                                                        }
+                                                        <SplitItem isFilled />
+                                                        <SplitItem>
+                                                            <Tooltip content="Delete account">
+                                                                <Button variant="danger" size={ButtonSize.sm} onClick={(e) => window.confirm(`Are you sure you want to delete account '${account.name}'?`) && removeAccount(e, account.name)}>
+                                                                    <TrashIcon />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </SplitItem>
+                                                    </Split>
+                                                </DropdownItem>
+                                            ))
+                                        )
+                                    }
+                                    <Divider />
+                                    <Bullseye>
+                                        <Button onClick={() => setUserModalOpen(true)}>
+                                            <PlusCircleIcon style={{ marginRight: 4 }} />
+                                            Add account
+                                        </Button>
+                                    </Bullseye>
+                                    {activeAccount && (
+                                        <Bullseye style={{ marginTop: 8 }}>
+                                            <Button variant={ButtonVariant.secondary} onClick={deactivateAllAccounts}>
+                                                Deactivate all accounts
+                                            </Button>
+                                        </Bullseye>
+                                    )}
+                                </DropdownList>
+                            </Dropdown>
+                        </SplitItem>
+                    }
                     {/*
                     <SplitItem>
                         <SearchInput
@@ -186,10 +202,10 @@ const Header = ({ refreshAccounts }) => {
                         isDisabled={
                             !isKeyValid(modalPrivateKeyString) ||
                             modalAccountName.trim() === "" ||
-                            accounts.some(account => account.name === modalAccountName)
+                            accounts?.some(account => account.name === modalAccountName)
                         }
                     >
-                        Confirm
+                        Add account
                     </Button>,
                     <Button key="cancel" variant="link" onClick={onUserModalClose}>
                         Cancel
@@ -202,10 +218,10 @@ const Header = ({ refreshAccounts }) => {
                             value={modalAccountName}
                             onChange={(e, value) => setModalAccountName(value)}
                             placeholder="Enter custom account name"
-                            validated={accounts.some(account => account.name === modalAccountName) && "error"}
+                            validated={accounts?.some(account => account.name === modalAccountName) && "error"}
                         />
                         {
-                            accounts.some(account => account.name === modalAccountName) && (
+                            accounts?.some(account => account.name === modalAccountName) && (
                                 <HelperText>
                                     <HelperTextItem variant="error" hasIcon>
                                         An account with this name already exists

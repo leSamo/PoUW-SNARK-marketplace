@@ -106,7 +106,7 @@ const ConfirmedBlocksTab = ({ addAlert }) => {
                                                     {block.header.serial_id}
                                                 </SplitItem>
                                                 <SplitItem>
-                                                    {block.header.serial_id === 0 && <Label isCompact color="green" style={{ marginLeft: 8 }}>Genesis</Label>}
+                                                    {block.header.serial_id === 0 && <Label isCompact color="gold" style={{ marginLeft: 8 }}>Genesis</Label>}
                                                 </SplitItem>
                                             </Split>
                                         </Td>

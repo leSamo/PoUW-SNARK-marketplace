@@ -1,21 +1,26 @@
-import { useEffect, useState, Fragment } from "react";
-import { RedoIcon } from "@patternfly/react-icons";
+import { useEffect, useState, Fragment, useContext } from "react";
+import { PlusCircleIcon, RedoIcon } from "@patternfly/react-icons";
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import Hash from "../Components/Hash";
 import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
-import { AlertVariant, Bullseye, Button, Label, Spinner, Split, SplitItem, Switch, Title } from "@patternfly/react-core";
+import { AlertVariant, Bullseye, Button, ButtonVariant, Label, Spinner, Split, SplitItem, Switch, Title, Tooltip } from "@patternfly/react-core";
 import ErrorState from "../Components/ErrorState";
+import CreateCoinTxModal from "../Modals/CreateCoinTxModal";
+import { AccountContext } from "../App";
 
 const CoinTransactionsTab = ({ addAlert }) => {
     const [arePendingTxsLoading, setPendingTxsLoading] = useState(true);
     const [areConfirmedTxsLoading, setConfirmedTxsLoading] = useState(true);
     const [isError, setError] = useState(false);
+    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
 
     const [pendingCoinTxs, setPendingCoinTxs] = useState([]);
     const [confirmedCoinTxs, setConfirmedCoinTxs] = useState([]);
 
     const [shouldShowUnconfirmed, setShowUnconfirmed] = useState(true);
+
+    const accounts = useContext(AccountContext);
 
     useEffect(() => {
         setPendingTxsLoading(true);
@@ -67,12 +72,16 @@ const CoinTransactionsTab = ({ addAlert }) => {
         ? [...pendingCoinTxs, ...confirmedCoinTxs]
         : confirmedCoinTxs;
 
+    const activeAccount = accounts?.find(account => account.isActive === true) ?? null;
+
     return (arePendingTxsLoading || areConfirmedTxsLoading)
         ? <Bullseye style={{ height: 150 }}><Spinner /></Bullseye>
         : isError
             ? <ErrorState />
             : (
                 <Fragment>
+                    { }
+                    <CreateCoinTxModal isOpen={isCreateModalOpen} setOpen={() => setCreateModalOpen(false)} />
                     <Split hasGutter style={{ margin: 16 }}>
                         <SplitItem>
                             <Title headingLevel="h1">
@@ -89,7 +98,17 @@ const CoinTransactionsTab = ({ addAlert }) => {
                             />
                         </SplitItem>
                         <SplitItem>
-                            <Button onClick={refresh} icon={<RedoIcon />}>Refresh</Button>
+                            <Button variant={ButtonVariant.secondary} onClick={refresh} icon={<RedoIcon />}>Refresh</Button>
+                        </SplitItem>
+                        <SplitItem>
+                            {activeAccount
+                                ? <Button variant={ButtonVariant.primary} onClick={() => setCreateModalOpen(true)} icon={<PlusCircleIcon />}>Create new</Button>
+                                : (
+                                    <Tooltip content="Select an account to perform this action">
+                                        <Button style={{ pointerEvents: "all" }} variant={ButtonVariant.primary} isDisabled icon={<PlusCircleIcon />}>Create new</Button>
+                                    </Tooltip>
+                                )
+                            }
                         </SplitItem>
                     </Split>
                     <Table variant="compact" style={{ border: "1px solid lightgray", borderTop: 0 }}>
