@@ -1,12 +1,16 @@
-import { Button, Form, FormGroup, Modal, ModalVariant, TextInput } from "@patternfly/react-core";
+import { Button, Form, FormGroup, Modal, ModalVariant, TextInput, TextInputTypes } from "@patternfly/react-core";
 import { useContext, useState } from "react";
 import { AccountContext } from "../App";
 import { ECPrivateKey, pemToBuffer } from "../Helpers/key";
 import { Buffer } from 'buffer';
+import { COMMANDS, sendRpcRequest } from "../Helpers/rpc";
 const secp256k1 = require('secp256k1');
+const crypto = require('crypto');
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
 
 const CreateCoinTxModal = ({ isOpen, setOpen }) => {
-    const [to, setTo] = useState("");
+    const [addressTo, setAddressTo] = useState("");
     const [amount, setAmount] = useState("");
 
     const accounts = useContext(AccountContext);
@@ -14,6 +18,9 @@ const CreateCoinTxModal = ({ isOpen, setOpen }) => {
     const onClose = () => {
         // TODO: Clear all fields
         setOpen(false);
+
+        setAddressTo("");
+        setAmount("");
     }
 
     const activeAccount = accounts?.find(account => account.isActive === true) ?? null;
@@ -27,6 +34,48 @@ const CreateCoinTxModal = ({ isOpen, setOpen }) => {
         activeAccountHexAddress = Buffer.from(pubCompressed).toString('hex');
     }
 
+    const onSubmit = () => {
+        const transactionObject = {
+            address_from: activeAccountHexAddress,
+            address_to: Buffer.from(addressTo).toString('hex'),
+            amount: Number(amount)
+        }
+
+        const timestamp = Math.round(Date.now() / 1000) * 1000
+        const serialized_tx = [
+            timestamp.toString(),
+            transactionObject.address_from,
+            transactionObject.address_to,
+            amount.toString()
+        ].join("|")
+
+        console.log(">>>", serialized_tx)
+
+        const tx_hash = crypto.createHash('sha256')
+            .update(serialized_tx)
+            .digest('hex');
+        
+        transactionObject.id = tx_hash;
+
+        const key = ec.keyFromPrivate(activeAccount.privateKey, 'hex');
+
+        const signature = key.sign(tx_hash, { canonical: true });
+
+        transactionObject.signature = signature;
+
+        sendRpcRequest(COMMANDS.BROADCAST_PENDING_COIN_TX, transactionObject);
+
+        onClose();
+    }
+
+    const validateAmount = () => {
+        const num = Number(amount);
+
+        if (isNaN(num) || !Number.isInteger(num) || num <= 0) {
+            return "error";
+        }
+    }
+
     return (
         <Modal
             variant={ModalVariant.small}
@@ -37,9 +86,8 @@ const CreateCoinTxModal = ({ isOpen, setOpen }) => {
                 <Button
                     key="confirm"
                     variant="primary"
-                    onClick={() => {
-                        onClose()
-                    }}
+                    onClick={onSubmit}
+                    isDisabled={validateAmount() === 'error'}
                 >
                     Create
                 </Button>,
@@ -58,8 +106,8 @@ const CreateCoinTxModal = ({ isOpen, setOpen }) => {
                 <FormGroup label="Address to">
                     <TextInput
                         isRequired
-                        value={to}
-                        onChange={(e, value) => setTo(value)}
+                        value={addressTo}
+                        onChange={(e, value) => setAddressTo(value)}
                         placeholder="Enter address"
                     />
                 </FormGroup>
@@ -69,6 +117,7 @@ const CreateCoinTxModal = ({ isOpen, setOpen }) => {
                         value={amount}
                         onChange={(e, value) => setAmount(value)}
                         placeholder="Enter amount"
+                        validated={amount !== "" && validateAmount()}
                     />
                 </FormGroup>
             </Form>

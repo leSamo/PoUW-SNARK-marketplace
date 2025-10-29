@@ -109,6 +109,7 @@ def send_message(receiver, command, message = {}):
     except Exception as error:
         util.vprint(f"Failed to send message {command} to peer {receiver} - {error}")
 
+# handle response to request for all coin txs in a mempool during initial synchronization
 def receive_pending_coin_transactions(pending_txs_obj, sender: str = ''):
     for tx in pending_txs_obj:
         # TODO: Check if tx is valid -- structure and signature
@@ -120,8 +121,7 @@ def receive_pending_coin_transactions(pending_txs_obj, sender: str = ''):
             pending_coin_transactions.append(new_tx)
             util.vprint(f"Accepted pending coin tx with id {new_tx.get_id()}")
 
-    # TODO: Broadcast received tx further, but not to sender
-
+# handle response to request for all proof txs in a mempool during initial synchronization
 def receive_pending_proof_transactions(pending_txs_obj, sender: str = ''):
     for tx in pending_txs_obj:
         # TODO: Check if tx is valid -- structure and signature
@@ -133,11 +133,11 @@ def receive_pending_proof_transactions(pending_txs_obj, sender: str = ''):
             pending_proof_transactions.append(new_tx)
             util.vprint(f"Accepted pending proof tx with id {new_tx.get_id()}")
 
-    # TODO: Broadcast received tx further, but not to sender
-
 # broadcast newly created or received coin transaction to the network
 def broadcast_pending_coin_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
+
+    # TODO: Check if transaction is not already included in mempool
 
     pending_coin_transactions.append(tx)
 
@@ -150,6 +150,8 @@ def broadcast_pending_coin_transaction(tx : CoinTransaction, sender : str = ''):
 # broadcast newly created or received coin transaction to the network
 def broadcast_pending_proof_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned proof transactions cannot be broadcast"
+
+    # TODO: Check if transaction is not already included in mempool
 
     pending_proof_transactions.append(tx)
 

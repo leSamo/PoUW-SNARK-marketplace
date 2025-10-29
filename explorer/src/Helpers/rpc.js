@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+export const RPC_PORT = 9545;
+
 export const COMMANDS = {
     GET_LATEST_BLOCK_ID: 'GET_LATEST_BLOCK_ID',
     GET_BLOCK: 'GET_BLOCK',
@@ -16,7 +18,7 @@ export const sendRpcRequest = async (command, params = {}) => {
         throw Error("Invalid RPC command");
     }
 
-    return axios.post(`http://localhost:9545/`, {
+    return axios.post(`http://localhost:${RPC_PORT}/`, {
         jsonrpc: "2.0",
         id: 0,
         method: command,

@@ -72,6 +72,14 @@ def get_pending_proof_txs_response() -> dict:
 def get_circuits() -> dict:
     return { 'circuits': [{ 'hash': hash, 'constraint_count': Zokrates.get_constraint_count(filepath) } for hash, filepath in network.circuits.items()] }
 
+def submit_coin_tx(coin_tx : dict):
+    new_tx = CoinTransaction()
+    new_tx.decode(coin_tx)
+
+    broadcast_pending_coin_transaction(new_tx)
+
+    return {}
+
 def start_json_rpc_server(port : int) -> None:
     global server
 
@@ -84,5 +92,7 @@ def start_json_rpc_server(port : int) -> None:
     server.register_function(get_pending_coin_txs_response, util.Command.GET_PENDING_COIN_TXS)
     server.register_function(get_pending_proof_txs_response, util.Command.GET_PENDING_PROOF_TXS)
     server.register_function(get_circuits, util.Command.GET_CIRCUITS)
+
+    server.register_function(submit_coin_tx, util.Command.BROADCAST_PENDING_COIN_TX)
 
     server.serve_forever()
