@@ -109,8 +109,10 @@ def send_message(receiver, command, message = {}):
     except Exception as error:
         util.vprint(f"Failed to send message {command} to peer {receiver} - {error}")
 
-def receive_pending_coin_transactions(pending_txs_obj):
+def receive_pending_coin_transactions(pending_txs_obj, sender: str = ''):
     for tx in pending_txs_obj:
+        # TODO: Check if tx is valid -- structure and signature
+
         new_tx = CoinTransaction()
         new_tx.decode(tx)
 
@@ -118,8 +120,12 @@ def receive_pending_coin_transactions(pending_txs_obj):
             pending_coin_transactions.append(new_tx)
             util.vprint(f"Accepted pending coin tx with id {new_tx.get_id()}")
 
-def receive_pending_proof_transactions(pending_txs_obj):
+    # TODO: Broadcast received tx further, but not to sender
+
+def receive_pending_proof_transactions(pending_txs_obj, sender: str = ''):
     for tx in pending_txs_obj:
+        # TODO: Check if tx is valid -- structure and signature
+
         new_tx = ProofTransaction()
         new_tx.decode(tx)
 
@@ -127,7 +133,9 @@ def receive_pending_proof_transactions(pending_txs_obj):
             pending_proof_transactions.append(new_tx)
             util.vprint(f"Accepted pending proof tx with id {new_tx.get_id()}")
 
-# broadcast newly created coin transaction to the network
+    # TODO: Broadcast received tx further, but not to sender
+
+# broadcast newly created or received coin transaction to the network
 def broadcast_pending_coin_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned coin transactions cannot be broadcast"
 
@@ -139,7 +147,7 @@ def broadcast_pending_coin_transaction(tx : CoinTransaction, sender : str = ''):
         if peer.to_string() != sender:
             send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_COIN_TX, message)
 
-# broadcast newly created coin transaction to the network
+# broadcast newly created or received coin transaction to the network
 def broadcast_pending_proof_transaction(tx : CoinTransaction, sender : str = ''):
     assert tx.is_signed(), "Unsigned proof transactions cannot be broadcast"
 
@@ -151,7 +159,7 @@ def broadcast_pending_proof_transaction(tx : CoinTransaction, sender : str = '')
         if peer.to_string() != sender:
             send_message(peer.to_tuple(), util.Command.BROADCAST_PENDING_PROOF_TX, message)
 
-# broadcast newly generated block to the network
+# broadcast newly generated or received block to the network
 def broadcast_block(block : Block, sender : str = '') -> None:
     blockchain.append(block)
 

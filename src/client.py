@@ -224,7 +224,7 @@ def receive_incoming(client_socket, client_address):
         network.send_message((client_address[0], message['port']), util.Command.BLOCK, { 'block': network.blockchain[message['block_id']].encode() })
 
     elif message['command'] == util.Command.PENDING_COIN_TXS:
-        network.receive_pending_coin_transactions(message['pending_txs'])
+        network.receive_pending_coin_transactions(message['pending_txs'], sender)
 
     elif message['command'] == util.Command.GET_PENDING_COIN_TXS:
         util.vprint(f"Sending pending coin txs")
@@ -232,7 +232,7 @@ def receive_incoming(client_socket, client_address):
         network.send_message((client_address[0], message['port']), util.Command.PENDING_COIN_TXS, { 'pending_txs': [tx.encode() for tx in network.pending_coin_transactions] })
 
     elif message['command'] == util.Command.PENDING_PROOF_TXS:
-        network.receive_pending_proof_transactions(message['pending_txs'])
+        network.receive_pending_proof_transactions(message['pending_txs'], sender)
 
     elif message['command'] == util.Command.GET_PENDING_PROOF_TXS:
         util.vprint(f"Sending pending proof txs")
@@ -453,6 +453,7 @@ def main(argv):
             try:
                 terminating_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 terminating_socket.connect((network.self_ip_address, network.port))
+                terminating_socket.shutdown(socket.SHUT_RDWR)
             except:
                 util.eprint("Failed to open terminating socket")
 
