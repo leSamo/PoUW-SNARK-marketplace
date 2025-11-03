@@ -70,7 +70,7 @@ class CoinTransaction(Encodeable):
         return self.__signature is not None
 
     def get_id(self) -> int:
-        return self.__amount
+        return self.__id
 
     def get_address_from(self) -> bytes:
         return self.__address_from
